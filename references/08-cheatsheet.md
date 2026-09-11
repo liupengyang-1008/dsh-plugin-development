@@ -136,7 +136,7 @@
 
 ---
 
-## 3. UI 插槽名（40 个，完整清单见 `E-official-templates.md` 附录）
+## 3. UI 插槽名（**最常用的几个**；权威全量约 59 个公开键，用 `scripts/extract_slots.py` 复现）
 
 **最常用的三个**：
 

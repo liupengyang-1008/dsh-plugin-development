@@ -233,7 +233,7 @@ entry.name = pathToFileURL(resolve(base, entry.name)).href
 ## T3 · 工具插件 · `defineTool`（让模型调用你的能力）★★
 
 **它是什么**：给模型加一个可调用的工具。**这是"外部调用方向"的主力形态。**
-**来源**：官方 `packages/interaction/tool-ask-user`（官方**最小**的工具插件，全包 101 行）。完整全文见 `plugin-research/notes/E-official-templates.md` 模板 3。
+**来源**：官方 `packages/interaction/tool-ask-user`（官方**最小**的工具插件，全包 101 行）。完整全文见本文件**附录 E 的官方模板 3**。
 
 ### 3.1 完整骨架（逐字，可直接抄）
 
@@ -727,7 +727,7 @@ export function apply(ctx: Context, config: Config): void {
 ## T8 · 最小 UI 插件 + 插槽机制 ★★★
 
 **来源**：官方 `packages/client/ui-brand-official`（全包 49 行，官方最小的 UI 插件）。
-**完整原文见** `plugin-research/notes/E-official-templates.md` 模板 2。
+**完整原文见**本文件**附录 E 的官方模板 2**。
 
 ### 8.1 一个 UI 插件 = 两个半侧
 
@@ -816,7 +816,7 @@ export function apply(ctx: ClientContext): void {
 > - `package.json` 的 `dsh.client.inject` 是**包级依赖**（字符串包名），决定加载顺序。
 > - 代码里的 `export const inject = [...]` 是**服务级依赖**（服务名），决定 `apply` 何时被调用。
 
-### 8.5 已知的 40 个官方插槽名（**最有用的三个先记住**）
+### 8.5 最常用的三个插槽名（**先记住这三个**）
 
 | 插槽名 | 用途 |
 |---|---|
@@ -824,16 +824,20 @@ export function apply(ctx: ClientContext): void {
 | `settings.general.item` | 通用设置里加一行/一项 |
 | `conversation.view` | 替换对话主视图（最激进） |
 
-> 完整 40 个见 `plugin-research/notes/E-official-templates.md` 的「官方全部 UI 插槽名」附录。
+> ⚠️ 基线时本手册说这里有「40 个官方插槽名」——**那是低估**。对 `v0.1.5-rc.2` 重新抽取：声明侧 **75 个键**、并集 77 个，剔除 18 个测试专用键后**约 59 个公开可用**。
+> 完整清单与可复现命令：`<skill>/scripts/extract_slots.py <DSH仓库路径> <skill目录>`；签名与报错见 `14-inbound-http-and-timers.md` §17.4，那份是权威。
 
 ### 8.6 🔴 UI 插件的三条硬约束
 
 1. **`dsh.client` 与 `exports["./client"]` 必须成对存在**。缺任一个，宿主报 `client package failed to compose`。
-2. **浏览器半侧里 `@deepseek-ai/*` 只能写 `import type`**。要用值只用平台种子表允许的四个：`react` / `cordis` / `ui-slots` / `ui-primitives`。越界报：
+2. **浏览器半侧里 `@deepseek-ai/*` 只能写 `import type`**。要用值只允许**平台种子表**里的 9 个 specifier（全名，`packages/client/web/src/platform.ts:8-14`）：
+   `react`、`react/jsx-runtime`、`react-dom`、`react-dom/client`、`@deepseek-ai/cordis`、`@deepseek-ai/dsh-client-store`、`@deepseek-ai/dsh-client-ui-slots`、`@deepseek-ai/dsh-client-ui-primitives`、`@deepseek-ai/dsh-client-ui-dockkit`；
+   个别包另有需要的，在 `dsh.client.external` 里**精确**追加。越界报：
    ```
-   client-modules: require("...") missed the module table — not a platform seed word,
-   not a materialized module, and no registered package factory
+   client bundle purity: "..." is not in the default client externals or <id>'s
+   dsh.client.external, an inline-safe wire layer, or a generated /remote contribution
    ```
+   （运行时层面的旧报错文案是 `client-modules: require("...") missed the module table …`——两道门禁，构建期与运行期各一道。）
 3. **不要 `import` 别人的实现**。跨插件协作走 **cordis 服务**（`ctx.slots`/`ctx.sessions`/`ctx.workspaces`）或**插槽**。
 
 ### 8.7 样式方案（事实，不猜测）
@@ -864,7 +868,7 @@ throw new TypeError(
    用 ctx.slots.inject('<插槽名>', () => ctx.slots.register({ name: '<插槽名>' }, 组件))。
 4. 组件用 React + CSS Modules；浏览器半侧里 @deepseek-ai/* 只能 import type。
 
-请先回答：我应该用哪个插槽名？请从官方 40 个插槽名清单里选，并说明依据。
+请先回答：我应该用哪个插槽名？请从源码里的 SlotMap 声明中找（别猜），并说明依据。
 ```
 
 ---
@@ -1068,7 +1072,7 @@ ctx.on('事件名', async (payload, next) => {
 
 ### 10.4 ⚠️ 社区真实事故：**用 system prompt 注入内容会被 persona 整段丢弃**
 
-来自 `volcengine/OpenViking` 的坑（详见 `plugin-research/notes/B-tools-external.md` 坑 O1）：
+来自 `volcengine/OpenViking` 的坑（详见 `05-pitfalls.md` 坑 P17 与素材 B 坑 O1）：
 **`agent preset` 的 persona 若声明了 `complete: true`，会丢弃其它插件贡献的 system prompt 段。**
 → 想往 system prompt 里加内容时，**先确认当前 persona 有没有 `complete: true`**。
 
@@ -1107,7 +1111,7 @@ ctx.on('事件名', async (payload, next) => {
 2. **长任务必须显式加大超时**：MCP 客户端默认 60s，长流程要写 `toolCallTimeoutMs: 1800000`。
 3. **`failOnStartupError: false` 做软失败**：外部依赖没装好时，DSH 仍能正常启动。
 
-### 11.2 社区踩过的外部调用坑（详见 `notes/B-tools-external.md`）
+### 11.2 社区踩过的外部调用坑（详见 `05-pitfalls.md` 与 `10-community-casebook.md` 第二篇）
 
 | 坑 | 教训 |
 |---|---|
@@ -1176,7 +1180,7 @@ my-dsh-plugin/
 npx publint          # 检查 exports / files 是否配错（最有用的一条）
 ```
 
-官方完整门禁清单见 `plugin-research/notes/J-official-conventions.md`。
+官方完整门禁清单见 `07-conventions.md` 第 J 篇。
 
 ### 12.6 命名别纠结：官方角色命名表（节选）
 
@@ -1211,7 +1215,7 @@ npx publint          # 检查 exports / files 是否配错（最有用的一条�
 
 # E. 官方自带插件 —— 七类可复用模板（原始素材）
 
-> 来源：`D:/WorkBuddy/2026-09-11-11-58-02/deepseek-harness`（完整克隆，commit `c291e7961a`，`0.1.5-rc.2`）。
+> 来源：**DSH 上游检出**（完整克隆，commit `c291e7961a`，`0.1.5-rc.2`；本 skill 不附带该检出，核验方式见 `00-version-gate.md`）。
 > 所有代码**逐字照抄**仓库原文，未改写。每个模板标注来源文件路径。
 > 面向《DSH 插件开发实战手册》补充篇，读者为零软件工程经验新手。
 
@@ -2113,9 +2117,10 @@ export function AppearanceRow({ t, setTheme, useStore }: AppearanceRowComponentP
 
 ---
 
-## 附：官方全部 UI 插槽名（40 个，实测提取）
+## 附：官方 UI 插槽名（**节选 40 余个**，实测提取）
 
-> 取证：`grep -rhoE "slots\.(inject|register)\(\s*'[^']+'" packages/*/*/src`（官方全仓）。**这份清单官方文档里没有**，靠源码提取。
+> ⚠️ **这不是全清单。** 本表由 `grep -rhoE "slots\.(inject|register)\(\s*'[^']+'" packages/*/*/src` 提取，因此**天然抓不到内建键**（如 `root` 是用 `renderSlot('root')` 渲染的）。
+> 对 `v0.1.5-rc.2` 的声明侧复核结果：**75 个键**（并集 77 个；剔除 18 个测试专用键后**约 59 个公开可用**）。完整清单与可复现的抽取命令见 `14-inbound-http-and-timers.md` 与 `scripts/extract_slots.py`；注册签名（组件是第二个参数）与「未声明 slot 报什么错」也记在那里。
 > 用法：`ctx.slots.inject('<插槽名>', () => ctx.slots.register({ name: '<插槽名>' }, 组件))`
 
 ### 会话 / 对话区（conversation.*）
@@ -2173,6 +2178,7 @@ export function AppearanceRow({ t, setTheme, useStore }: AppearanceRowComponentP
 
 | 插槽名 | 位置 |
 |---|---|
+| `root` | **内建根插槽**（唯一由 Cordis service 自身渲染的键）。`ui-layout` 被禁用后，整页由它接管 —— 见 T8/根布局玩法 |
 | `main` | 主区域 |
 | `rightbar` | 右侧栏 |
 | `tool.call.toolview` | **工具调用的自定义视图**（工具插件想画专属卡片就用它） |
@@ -2185,8 +2191,9 @@ export function AppearanceRow({ t, setTheme, useStore }: AppearanceRowComponentP
 ## 附：UI 插件的三条硬约束（实测 + 官方文档）
 
 1. **`dsh.client` 与 `exports["./client"]` 必须成对存在**。缺任一个，客户端半侧不会被组装（宿主报 `client package failed to compose`）。
-2. **浏览器半侧里 `@deepseek-ai/*` 只能写 `import type`**。要用值只用平台种子表允许的四个：`react` / `cordis` / `ui-slots` / `ui-primitives`。越界会报：
-   `client-modules: require("...") missed the module table — not a platform seed word, not a materialized module, and no registered package factory`
+2. **浏览器半侧里 `@deepseek-ai/*` 只能写 `import type`**。要用值只允许**平台种子表**里的 9 个 specifier（全名）：`react`、`react/jsx-runtime`、`react-dom`、`react-dom/client`、`@deepseek-ai/cordis`、`@deepseek-ai/dsh-client-store`、`@deepseek-ai/dsh-client-ui-slots`、`@deepseek-ai/dsh-client-ui-primitives`、`@deepseek-ai/dsh-client-ui-dockkit`；个别包另有需要的在 `dsh.client.external` 精确追加。越界会报：
+   `client bundle purity: "..." is not in the default client externals or <id>'s dsh.client.external, an inline-safe wire layer, or a generated /remote contribution`
+   （权威来源与两道门禁的区别见 `14-inbound-http-and-timers.md` §17.3）
 3. **跨插件协作走服务或插槽，不要 `import` 别人的实现**（客户端 bundle 纯度门）。
 
 ---

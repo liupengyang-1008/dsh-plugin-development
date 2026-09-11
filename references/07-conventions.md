@@ -74,6 +74,7 @@ packages/<group>/<pkg>/
 ## 3. 客户端（UI）包的额外要求（逐字）
 
 > `packages/client/*` 包改为 extends `tsconfig.base.client.json`（而非 `tsconfig.base.json`）；client 插件包还需在 package.json 声明 `dsh.client`、导出 `./client`、调用共享 tsdown preset（`packages/client/tsdown.client.ts`）。
+> ⚠️ 该 preset **只在 DSH 仓库内可用**（官方明确「没有已发布的预设暴露该包」）。仓库外的第三方插件必须自己复刻 lazy-CJS 产物格式——契约见 `14-inbound-http-and-timers.md` §17.3。
 
 **三件套**：`tsconfig.base.client.json` + `dsh.client` 声明 + `./client` 导出。
 

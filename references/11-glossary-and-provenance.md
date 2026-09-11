@@ -143,23 +143,29 @@
 
 ## A.2 原始素材索引（十份，共约 7,400 行）
 
-| 文件 | 内容 | 行数 |
-|---|---|---|
-| `plugin-research/notes/A-ui-plugins.md` | UI 方向坑点 | 1445 |
-| `plugin-research/notes/B-tools-external.md` | 工具/外部调用方向（52 个坑 + 4 模板 + 10 规范） | 2273 |
-| `plugin-research/notes/C-services-state.md` | 服务/记忆/状态内核方向（19 个坑 + 14 个模板） | 1517 |
-| `plugin-research/notes/D-host-bundle.md` | 宿主/桌面/组合包方向（32 个坑 + 4 个模板） | 1189 |
-| `plugin-research/notes/E-official-templates.md` | **官方 7 类模板 + 40 个插槽名** | 1044 |
-| `plugin-research/notes/F-official-pitfalls.md` | **官方 4 篇事故复盘** | 195 |
-| `plugin-research/notes/G-install-and-cli.md` | 安装/CLI 机制逐字实证 | 254 |
-| `plugin-research/notes/H-community-bundle.md` | ouroboros 零代码组合包全文 | 231 |
-| `plugin-research/notes/I-quickref.md` | 速查表（服务/事件/插槽/命令） | 187 |
-| `plugin-research/notes/J-official-conventions.md` | 官方包工程约定 | 143 |
+> ⚠️ **下表是「生成期素材代号」，不是本 skill 的文件，也不随本 skill 发布。**
+> 素材 A~J 在生成本套 references 时**已被合并**并落位到下表「已并入」一列；正文各处的「来源：素材 B 坑 M1」只是在标注**该结论的证据来源**，
+> 不是让你去打开某个文件——**在技能目录里找不到它们，这是设计如此，不是缺失。**
 
-> **坑点总量**：四个方向合计 **约 130 条**有 commit 或源码实证的坑/教训（A 方向 100+ / B 52 / C 19 / D 32，部分重叠）。本文件第三篇精选了其中 **23 条最高频、最致命**的整理成症状索引；要查全量请直接翻对应素材。
+| 素材 | 内容 | 原行数 | 已并入 |
+|---|---|---|---|
+| **A** | UI 方向坑点 | 1445 | `10-community-casebook.md` |
+| **B** | 工具 / 外部调用（52 坑 + 4 模板 + 10 规范） | 2273 | `10-community-casebook.md`；另经实战补充并入 `02-templates.md`、`05-pitfalls.md` |
+| **C** | 服务 / 记忆 / 状态内核（19 坑 + 14 模板） | 1517 | `10-community-casebook.md` |
+| **D** | 宿主 / 桌面 / 组合包（32 坑 + 4 模板） | 1189 | `10-community-casebook.md` |
+| **E** | 官方 7 类模板 + 插槽名提取（当时 40 个，⚠️ 非全量——真实约 59 个公开键） | 1044 | `02-templates.md` 附录 E |
+| **F** | 官方 4 篇事故复盘 | 195 | `05-pitfalls.md` 附录 |
+| **G** | 安装 / CLI 机制逐字实证 | 254 | `06-workflow.md` 第 G 篇 |
+| **H** | ouroboros 零代码组合包全文 | 231 | `02-templates.md` 附录 H |
+| **I** | 速查表（服务 / 事件 / 插槽 / 命令） | 187 | `08-cheatsheet.md` |
+| **J** | 官方包工程约定 | 143 | `07-conventions.md` 第 J 篇 |
 
-**源码快照**：`plugin-research/src/<仓库>/`（13 个仓库完整源码）
-**git 历史**：`plugin-research/repos/<仓库>/`（完整提交历史；⚠️ 部分克隆，**无文件 blob**，`git log`/`ls-tree` 可用，`git show <hash>:<path>` 会报 bad object）
+另有两份**源手册**（同样不随本 skill 发布）也是本套 references 的合成来源：《DSH 插件开发指导手册》与《DSH 插件开发实战补充：模板库·踩坑百科》。各 reference 文件头的「合成来源」行写明了每一篇由谁合成。
+
+> **坑点总量**：四个方向合计 **约 130 条**有 commit 或源码实证的坑/教训（A 100+ / B 52 / C 19 / D 32，部分重叠）。本套 references 精选了其中 **23 条最高频、最致命**的整理成症状索引（见 `05-pitfalls.md`）。
+
+**社区仓库快照与 git 历史**（13 个仓库，**不随本 skill 发布**）：生成期曾在本地以 `<工作区>/src/<仓库>/`（完整源码）与 `<工作区>/repos/<仓库>/`（提交历史）两处存放。
+⚠️ 后者是**部分克隆**，**无文件 blob**：`git log` / `ls-tree` 可用，`git show <hash>:<path>` 会报 bad object。`10-community-casebook.md` 里的「快照路径」行即指这批素材。
 
 ## A.3 ⚠️ 三条诚实声明
 
@@ -178,13 +184,13 @@
 | 争议点 | 官方文档说 | 源码实证 | 本文件立场 |
 |---|---|---|---|
 | 补丁里插件路径能否用相对路径 | `user/develop/basic/index.zh.md:56` 说「必须是绝对路径」 | `app-boot/src/index.ts` 的 `anchorInsertedPluginNames()` 把相对路径锚到补丁文件旁（有单测固定） | **以源码为准**：可以用相对路径；但第三方插件建议用包名 |
-| `!!js` 在 `disabled` 上是否求值 | 复盘 0002 描述的是「不求值」的旧行为 | 当前官方 `bundle/base` 补丁在用 `disabled: !!js ...` | **当前版本支持**；解释见 `notes/F-official-pitfalls.md` 0002 的版本注记 |
+| `!!js` 在 `disabled` 上是否求值 | 复盘 0002 描述的是「不求值」的旧行为 | 当前官方 `bundle/base` 补丁在用 `disabled: !!js ...` | **当前版本支持**；解释见素材 F 的 0002 版本注记（原文已并入 `05-pitfalls.md`） |
 
 **3. 素材的历史边界**
 
-`A-ui-plugins.md` 的部分章节写于「部分克隆导致源码 blob 不可用」的阶段，因此它对**社区 UI 插件的源码正文**标注了「未找到（blob 不可用）」，只有提交信息、维护者笔记与目录树三类证据。
+素材 A 的部分章节写于「部分克隆导致源码 blob 不可用」的阶段，因此它对**社区 UI 插件的源码正文**标注了「未找到（blob 不可用）」，只有提交信息、维护者笔记与目录树三类证据。
 
-**该缺口现已闭合**：13 个仓库的**完整源码快照**已下载到 `plugin-research/src/`，且 **T8/T9 两节给出的 UI 模板全部来自官方仓库的逐字源码**（`ui-brand-official`、`ui-theme`），可直接照抄。
+**该缺口现已闭合**：13 个仓库的**完整源码快照**在生成期已下载并用于复核，且 **T8/T9 两节给出的 UI 模板全部来自官方仓库的逐字源码**（`ui-brand-official`、`ui-theme`），可直接照抄。
 
 ---
 

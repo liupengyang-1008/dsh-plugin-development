@@ -1445,7 +1445,9 @@ packages/dsh-web-all/src/shells/...   （tests 见下）
 ### 5. 在浏览器半区 import 了不该 import 的包，bundle 直接不加载
 
 现象：控制台报 `client-modules: require("...") missed the module table — not a platform seed word, not a materialized module, and no registered package factory`。
-**可执行建议**：**浏览器半区里 `@deepseek-ai/*` 只能写 `import type`**；要用值就只用**平台种子表允许的四个**（react / cordis / ui-slots / ui-primitives）。需要别的插件的功能时，**不要 `import` 它**，改用 **cordis 服务**（`ctx.slots` / `ctx.sessions` / `ctx.workspaces`）或插槽（见 §二.4.4 与 `packages/AGENTS.md` 的"浏览器 bundle 纯度门"）。
+**可执行建议**：**浏览器半区里 `@deepseek-ai/*` 只能写 `import type`**；要用值只允许**平台种子表**里的那 9 个 specifier（react 四件套 + `@deepseek-ai/cordis` + `dsh-client-store` + `dsh-client-ui-slots` + `dsh-client-ui-primitives` + `dsh-client-ui-dockkit`；权威来源 `packages/client/web/src/platform.ts:8-14`）。需要别的插件的功能时，**不要 `import` 它**，改用 **cordis 服务**（`ctx.slots` / `ctx.sessions` / `ctx.workspaces`）或插槽（见 §二.4.4 与 `packages/AGENTS.md` 的"浏览器 bundle 纯度门"）。
+
+> 🔧 **校正（2026-09-11）**：本节原文写「只用平台种子表允许的**四个**（react / cordis / ui-slots / ui-primitives）」——那是**低估**，且写的是简写名而非真实 specifier。已按源码改为 9 个全名。见 `14-inbound-http-and-timers.md` §17.3。
 
 ---
 
@@ -2790,7 +2792,7 @@ modlens 的 dsh 相关修复提交极多（`git log --oneline -i --grep='dsh'` �
 
 ## 模板一：WeKnora 只读工具插件（最干净的 `defineTool` 范本）
 
-- **快照路径**：`D:/WorkBuddy/2026-09-11-11-58-02/plugin-research/src/Tencent_WeKnora/packages/dsh-weknora/`
+- **快照路径**：生成期素材 `Tencent_WeKnora/packages/dsh-weknora/`（不随本 skill 发布，见 `11-glossary-and-provenance.md` §A.2）
 - **为什么适合新手**：**零运行时依赖**（`dependencies` 都不需要）、不碰 UI、不写 patch 复杂结构，4 个工具全是纯只读 HTTP 调用；类型用“结构化镜像”自包含，不 import 宿主内部包，**升级 DSH 不用改代码**。
 - **目录树**（实际快照文件）：
 
@@ -3055,7 +3057,7 @@ modlens 的 dsh 相关修复提交极多（`git log --oneline -i --grep='dsh'` �
 
 ## 模板二：OpenViking 记忆服务插件（`ctx.provide` + 事件钩子）
 
-- **快照路径**：`D:/WorkBuddy/2026-09-11-11-58-02/plugin-research/src/volcengine_OpenViking/examples/dsh-memory-plugin/`
+- **快照路径**：生成期素材 `volcengine_OpenViking/examples/dsh-memory-plugin/`（不随本 skill 发布）
 - **为什么值得看**：它是**“有状态服务型插件”**的标准形态——`inject` 多个服务、`ctx.provide('openvikingMemory', runtime)` 暴露一个运行时可被别的插件 `ctx.get('openvikingMemory')` 取用；用 `agent/pre-step` waterfall 往会话注入上下文；用 `session/event` 捕获事件；用 `tools/pre-execute` 做工具调用守卫。
 - **插件形态**：**手写 JS（`.mjs`）**，不编译、不打包，天然自包含（避免 R18）。这与模板一的 TS 编译形态是两条路线，新手可对比。
 - **目录树**（实际快照文件）：
@@ -3206,7 +3208,7 @@ modlens 的 dsh 相关修复提交极多（`git log --oneline -i --grep='dsh'` �
 
 ## 模板三：modlens 插件（`dsh.bundle` + `dsh.client` 双声明）
 
-- **快照路径**：`D:/WorkBuddy/2026-09-11-11-58-02/plugin-research/src/liustack_modlens/`
+- **快照路径**：生成期素材 `liustack_modlens/`（不随本 skill 发布）
 - **为什么值得看**：它是**“既有命令行、又有 DSH 插件、还有前端 UI 面板”**的复杂项目；`dsh` 字段**同时声明 bundle 与 client**；插件代码放在 `dsh/` 子目录、用 `exports` 映射，`bin` 仍是 CLI。
 - **目录树（DSH 相关部分）**：
 
@@ -3310,7 +3312,7 @@ modlens 的 dsh 相关修复提交极多（`git log --oneline -i --grep='dsh'` �
 
 ## 模板四：routing-suite 运行时注入器（bundle + client + 事件拦截 + 运行时注入）
 
-- **快照路径**：`D:/WorkBuddy/2026-09-11-11-58-02/plugin-research/src/yjh051108_dsh-routing-suite/injector/`
+- **快照路径**：生成期素材 `yjh051108_dsh-routing-suite/injector/`（不随本 skill 发布）
 - **为什么值得看**：这是**高级形态全家桶**——`bundle` + `client` 双声明、`ctx.webServer.register` 起 HTTP API、`ctx.on('llm/stream')` 拦截模型路由、`ctx.slots.inject` 挂 UI 面板、并用 `loader.create` **运行时注入其它插件**。
 - **它自带的“教学模板”**：仓库里有个 `dev_scaffold_plugin` 工具，会**生成新手骨架代码**。下面是它生成的两个骨架（逐字照抄），可直接当新手模板。
 
@@ -3743,8 +3745,8 @@ yjh051108_dsh-routing-suite/
 
 > 调研员：Explore-1　｜　方向：服务式 / 记忆 / 状态内核 / 配置组合
 > 读者定位：零软件工程经验的新手。本文只写**能从本地真实源码与 git 历史中核实**的内容。
-> 素材根目录：`D:/WorkBuddy/2026-09-11-11-58-02/plugin-research/src/`
-> git 历史（仅 commit 元数据）：`D:/WorkBuddy/2026-09-11-11-58-02/plugin-research/repos/`
+> 素材根目录（生成期，**不随本 skill 发布**）：`<社区仓库快照>/src/`
+> git 历史（生成期，仅 commit 元数据）：`<社区仓库快照>/repos/`
 > 注意：本环境的 git 快照**只有 commit 元数据，没有文件 blob**；`git show <hash>:<path>` 与 `git show --stat` 会报 `could not fetch ... from promisor remote`。因此所有"改动文件清单"类信息无法获取，本文只引用 commit 的标题与正文。
 
 ---
@@ -5415,9 +5417,9 @@ export function resolveArchifySkillRoot(profileBaseUrl) {
 > - `xiaobright_dsh-anchored-standard` —— 126 文件的 preset 包（工程规范化方向）
 > - `omdsh-dev_DSH-better-sidebar` —— 644 commits 的「可被第三方注册新页面」侧边栏底座
 >
-> 源码根：`D:/WorkBuddy/2026-09-11-11-58-02/plugin-research/src/<仓库>/`
-> git 根：`D:/WorkBuddy/2026-09-11-11-58-02/plugin-research/repos/<仓库>/`
-> 官方 DSH 源码（用于交叉验证机制）：`D:/WorkBuddy/2026-09-11-11-58-02/deepseek-harness/`
+> 源码根（生成期，**不随本 skill 发布**）：`<社区仓库快照>/src/<仓库>/`
+> git 根（生成期）：`<社区仓库快照>/repos/<仓库>/`
+> 官方 DSH 源码（用于交叉验证机制）：`<DSH 检出>/`
 >
 > 规则：代码**逐字照抄**，超长标 `…(略)`；每个结论标注 `仓库 + 文件路径` 或 `仓库 + commit`；查不到写「未找到」，绝不编造。
 
@@ -6404,7 +6406,7 @@ if (ctx.betterSidebar.version >= '0.12.0') { /* 字符串比较即可：minor �
 
 **结论：`Q00_ouroboros/integrations/dsh-plugin/`（3 个文件，0 行 JS，1 个 `insert` 行）** 是本次四个仓库里、也是全仓清单里最小的「组合包」。
 
-- 路径：`D:/WorkBuddy/2026-09-11-11-58-02/plugin-research/src/Q00_ouroboros/integrations/dsh-plugin/`
+- 路径：生成期素材 `Q00_ouroboros/integrations/dsh-plugin/`（不随本 skill 发布）
 - 文件：`package.json`（声明 `dsh.bundle.patch`）+ `cordis.patch.yml`（1 行 insert）+ `README.md`
 - 对比：`better-sidebar` 组合包（同为零 JS bundle 层）也在用 `cordis.patch.yml`，但它的包里有完整 TS 源码 + 构建链；`dsh-desktop` 的组合包挂了 7 行并带 130 个源码文件。
 - **推荐作为手册「第一个例子」**：把 ouroboros 的 `package.json` + `cordis.patch.yml` 直接当「最小可用组合包」模板（把 `name` 换成你的目标行、`config` 换成你的参数即可）。

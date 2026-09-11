@@ -103,6 +103,8 @@ import { clientBundle } from '../tsdown.client.ts'
 export default clientBundle('@deepseek-ai/dsh-client-ui-brand-official', ['lib/types/index.js'])
 ```
 
+> ⚠️ **这只在 DSH 仓库内可用**——`clientBundle()` 未对外发布。仓库外的第三方插件要自己复刻产物格式，见 §9.6 的校正块与 `14-inbound-http-and-timers.md` §17.3。
+
 `tsconfig.json`（逐字）：
 
 ```json
@@ -282,7 +284,11 @@ export function apply(ctx: Context): void {
 
 **结论**：**CSS 会被编进 `lib/client.js`**，不需要单独发布静态资源文件。`files` 里通常只列 `lib/index.js`、`lib/client.js`、`lib/types/**/*.d.ts`。
 
-⚠️ 另有一个反直觉的事实（源码实证）：动态 plugin bundle 是 **lazy-CJS factory**（`window.__ModuleLoader__.load({id, factory})`），**不是 ESM**。这是构建产物格式，你写代码时不用管，但排查加载问题时要记得。
+⚠️ **反直觉的事实（源码实证）**：动态 plugin bundle 是 **lazy-CJS factory**（`window.__ModuleLoader__.load({id, factory})`），**不是 ESM**。
+
+> 🔧 **校正（2026-09-11）**：本节原先说「这是构建产物格式，你写代码时不用管」——**对仓库内开发成立，对仓库外开发不成立**。
+> `clientBundle()` 这个共享 preset **没有对外发布**，官方原文（`adding-a-settings-card.zh.md:102`）写明「本仓库之外的包**得自行复刻同样的输出格式**」。
+> 所以第三方 UI 插件作者**必须自己产出**这个格式：esbuild/rolldown 的 `format: 'cjs'` + `platform: 'browser'`，并自己拼那三行 banner/intro/footer。完整契约（含逐字三行与平台种子表 9 项）见 `14-inbound-http-and-timers.md` §17.3。
 
 ## 9.7 开发期调试 UI 插件
 

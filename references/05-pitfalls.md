@@ -15,7 +15,7 @@
 
 > **用法**：先在下表找到你的症状 → 拿到坑号 → 跳到对应小节看「现象 → 根因 → 怎么修」。
 > 全部坑来自 **13 个真实仓库的 git 提交历史 + 官方 4 篇事故复盘 + 源码实证**，每条都标了来源。
-> 详细原文见 `plugin-research/notes/` 下的 A~J 十份原始素材。
+> 每条坑的「来源」行用**素材代号 A~J** 标注证据出处（这些素材已合并进本套 references，**不随 skill 发布**，见 `11-glossary-and-provenance.md` §A.2）；能追到源码的另标 `packages/…` 等上游路径。
 
 ## 3.0 症状速查表
 
@@ -73,7 +73,7 @@
   "dsh": { "bundle": { "patch": "./cordis.patch.yml" } }
   ```
   且包里**必须真的带**那个文件。
-- **来源**：`apps/cli/src/plugin.ts`；社区侧印证见 `plugin-research/notes/B-tools-external.md` 坑 M1。
+- **来源**：`apps/cli/src/plugin.ts`；社区侧印证见素材 B 坑 M1（已并入 `10-community-casebook.md`）。
 
 ### 坑 P2 · `files` 漏了补丁文件 ★★
 
@@ -104,7 +104,7 @@
       disabled: !!js <判断条件>
     ```
 - **⛔ 顺序敏感提醒**：`disabled: !!js` 里能看到的**只有同一补丁内它之前的行**（官方 `better-sidebar` 补丁注释原文：`only rows before this one are visible`）。所以"退让判断"必须写在被判断的那些行**之后**。
-- **来源**：`plugin-research/notes/D-host-bundle.md` 坑 4.2（better-sidebar）、坑 3.x（anchored-standard）。
+- **来源**：素材 D 坑 4.2（better-sidebar）、坑 3.x（anchored-standard），已并入 `10-community-casebook.md`。
 
 ### 坑 P4 · 补丁顶层写成了两个值 ★
 
@@ -220,7 +220,7 @@
   ```
 - **官方硬规则原文**：
   > Registry contributions prove disposal through the HMR-safety test required by testing policy: **dispose the fiber and observe removal.**
-- **来源**：`packages/AGENTS.md`；社区侧 `notes/B-tools-external.md` 坑 R2、`notes/D-host-bundle.md` 坑 4.3。
+- **来源**：`packages/AGENTS.md`；社区侧素材 B 坑 R2、素材 D 坑 4.3（均已并入 `10-community-casebook.md`）。
 
 ### 坑 P12 · UI 插件改了没生效 —— 其实需要重启 ★★★
 
@@ -246,7 +246,7 @@
   3. **查 DOM 锚点**：`document.querySelector('[data-slot="<你的插槽全名>"]')` ——
      **不在 = 插槽名错了；在 = 渲染/优先级问题**。
   4. 另外：`catch(e) {}` 空捕获是这类 bug 的头号帮凶 —— 先把异常打出来。
-- **来源**：`plugin-research/notes/A-ui-plugins.md` 坑 C1/C2/C4。
+- **来源**：素材 A 坑 C1/C2/C4（已并入 `10-community-casebook.md`）。
 
 ### 坑 P14 · 页面白屏，报 `window.__DSH_BOOT__ is missing` ★★
 
@@ -266,9 +266,9 @@
 - **根因**：浏览器半侧里用了**非 type-only** 的 `@deepseek-ai/*` 导入。
 - **怎么修**：
   - `@deepseek-ai/*` 只能写 `import type`
-  - 要用值只用平台种子表允许的四个：`react` / `cordis` / `ui-slots` / `ui-primitives`
+  - 要用值只允许平台种子表的 9 个 specifier：`react`、`react/jsx-runtime`、`react-dom`、`react-dom/client`、`@deepseek-ai/cordis`、`@deepseek-ai/dsh-client-store`、`@deepseek-ai/dsh-client-ui-slots`、`@deepseek-ai/dsh-client-ui-primitives`、`@deepseek-ai/dsh-client-ui-dockkit`（权威来源 `packages/client/web/src/platform.ts:8-14`；另可在 `dsh.client.external` 精确追加）
   - 需要别的插件的功能时，**不要 import**，改用 **cordis 服务**（`ctx.slots`/`ctx.sessions`/`ctx.workspaces`）或**插槽**
-- **来源**：官方 `packages/AGENTS.md` 的"浏览器 bundle 纯度门" + `notes/A-ui-plugins.md` §二.5.1。
+- **来源**：官方 `packages/AGENTS.md` 的"浏览器 bundle 纯度门" + `packages/client/tsdown.client.ts` 的 `dsh-client-bundle-purity` 插件 + 素材 A §二.5.1。详见 `14-inbound-http-and-timers.md` §17.3。
 
 ### 坑 P16 · 卡片整个不渲染（类实例方法当 React 回调）★★
 
@@ -283,7 +283,7 @@
 - **怎么修**（社区维护者原话）：
   > `AutoSettingsPanel` now binds both methods to the scope with `useMemo` (`settings.subscribe.bind(settings)`)
 - **通用规则**：**凡是把类实例的方法交给 React 当回调，一律 `.bind(instance)`**。闭包 store（`createSnapshotStore` 之类）不用 bind。
-- **来源**：`notes/A-ui-plugins.md` §二.3.3。
+- **来源**：素材 A §二.3.3（已并入 `10-community-casebook.md`）。
 
 ### 坑 P22 · 卸载后刷新 404 ★
 
@@ -320,7 +320,7 @@
 - **现象**：往 system prompt 里加内容，完全不生效。
 - **根因**：`agent preset` 的 persona 若声明了 `complete: true`，会**丢弃其它插件贡献的 system prompt 段**。
 - **怎么修**：加内容前先确认当前 persona 有没有 `complete: true`；有就换注入方式（如走 `agent/pre-step` 改消息）。
-- **来源**：`volcengine/OpenViking` 事故，见 `notes/B-tools-external.md` 坑 O1。
+- **来源**：`volcengine/OpenViking` 事故，见素材 B 坑 O1（已并入 `10-community-casebook.md`）。
 
 ---
 

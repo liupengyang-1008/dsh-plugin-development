@@ -61,5 +61,5 @@ dsh plugin --profile <profile 名> add dsh-tool-greet
 
 - 完整字段表与两条注册路径对比：`references/03-api-cookbook.md`
 - 模板库 T3 / T4：`references/02-templates.md`
-- 官方最小范本逐字源码：`references/02-templates-appendices.md`
-- 出问题先查：`references/05-pitfalls.md`、`references/06-workflow-debug.md`
+- 官方最小范本逐字源码：`references/02-templates.md` 附录 E（官方模板 3）
+- 出问题先查：`references/05-pitfalls.md`、`references/06-workflow.md` 第 ④ 部分（调试与排错）

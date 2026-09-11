@@ -161,10 +161,10 @@ dsh plugin --profile web add dsh-find-plugin
 
 ## 7. 数据与复现
 
-本次调研的原始数据与脚本都落在项目内：
+本次调研的原始数据与脚本都落在**生成期工作区**内（**不随本 skill 发布**）：
 
 ```
-D:\WorkBuddy\2026-09-11-11-58-02\
+<工作区>\
 ├── scripts\
 │   ├── parse_dsh_plugins.py     # 解析 GitHub 搜索结果
 │   ├── filter_dsh_eco.py        # 按生态 topic 过滤

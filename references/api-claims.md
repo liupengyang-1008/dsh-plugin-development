@@ -81,7 +81,7 @@
 | 事实类型 | 基线时刻的值 | 为什么不断言 / 该怎么用 |
 |---|---|---|
 | 官方斜杠命令清单 | 基线时约 6 个（含 `/compact`、`/permission`、`/plan`、`/goal` 等） | **枚举会增长**。需要用就现场 `grep -rn "commands.register(" packages` 或看 `dsh` 的 `/help` |
-| UI 插槽总数与全清单 | 基线时从源码提取到 40 个 | 数量会变。要用就用 M14 的方式现场枚举 |
+| UI 插槽总数与全清单 | 基线时**只提取到 40 个**（**低估**——`slots.inject/register` 的正则抓不到内建键；2026-09-11 重抽为 75 个声明侧键 / 约 59 个公开可用） | 数量会变。要用就用 M14 的方式现场枚举，或跑 `<skill>/scripts/extract_slots.py` |
 | `$DSH_HOME` 默认值 | 基线时为 `~/.dsh` | 默认值可被改。要么读 `DSH_HOME` 环境变量，要么运行时确认 |
 | profile 目录布局 | `$DSH_HOME/profiles/<名字>/`，已装插件在 `profiles/node_modules/` | 布局可能调整。用 `dsh plugin --profile <名字> ls` 现场确认 |
 | 报错文案的细节措辞 | 见 M 级各条 | 只把**关键片段**当断言（如 `duplicate loader entry id`），**不要断言整句** |
@@ -139,7 +139,7 @@
 
 | 论断 | 为什么不能自动 | 人工复核方式 |
 |---|---|---|
-| 官方文档**未列** UI 插槽全清单（40 个系从源码提取） | skill 内没有官方文档副本，且官方文档会更新 | 看 `<repo>/docs/` 是否新增插槽清单类文档 |
+| 官方文档**没有随仓库提交**插槽键完整清单（40 个系从源码提取，**且低估**） | skill 内没有官方文档副本，且官方文档会更新 | 三种复核：① 看 `<repo>/docs/subsystems/slots.*.md` 是否新增清单类章节；② `pnpm run gen-client-catalog` 是否已把 catalog 产物提交进仓库（基线时只有生成器 `scripts/gen-client-catalog.ts`，**产物未入库**）；③ 运行中的实例可用 `cordis_inspect what:"client"` 查实时树与某个精确 key |
 | 生态**没有官方插件市场**（发现机制是 GitHub topic `dsh-plugin`） | 生态事实，不在仓库内 | 查 GitHub 是否出现官方 marketplace 仓库 |
 | 官方文档存在**两处内部矛盾** | 需人工阅读理解 | 重读 `11-glossary-and-provenance.md` 记录的矛盾点是否被官方修正 |
 | `!!js` 写在 `config:`/`disabled:` 之外**静默失效（不报错）** | 运行时行为，静态搜不出来 | 写一个错位用例实跑一次 |
@@ -178,3 +178,41 @@
 - `.py` 与 `.sh` 两份断言表**逐条一致**（等级 / 说明 / 模式 / 作用域全同），改一份必须同步另一份。
 - 改断言前，**先用已知存在的样本验证正则本身**（`grep` 是 ERE，Python 是 `re`，转义不通用）。
 - **V 级事实一律不许进断言表**。判据：这条事实明天变了，会让本 skill 的指引失效吗？不会 → 不进表。
+
+---
+
+## 七、第二批断言：入站 HTTP / 定时器 / 客户端产物 / 插槽（**独立核验器**）
+
+> 追加于 2026-09-11（v1.0.1）。来源：调研同类方案 `dsh-plugin-studio` 时发现它提供的代码大面积不可用，于是把它**自称能做的事**逐条对源码重做核验；能核验的才吸收，核验不过的一律写成反面教材（见 `14-inbound-http-and-timers.md` §17.5）。
+
+### 7.1 为什么单开一个核验器，而不是并进 `dsh-api-probe.py`
+
+| 维度 | `dsh-api-probe.py` | `scripts/verify_absorbed_claims.py` |
+|---|---|---|
+| 覆盖面 | 本 skill 核心骨架（48 条，全仓级） | 第二批 27 条（指定文件级） |
+| 失败信号 | `exit 1` 表示某条 M/S 事实漂移 | 同上 |
+| 分开的理由 | 「48 条」这个数字被 SKILL.md、README、skill-card、发布清单多处引用；并表会让**一个纯增量的动作**引发全库数字同步，制造无关的改动面与风险 | 保持主探针稳定；新事实独立可复跑 |
+
+**代价（如实声明）**：现在有**两个**核验入口，改 DSH 基线时要跑两个。这是有意识的取舍——用「多跑一条命令」换「主探针数字不被动摇」。
+
+### 7.2 本轮核验通过并已写入 `14-*.md` 的断言（27 条）
+
+核验器自带**负向自检**（对空仓库跑同一张表，要求 27/27 全 STALE），因为一张全是「X 不存在」的断言表在空语料上会**全部假通过**——这一点在开发本核验器时**真的发生了**（首版 5 条否定断言在空仓库上 HOLDS），修法是给每条否定断言加**护栏模式**（必须同时命中一个必然存在的样本，证明语料读到了）。
+
+| 组 | 条数 | 代表断言 | 级别 |
+|---|---|---|---|
+| H · 入站 HTTP | 5 | `register(route: WebRoute): () => void`；`WebRoute` 三字段；`webServer` 由 Web 组合的 `id: webserver` 行提供 | S/M |
+| T · 定时器 | 4 | `ctx.interval(cb, delay)` 返回 disposer；handle 绑 fiber 自动清；`ctx.setInterval` 仅 deprecated 别名 | S/M |
+| B · 客户端产物 | 8 | lazy-CJS factory 的 banner/intro/footer 三行；`lib/client.js`；平台模块种子表 9 项；仓库外无已发布预设 | S/M |
+| U · 插槽 | 5 | `register(options, component)`；未声明 slot 的报错原文；`root` 是内建键；`ui-layout` 可禁用 | S/M |
+| X · 否定（防编造） | 5 | 不存在 `ui` 服务；不存在裸 `settings`/`status`/`workspace` 插槽键；`webServer.register` 不收 router 回调 | N |
+
+### 7.3 本批**修正**的既有表述（原文错了，已改）
+
+| # | 位置 | 原表述（错） | 现状（核验后） |
+|---|---|---|---|
+| 1 | `02-templates.md`（2 处）、`05-pitfalls.md`（1 处） | 浏览器半侧「平台种子表允许的**四个**：`react` / `cordis` / `ui-slots` / `ui-primitives`」 | 种子表实为 **9 个 specifier**，且是**全名**（含 `react-dom`、`react-dom/client`、`@deepseek-ai/dsh-client-store`、`@deepseek-ai/dsh-client-ui-dockkit`）；另有 `dsh.client.external` 可追加请求。以 `packages/client/web/src/platform.ts:8-14` 为准 |
+| 2 | `02-templates.md` 插槽清单标题 | 「官方全部 UI 插槽名（**40 个**，实测提取）」 | 实为 **75 个声明侧键**（并集 77；剔除 18 个测试专用键后**约 59 个公开可用**），且**漏了内建的 `root`**。已把 4 处「40 个」的说法改成「节选/低估」并给出可复现命令（`08-cheatsheet.md`、`11-glossary-and-provenance.md`、`api-claims.md` 同批修正） |
+
+**教训（与 §6 同源）**：「全清单」「四个」这类**完备性措辞**本身就是一种断言，而它往往来自一次不完整的 grep——用 `slots\.(inject|register)\(\s*'` 提取，永远抓不到用 `renderSlot('root')` 渲染的内建键。**凡写「全部/仅/只有 N 个」，都要能给出可复现的抽取命令。**
+

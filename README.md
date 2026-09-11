@@ -11,10 +11,14 @@ It is **not** a DSH runtime dependency. It does not install into any DSH profile
 | Area | Contents |
 |---|---|
 | Plugin forms | Function plugin / service plugin / zero-code bundle — and why mixing them fails |
-| Templates | 12 practice templates (T1–T12) + verbatim official sources + 40 UI slot names |
+| Routing | A user-language → template → form → registration point → smoke-criterion router, so "add a tool" lands on T3 without reading the templates first |
+| Templates | 12 practice templates (T1–T12) + verbatim official sources + a curated UI slot quick-reference |
 | APIs | `defineTool`, parameter DSL, `ctx.tools.register`, commands, config schemas, services, events, slots |
+| Inbound HTTP & timers | `ctx.webServer.register({kind, path, handler})`, `ctx.interval` / `ctx.timeout`, and the client bundle's lazy-CJS artifact contract (with a "looks plausible, verified wrong" anti-pattern list) |
 | UI | React plugin halves, three registration points, settings cards |
 | Agent flow | `waterfall` interception, `agent/pre-step`, `agent/request` |
+| Verification | Smoke-first delivery discipline: one command / one real call / one visible marker, plus a per-capability pass table |
+| Contracts | The five `package.json` / patch / client invariants behind most "installed but does nothing" failures |
 | Pitfalls | 23 catalogued pitfalls + symptom index + error-message lookup table + 4 official postmortems |
 | Engineering | Naming, README requirements, testing, gates, commit conventions |
 | AI pairing | 10 copy-ready prompt templates for agent-assisted development |
@@ -35,6 +39,8 @@ python scripts/dsh-api-probe.py <DSH_CHECKOUT>
 # 3 = assertion table is empty — nothing was verified, the result is not valid
 ```
 
+- **Second assertion set** — `scripts/verify_absorbed_claims.py` re-verifies 27 further facts (inbound HTTP, timers, client artifact format, slot registration, plus negative claims that keep fabricated API names out). It ships a `--selftest` that runs the same table against an empty corpus and requires **all 27 to go STALE**, because a table made of "X does not exist" assertions otherwise passes on nothing at all.
+- **Reference integrity** — `scripts/check_refs.py` proves every path cited anywhere in the skill either resolves inside the skill or points at the DSH upstream checkout. Generation-time research material is cited by code ("material B, pit M1") rather than as a file path, so nothing points at files a user will never have.
 - **Sync + diff** — `scripts/dsh-sync.sh` pulls upstream source into `vendor/dsh-src/` after explicit developer confirmation (≈200 MB on first run, never runs `pnpm install`); `scripts/dsh-version-diff.sh` produces a "baseline → latest" change report.
 
 > **A probe that cannot fail is more dangerous than no probe.** Exit code `3` exists because an empty assertion table once reported "all assertions hold". The probe's own reliability rules, the two false-pass defects found and fixed, and the mandatory self-check are documented in `references/00-version-gate.md` §9 and `references/api-claims.md` §6.
@@ -50,7 +56,7 @@ This skill follows the SkillHub / ClawHub package layout. Once published there, 
 ## Repository layout
 
 ```
-SKILL.md                    entry layer — routing, workflow, red lines (kept under a hard 230-line budget)
+SKILL.md                    entry layer — routing, workflow, smoke criteria, contracts, red lines (≤ 500 lines)
 skill-card.md               marketplace listing card (fixed 10-section format)
 references/
   00-version-gate.md        mandatory step 0: anti-staleness protocol + probe self-reliability
@@ -68,15 +74,21 @@ references/
   11-glossary-and-provenance.md  glossary, sources, and known limits
   12-community-plugins.md   community high-star plugin survey
   13-version-history.md     per-tag upstream version history and breaking changes
+  14-inbound-http-and-timers.md  curated: webServer routes, timers, client artifact format
+  15-skill-scope-and-maintenance.md  curated: known limits + maintenance rules
 scripts/
   dsh-api-probe.py          anti-staleness probe (preferred; stdlib only)
   dsh-api-probe.sh          same probe, bash version
+  verify_absorbed_claims.py second assertion set (27 checks) + --selftest
+  extract_slots.py          authoritative UI slot-key extraction and diff
+  check_refs.py             resource-reference integrity (dangling / out-of-skill / local paths)
   dsh-sync.sh               pull upstream source into the skill directory
   dsh-version-diff.sh       baseline → latest change report
   dsh-tag-matrix.sh         cross-tag historical assertion matrix
 assets/
   minimal-bundle/           smallest working zero-code bundle
   minimal-tool-plugin/      smallest working tool plugin
+  plan-template.md          decision log template (copy into your plugin's docs/plan.md)
 ```
 
 ## Baselined against

@@ -26,3 +26,4 @@ venv/
 _probe*.txt
 _*.log
 _probe*.log
+_slots_report.txt
