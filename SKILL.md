@@ -1,8 +1,14 @@
 ---
 name: dsh-plugin-development
 description: A development-time skill for building plugins on DSH (DeepSeek Harness) / Cordis — it is not itself an installable DSH plugin, but the tooling that guides a developer or AI agent through creating, debugging, packaging, and publishing one. This skill should be used whenever the user asks to develop a DSH plugin, write or modify a cordis plugin, add a tool / slash command / config schema / service / UI slot to DSH, fix a plugin that fails to load or stays in PENDING, or package a plugin bundle for installation or distribution. It covers the full difficulty ladder — zero-code bundles, patch syntax, defineTool tools, commands, configurable plugins, services, React UI plugins, settings cards, and agent-flow interception — plus 23 catalogued pitfalls, official engineering conventions, and copy-ready prompts for AI-agent pair development. Because DSH is pre-stable and changes frequently, it also ships a per-tag version history of upstream breaking changes, a probe script that verifies the skill's own API claims (including negative claims such as "there is no CHANGELOG") against the live source checkout, a sync script that pulls the upstream source into the skill directory after developer confirmation so the history can be refreshed, and a mandatory version gate that must be answered before writing any DSH code.
+version: 1.0.0
 license: MIT-0
 agent_created: true
+metadata:
+  openclaw:
+    emoji: "🔌"
+    homepage: https://github.com/liupengyang-1008/dsh-plugin-development
+    requires: { anyBins: [python3, python] }
 ---
 
 # DSH 插件开发
@@ -50,13 +56,12 @@ bash   <skill>/scripts/dsh-api-probe.sh <DSH 仓库路径>    # 备选：仅当 
 # 3 = 断言表为空 —— 未核验任何事实，结果无效（缺 coreutils 的典型症状）
 ```
 
-> ⚠️ **bash 版在本机不可用**：`C:\Program Files\Git\bin\bash.exe` 缺 `cat`/`grep`/`head`/`find`，
-> bash 版会因缺 `grep` 报出**几十条假 STALE**。本机请一律用 Python 版。
-> 另：环境缺 `dirname` 时 WorkBuddy 自带的 `bash` 完全不可用。
+> ⚠️ **shell 缺 `cat`/`grep`/`dirname` 等 coreutils 时，bash 版会解析不出断言表而报出几十条假 STALE。**
+> 拿不准就先跑 Python 版；两者结果不一致时，以 Python 版为准。
 
 > **S/M/V 怎么分**：问「这条事实明天变了，我的代码会崩吗？」——**会崩 → M/V，必须核验**；不会崩 → S，可直接用。
 > **降级规则**（拿不到源码时）：允许继续，但必须 ① 显式声明「以下 API 未对当前版本核验」；② S 级骨架照给，M/V 级符号单独列成「需你确认」清单；③ 禁止把未核验事实写成肯定句。**绝不编造 API 名填补空白。**
-> **目标版本高于基线时**：不要去猜。`dsh-sync.sh` 拉源码（先经你确认）→ `dsh-api-probe.sh` 核验 → `dsh-version-diff.sh` 出「基线 → 最新」差异。
+> **目标版本高于基线时**：不要去猜。`dsh-sync.sh` 拉源码（先经你确认）→ `dsh-api-probe.py` 核验 → `dsh-version-diff.sh` 出「基线 → 最新」差异。
 > **手上已有任意一份 DSH 仓库时**，直接指给探针即可，无需联网。
 
 📖 完整机制（腐化推导、易变性三级全表、五种核验手段、降级四条、探针维护流程、拉取纪律、网络不可达时的三条降级路径）**见 `references/00-version-gate.md`**。本节只保留「不做就会出错」的部分。
@@ -186,8 +191,6 @@ bash   <skill>/scripts/dsh-api-probe.sh <DSH 仓库路径>    # 备选：仅当 
 ```bash
 grep -rn "ctx.slots.inject" references/ | head -30        # 某 API 名出现在哪
 grep -n -A 40 "^### 坑 P7" references/05-pitfalls.md      # 某个坑的全文（按编号）
-grep -n -A 120 "^## T3 " references/02-templates.md       # 某个模板
-grep -n -B 3 -A 10 "duplicate" references/05-pitfalls.md  # 报错反查成因
 ```
 
 ## 内置工具
@@ -202,7 +205,7 @@ grep -n -B 3 -A 10 "duplicate" references/05-pitfalls.md  # 报错反查成因
 | 脚本 | 作用 | 关键点 |
 |---|---|---|
 | `dsh-api-probe.py <仓库路径>` | **防过时探针（首选）**：核验 43 条正向 + 5 条反向断言 | 退出码 0/1/2/3；纯标准库、零外部命令依赖，Windows 最稳 |
-| `dsh-api-probe.sh <仓库路径>` | 同上的 bash 版（断言表须与 .py 版同步） | 依赖 coreutils；**本机缺 `grep` 会报假 STALE，勿用** |
+| `dsh-api-probe.sh <仓库路径>` | 同上的 bash 版（断言表须与 .py 版同步） | 依赖 coreutils；**缺 `grep` 会报假 STALE，不确定时用 .py 版** |
 | `dsh-sync.sh` | **把 DSH 源码拉进 skill 目录**（`vendor/dsh-src/`） | 首次约 200 MB，**必须先经开发者确认**；之后增量更新。**绝不执行 pnpm install** |
 | `dsh-version-diff.sh <仓库路径>` | **出「基线 → 最新」差异**，六个维度 + 作者自报的 `!:` 提交 | 需要本地是 git 仓库；输出可直接追加到 `13-version-history.md` 第 2 节 |
 | `dsh-tag-matrix.sh <仓库路径> [out.tsv]` | **历史矩阵复核**：对全部 tag 逐条核验 API 面，输出 TSV | 只在质疑「API 名是否稳定」这类**历史结论**时用；需要完整 tag 历史 |
