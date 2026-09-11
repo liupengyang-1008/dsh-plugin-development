@@ -1,0 +1,20 @@
+# Default: normalise line endings in the repository
+* text=auto
+
+# Shell scripts MUST stay LF, or they fail with "bad interpreter" on Linux/macOS
+*.sh text eol=lf
+
+# Python scripts likewise
+*.py text eol=lf
+
+# Markdown / YAML / TS / JSON are reviewed as text
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.ts text eol=lf
+*.json text eol=lf
+
+# Binary assets
+*.png binary
+*.jpg binary
+*.zip binary

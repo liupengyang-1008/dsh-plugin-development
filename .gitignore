@@ -1,0 +1,28 @@
+# Editor / OS
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*~
+
+# Pulled upstream source (created by scripts/dsh-sync.sh — ~200 MB)
+vendor/
+
+# Skill package metadata produced by the install side, not Source
+_skillhub_meta.json
+_meta_base.json
+
+# Build output
+dist/
+*.zip
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Scratch / probe logs
+_probe*.txt
+_*.log
+_probe*.log

@@ -1,0 +1,201 @@
+<!-- 本文件由 DSH 插件开发手册套件整合生成，请勿手工编辑；改动请回到工作区源文档。 -->
+
+> **本文件用途**：术语表、事实来源清单（含「不存在/未证实」的明确清单）、已知的官方文档内部矛盾、以及两套手册各自的诚实边界声明与素材索引。
+> **合成来源**：DSH插件开发指导手册.md（附录 D 术语表 + 附录 F 事实来源） + DSH插件开发实战补充-模板与踩坑.md（附录 素材来源与边界）
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `v0.1.5-rc.2` / commit `c291e7961a`，2026-09-10），其中的**接口名级事实可能已过时**。
+> **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
+> **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
+> **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
+
+---
+
+<!-- ↓ 源：DSH插件开发指导手册.md 区间 2977-3009 -->
+
+# 附录 D 术语表
+
+> 官方统一译名以 `docs/i18n/terminology.md` 为准。以下是新手最常遇到的。
+
+| 英文 | 中文 | 备注 |
+|---|---|---|
+| plugin | 插件 | |
+| Cordis plugin | Cordis 插件 | 指插件实现 |
+| Cordis config entry | Cordis 配置项 | 指 `cordis.yml` 里的一项 |
+| fiber | fiber | 保留英文。一个已加载插件实例的运行时句柄 |
+| effect | effect | 保留概念。注册的副作用，卸载时自动撤销 |
+| dispose | dispose（资源释放） | 卸载并清理 |
+| PENDING | PENDING | 已声明但依赖未就绪 |
+| capability seam | 能力 seam | **保留英文 seam**，不要译成"接缝" |
+| Service Definition | 服务定义 | capability seam 三角色之一 |
+| Service Provider | 服务提供方 | 三角色之一 |
+| Consumer | 消费方 | 三角色之一，**不要译"消费者"** |
+| composition bundle | 组合包 | 你要发布的格式 |
+| profile | profile | 用户机器上的具名组装 |
+| patch / overlay | patch / overlay | 配置层；`--patch` 指命令行叠加层 |
+| hook | 钩子 | |
+| HMR | HMR（热模块替换） | 改代码不重启 |
+| slot | 插槽 | UI 扩展点 |
+| manifest | manifest（元数据清单） | |
+| waterfall | waterfall | 保留英文。环绕中间件式事件 |
+| regression | 回归 | |
+| quality gate | 质量门禁 | |
+| artifact | 产物 | **不要译"制品"** |
+| stale | 陈旧 | |
+| source of truth | 真源 | |
+
+---
+
+
+---
+
+<!-- ↓ 源：DSH插件开发指导手册.md 区间 3034-3099 -->
+
+# 附录 F 本手册的事实来源
+
+**仓库**：`deepseek-ai/deepseek-harness`
+**基线 commit**：`c291e7961a515f6d7af9304e7fd1d257929aef26`（2026-09-10）
+**版本**：`0.1.5-rc.2`
+**核查日期**：2026-09-11
+
+## F.1 本手册引用的一手来源
+
+| 主题 | 来源文件（相对仓库根） |
+|---|---|
+| 插件入门 | `docs/user/develop/basic/index.zh.md` |
+| 工具开发 | `docs/user/develop/basic/tool.zh.md`、`docs/cookbook/adding-a-tool.zh.md` |
+| 插件配置 | `docs/user/develop/basic/config.zh.md`、`docs/cordis-tutorial/05-config.zh.md` |
+| 打包发布 | `docs/user/develop/basic/publish.zh.md` |
+| Cordis 框架 | `docs/cordis-tutorial/01..07*.zh.md` |
+| 生命周期与 effect | `docs/user/develop/framework/index.zh.md`、`docs/cordis-tutorial/02-*.zh.md` |
+| 服务与依赖 | `docs/user/develop/framework/service.zh.md`、`docs/cordis-tutorial/03-*.zh.md` |
+| 事件 | `docs/user/develop/framework/events.zh.md`、`docs/cordis-tutorial/04-*.zh.md` |
+| 工具子系统 | `docs/subsystems/tools.zh.md`、`packages/core/tools/src/schema.ts` |
+| 命令子系统 | `docs/subsystems/commands.zh.md`、`packages/interaction/commands/README.zh.md` |
+| 终端子系统 | `docs/subsystems/terminal.zh.md`、`packages/terminal/README.zh.md` |
+| 插槽与 UI | `docs/subsystems/slots.zh.md`、`client-modules.zh.md`、`docs/cookbook/adding-a-settings-card.zh.md` |
+| 设置 | `docs/subsystems/settings.zh.md`、`packages/client/ui-settings/src/client/settings-contract.ts` |
+| 架构与 seam | `docs/architecture.zh.md`、`docs/capability-seams.zh.md` |
+| CLI 与 profile | `apps/cli/src/args.ts`、`apps/cli/README.zh.md`、`packages/boot/app-boot/src/profile.ts` |
+| 环境与路径 | `packages/util/home-paths/src/index.ts` |
+| 工程规范 | 根 `AGENTS.md`、`packages/AGENTS.md`、`packages/client/AGENTS.md`、`docs/testing.zh.md` |
+| 事故复盘 | `docs/postmortem/0001-*.zh.md`、`0002-*.zh.md` |
+| 贡献与分发 | `CONTRIBUTING.zh.md`、`README.zh.md` |
+| 术语 | `docs/i18n/terminology.md`、`docs/glossary.zh.md` |
+
+## F.2 已知的文档内部矛盾（本手册已如实标注）
+
+| 矛盾 | 立场 |
+|---|---|
+| `basic/index.zh.md:56` 说插件路径必须绝对；`basic/config.zh.md:38` 用相对路径 | **以源码为准**：相对路径会被锚定到 patch 文件所在目录（`app-boot/src/index.ts:325-336` + 测试 `user-patches.spec.ts:128`） |
+| `docs/cookbook/extension-cookbook.zh.md` 的代码片段 | 文件自述**无法直接复制运行**（省略了 import 与辅助实现） |
+| `docs/user/develop/basic/index.zh.md` 展示了对象/类形态用 `export default` | 与 `packages/AGENTS.md:5`「函数插件无 default export」并存；**两形态不要混用** |
+| `adding-a-package.zh.md:25` 说 `private: true` 必填 | 源码模板 `packages/core/tools/package.json` **无此字段**（用 `publishConfig.access: public`）；以 `pnpm run constraints` 实际行为为准 |
+
+## F.3 明确「不存在 / 未证实」的清单
+
+- ❌ 官方插件市场 / registry / `dsh plugin search`
+- ❌ `CHANGELOG` / release notes
+- ❌ TUI 前端插件（已归档，`packages/ui/` 不存在）
+- ❌ `onReady` / `onDispose` 生命周期钩子
+- ❌ `--log-level` / `DSH_LOG_LEVEL`
+- ❌ 项目级 `cordis.yml` 常量
+- ❌ 插件审核 / 白名单
+- ❌ 官方仓库接受外部 PR
+- ⚠️ `installSection` 的专门文档段落：**未找到**（属内部机制）
+- ⚠️ 面向外部作者的测试脚手架：**未找到**
+
+---
+
+## 结语：给零基础的你的三句话
+
+1. **不要追求"学会写代码"，要追求"学会验证"。** 你的 Agent 会写代码，你要会问「出处呢」「怎么验证」「哪里是猜的」。
+2. **小步快跑，每步都要能跑起来。** 第 3 章那 4 行插件就是你全部的信心来源——它跑通了，后面只是加东西。
+3. **接受它每周都在变。** 作者官方都说 API pre-stable 了。你基于 `0.1.5-rc.2` 学到的东西，三个月后可能需要微调。**这不是你学得不好，是这个项目就是这个阶段。**
+
+⚛️ 从不可否认的事实出发——你的插件跑起来了，这件事不证自明。
+
+
+
+
+---
+
+<!-- ↓ 源：DSH插件开发实战补充-模板与踩坑.md 区间 1925-2000 -->
+
+# 附录 · 素材来源与边界（**请务必读**）
+
+## A.1 本补充用到的 13 个真实仓库
+
+| 仓库 | ★ | 本补充用它讲什么 |
+|---|---|---|
+| `deepseek-ai/deepseek-harness`（官方） | — | **全部官方模板与规范**（完整克隆，70 个插件包） |
+| `zhu1090093659/dsh-web` | 7,358 | UI 方向的坑矿（2444 提交 / 1032 次修复 / 245 篇维护者笔记） |
+| `omdsh-dev/DSH-better-sidebar` | 3,383 | 侧栏底座与**扩展点设计** |
+| `dsh-market/dsh-market` | 3,625 | 设置页可视化插件市场 |
+| `Tencent/WeKnora` | 22,166 | **最干净的社区工具插件范本** |
+| `volcengine/OpenViking` | 36,559 | 记忆服务 + 事件钩子 |
+| `liustack/modlens` | 1,050 | bundle + client 双声明 |
+| `yjh051108/dsh-routing-suite` | 7,162 | 运行时注入 / 事件拦截 |
+| `MemTensor/MemOS` | 11,277 | **服务生命周期 + 副作用回收** |
+| `huangruiteng/loopx` | 5,785 | 状态内核 / 多方监听 / 生成器清理 |
+| `tt-a1i/archify` | 57,636 | 完整包结构 / bundle-only 形态 |
+| `Q00/ouroboros` | 5,805 | **零代码组合包黄金范本** |
+| `anywhere-labs/dsh-desktop` | 25,403 | 桌面宿主 / 进程与生命周期 |
+| `xiaobright/dsh-anchored-standard` | — | 工程规范化 / 构建校验 |
+
+## A.2 原始素材索引（十份，共约 7,400 行）
+
+| 文件 | 内容 | 行数 |
+|---|---|---|
+| `plugin-research/notes/A-ui-plugins.md` | UI 方向坑点 | 1445 |
+| `plugin-research/notes/B-tools-external.md` | 工具/外部调用方向（52 个坑 + 4 模板 + 10 规范） | 2273 |
+| `plugin-research/notes/C-services-state.md` | 服务/记忆/状态内核方向（19 个坑 + 14 个模板） | 1517 |
+| `plugin-research/notes/D-host-bundle.md` | 宿主/桌面/组合包方向（32 个坑 + 4 个模板） | 1189 |
+| `plugin-research/notes/E-official-templates.md` | **官方 7 类模板 + 40 个插槽名** | 1044 |
+| `plugin-research/notes/F-official-pitfalls.md` | **官方 4 篇事故复盘** | 195 |
+| `plugin-research/notes/G-install-and-cli.md` | 安装/CLI 机制逐字实证 | 254 |
+| `plugin-research/notes/H-community-bundle.md` | ouroboros 零代码组合包全文 | 231 |
+| `plugin-research/notes/I-quickref.md` | 速查表（服务/事件/插槽/命令） | 187 |
+| `plugin-research/notes/J-official-conventions.md` | 官方包工程约定 | 143 |
+
+> **坑点总量**：四个方向合计 **约 130 条**有 commit 或源码实证的坑/教训（A 方向 100+ / B 52 / C 19 / D 32，部分重叠）。本文件第三篇精选了其中 **23 条最高频、最致命**的整理成症状索引；要查全量请直接翻对应素材。
+
+**源码快照**：`plugin-research/src/<仓库>/`（13 个仓库完整源码）
+**git 历史**：`plugin-research/repos/<仓库>/`（完整提交历史；⚠️ 部分克隆，**无文件 blob**，`git log`/`ls-tree` 可用，`git show <hash>:<path>` 会报 bad object）
+
+## A.3 ⚠️ 三条诚实声明
+
+**1. 一处主动校正（与原始素材不一致，以本文件为准）**
+
+`A~D` 四份素材中，有多处出现过这样的结论：**「工具 `parameters` 属性级不能写 `required` 键，必须用对象级 `required` 数组」**。
+
+**这个结论只对一半。** 官方源码实证（`packages/core/tools/src/schema.ts`）：
+- 走 **`defineTool()`** 时，`parameters` 是 **DSH 作者 DSL**，必填**必须**写**属性级** `required: true`；
+- 走 **裸 `ctx.tools.register()`** 时，`parameters` 是**原始 JSON Schema**，必填写**对象级** `required: ['a']`。
+
+本文件 **T3 §3.2** 与 **坑 P7** 已给出源码级证据。素材 B 中相关段落已就地加上校正说明。
+
+**2. 官方文档本身存在矛盾的地方**（已按源码为准处理）
+
+| 争议点 | 官方文档说 | 源码实证 | 本文件立场 |
+|---|---|---|---|
+| 补丁里插件路径能否用相对路径 | `user/develop/basic/index.zh.md:56` 说「必须是绝对路径」 | `app-boot/src/index.ts` 的 `anchorInsertedPluginNames()` 把相对路径锚到补丁文件旁（有单测固定） | **以源码为准**：可以用相对路径；但第三方插件建议用包名 |
+| `!!js` 在 `disabled` 上是否求值 | 复盘 0002 描述的是「不求值」的旧行为 | 当前官方 `bundle/base` 补丁在用 `disabled: !!js ...` | **当前版本支持**；解释见 `notes/F-official-pitfalls.md` 0002 的版本注记 |
+
+**3. 素材的历史边界**
+
+`A-ui-plugins.md` 的部分章节写于「部分克隆导致源码 blob 不可用」的阶段，因此它对**社区 UI 插件的源码正文**标注了「未找到（blob 不可用）」，只有提交信息、维护者笔记与目录树三类证据。
+
+**该缺口现已闭合**：13 个仓库的**完整源码快照**已下载到 `plugin-research/src/`，且 **T8/T9 两节给出的 UI 模板全部来自官方仓库的逐字源码**（`ui-brand-official`、`ui-theme`），可直接照抄。
+
+---
+
+## A.4 下一步建议
+
+1. **试水**：按 **T1** 做一个零代码组合包（30 分钟内可见成果，且不用配前端工具链）。
+2. **进阶**：按 **T3** 做一个工具插件（这是用得最多的形态）。
+3. **上界面**：按 **T8/T9** 做 UI 与设置卡片（需要先跑通 `pnpm install`）。
+4. **长期**：把本文件的 **第五篇** 提示词存成片段，每次让 AI 写 DSH 代码时先贴上"铁律：要求出处"。
+
+> ⚠️ **最后一条风险提示**：本文件基线是 commit `c291e7961a`（`0.1.5-rc.2`，2026-09-10）。DSH 自称 pre-stable、tag 间隔中位数约 1.1 天且有过破坏性变更。**升级前先跑 `git log --grep='!'` 评估影响**，并把 `package.json` 的 `peerDependencies` 写成**区间**而非钉死某个 rc 号。
+
+---
+

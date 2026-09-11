@@ -1,0 +1,6 @@
+- insert:
+    # id 全局唯一；重复会报 duplicate loader entry id 且启动即崩。
+    - id: dsh-tool-greet
+      # 交付期按「包名」引用，Node 才能解析到已安装代码。
+      # 开发期调试改用本地文件路径，见 README。
+      name: dsh-tool-greet

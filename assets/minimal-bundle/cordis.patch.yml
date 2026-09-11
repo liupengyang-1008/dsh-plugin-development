@@ -1,0 +1,31 @@
+# 补丁文件顶层是「单个数组」，不是对象，也不要写两个顶层值。
+# 每一行都必须有全局唯一的 id —— 重复会报 duplicate loader entry id 且启动即崩。
+- insert:
+    # 示例：把一个 MCP server 挂进来（真实范本见 Q00/ouroboros 的 dsh-plugin）
+    - id: mcp-my-capability
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: my-capability
+        transport: stdio
+        command: npx
+        args:
+          - -y
+          - my-mcp-server
+        env:
+          # 子进程环境会被清洗：凡是 /KEY|PASSWORD|SECRET|TOKEN/i 形状的名字
+          # 以及所有 DSH_* 变量都会被删掉。要传的凭据必须在这里显式列出。
+          MY_API_KEY: !!js process.env.MY_API_KEY ?? ''
+        toolCallTimeoutMs: 600000
+        # 软失败：依赖没装好时不让整个 DSH 起不来
+        failOnStartupError: false
+
+    # 示例：按平台启用 / 禁用（官方就是这么处理 bash / pwsh 差异的）
+    - id: bash-sandbox
+      name: '@deepseek-ai/dsh-bash-sandbox'
+      disabled: !!js process.platform === 'win32'
+      config:
+        timeoutMs: 60000
+
+    - id: pwsh-sandbox
+      name: '@deepseek-ai/dsh-pwsh-sandbox'
+      disabled: !!js process.platform !== 'win32'
