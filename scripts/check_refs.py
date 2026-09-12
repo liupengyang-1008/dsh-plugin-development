@@ -12,8 +12,14 @@
   ❌ 素材  `plugin-research/…`、`notes/X.md`、裸 `A~J-*.md` —— 生成期调研素材，不在 skill 内
   ❌ 绝对  盘符开头的本机绝对路径（既悬空又泄漏本机路径）
   ❌ 悬空  以 `references/` `assets/` `scripts/` 开头但文件不存在
+  ❌ 悬空  **父目录引用**（`../…`）—— 自包含发布物内不可能解析
+
+补充：「`scripts/xxx.ts|tsx|mjs|js`」视为 OK-外（上游/社区仓库的脚本；本 skill 只发布 `.py`/`.sh`）。
+**收紧过一次**：此前是「凡不以 `.py`/`.sh` 结尾的 `scripts/*` 都算上游」，于是
+`scripts/xxx.json` 这类**本 skill 侧的路径**被静默放行 —— 真实漏报过一次，已修。
 
 用法：python scripts/check_refs.py <skill目录> [日志路径]
+      python scripts/check_refs.py --selftest
 退出码：0 = 无问题；1 = 存在问题；2 = 前置错误
 """
 
@@ -55,6 +61,10 @@ PLACEHOLDER = re.compile(r"[<{…]|\.\.\.")
 
 # 本 skill 自己只发布 .py / .sh；`scripts/*.ts|*.mjs|*.js` 一律是 DSH 上游或社区仓库的脚本
 OWN_SCRIPT_SUFFIX = (".py", ".sh")
+# scripts/ 下这些后缀属「上游 / 社区仓库的脚本」，不是本 skill 的文件。
+# 注意：**只放行这几种**。早期版本写成「不以 .py/.sh 结尾的一律放行」，
+# 结果 `scripts/xxx.json` 这种本 skill 侧的路径被静默当成上游 —— 真实漏报一次。
+UPSTREAM_SCRIPT_SUFFIX = (".ts", ".tsx", ".mjs", ".js")
 
 
 def is_pathish(s: str) -> bool:
@@ -74,6 +84,13 @@ def classify(ref: str, skill: Path) -> tuple[str, str]:
     #    **规则示例文本**会被当成真实引用而自指误报。
     if PLACEHOLDER.search(ref):
         return "示例", "含占位符，属正常文档写法"
+    # 父目录引用（`../…`）：自包含发布物在用户机器上不可能解析到任何东西。
+    # 必须用**原始** ref 判断 —— 下面的 rel 会 lstrip("./") 把 `../` 的信息抹掉。
+    # 排在 UPSTREAM_PREFIXES 之前：否则 `../packages/x.ts` 会被 lstrip 成
+    # `packages/x.ts` 而以「上游路径」的身份蒙混过去。
+    raw = ref.strip().replace("\\", "/")
+    if raw.startswith("..") or "/../" in raw:
+        return "❌悬空", "父目录引用，自包含发布物内不存在"
     if rel.startswith(UPSTREAM_PREFIXES):
         return "OK-外", ""
     if rel.startswith("plugin-research/") or rel.startswith("notes/"):
@@ -82,8 +99,8 @@ def classify(ref: str, skill: Path) -> tuple[str, str]:
         return "❌素材", "生成期调研笔记名，不在 skill 内"
     if re.match(r"^[A-Za-z]:[/\\]", ref):
         return "❌本机", "本机绝对路径（悬空 + 泄漏本机路径）"
-    # scripts/*.ts|*.mjs|*.js 不是本 skill 的脚本（我们只发布 .py/.sh）
-    if rel.startswith("scripts/") and not rel.endswith(OWN_SCRIPT_SUFFIX):
+    # `scripts/*.ts|*.tsx|*.mjs|*.js` 不是本 skill 的脚本（我们只发布 .py/.sh）
+    if rel.startswith("scripts/") and rel.endswith(UPSTREAM_SCRIPT_SUFFIX):
         return "OK-外", ""
     for root in ("references", "assets", "scripts"):
         if rel.startswith(root + "/"):
@@ -94,15 +111,12 @@ def classify(ref: str, skill: Path) -> tuple[str, str]:
     return "忽略", ""
 
 
-def main() -> int:
-    if len(sys.argv) < 2:
-        print("usage: check_refs.py <skill_dir> [log]")
-        return 2
-    skill = Path(sys.argv[1]).resolve()
+def run(skill: Path, log: Path) -> tuple[int, int]:
+    """扫描一个 skill 目录并落盘报告。返回 (退出码, 被扫描的文件数)。"""
+    skill = skill.resolve()
     if not (skill / "SKILL.md").exists():
         print(f"FATAL: {skill} 下没有 SKILL.md")
-        return 2
-    log = Path(sys.argv[2]) if len(sys.argv) > 2 else Path.cwd() / "_refs_report.txt"
+        return 2, 0
 
     # 排除本脚本自身：它必须写下 `notes/X.md`、盘符路径等**模式字面量**作为判据，
     # 那是规则定义而不是资源引用（否则会自指误报）。
@@ -178,7 +192,84 @@ def main() -> int:
     out.append(f"结论：{'✅ 全部引用均可在 skill 内解析或指向 DSH 上游' if total_bad == 0 else f'❌ {total_bad} 处问题引用'}")
 
     log.write_text("\n".join(out) + "\n", encoding="utf-8")
-    return 0 if total_bad == 0 else 1
+    return (0 if total_bad == 0 else 1), len(files)
+
+
+# ---------------------------------------------------------------------------
+# 自检：证明这个守门器**会失败**。
+# 铁律：任何校验器都必须先证明它能失败，否则它的「通过」不可信。
+# 夹具写在系统临时目录（不落进 skill 目录，避免污染发布物），finally 清理。
+# ---------------------------------------------------------------------------
+
+FIXTURE_DOC = "references/doc.md"
+
+
+def _fixture(root: Path, quote: str, *, extra_files: bool = True) -> Path:
+    """造一个最小 skill：SKILL.md + references/doc.md，doc 里引用了 quote。"""
+    skill = root / "skill"
+    (skill / "references").mkdir(parents=True, exist_ok=True)
+    (skill / "SKILL.md").write_bytes(b"# fixture\n")
+    if extra_files:
+        (skill / "references" / "good.md").write_bytes(b"# good\n")
+        (skill / "scripts").mkdir(exist_ok=True)
+        (skill / "scripts" / "dsh-sync.sh").write_bytes(b"#!/bin/sh\n")
+    (skill / FIXTURE_DOC).write_bytes(f"引用：`{quote}`\n".encode("utf-8"))
+    return skill
+
+
+def selftest() -> int:
+    import tempfile
+
+    cases: list[tuple[str, str, int, bool]] = [
+        # (说明, 被引用的字符串, 期望退出码, 是否附带 good 文件)
+        ("A 真实存在的 references 文件", "references/good.md", 0, True),
+        ("B 不存在的 references 文件", "references/missing.md", 1, True),
+        ("C scripts/ 下的非脚本路径（本 skill 侧，不存在）", "scripts/state.json", 1, True),
+        ("D 父目录引用", "../scripts/state.json", 1, True),
+        ("E 本机绝对路径", "C:\\Users\\someone\\notes.md", 1, True),
+        ("F 生成期调研素材", "plugin-research/notes/foo.md", 1, True),
+        ("G DSH 上游路径（合法）", "packages/boot/app-boot/src/index.ts", 0, True),
+        ("H 上游脚本（scripts/*.ts，合法）", "scripts/gen-version.ts", 0, True),
+        ("I 占位/示例写法（合法）", "references/<素材>.md", 0, True),
+    ]
+
+    results: list[tuple[bool, str]] = []
+    root = Path(tempfile.mkdtemp(prefix="checkrefs_selftest_"))
+    try:
+        for name, quote, want, extra in cases:
+            skill = _fixture(root, quote, extra_files=extra)
+            log = root / f"log_{len(results)}.txt"
+            got, scanned = run(skill, log)
+            ok = got == want
+            results.append((ok, f"{name}：期望退出码 {want}，实得 {got}"
+                                f"（扫描 {scanned} 文件）"))
+            if scanned == 0:
+                results.append((False, f"{name}：扫描文件数为 0 —— 语料护栏失败，"
+                                        f"「无问题」可能是假通过"))
+    finally:
+        import shutil
+        shutil.rmtree(root, ignore_errors=True)
+
+    print("=" * 70)
+    print(" check_refs.py 自检")
+    print("=" * 70)
+    failed = 0
+    for ok, msg in results:
+        print(("  ✅ " if ok else "  ❌ ") + msg)
+        failed += 0 if ok else 1
+    print("=" * 70)
+    print(f" {len(results) - failed}/{len(results)} 通过")
+    return 0 if failed == 0 else 1
+
+
+def main() -> int:
+    if len(sys.argv) > 1 and sys.argv[1] == "--selftest":
+        return selftest()
+    if len(sys.argv) < 2:
+        print("usage: check_refs.py <skill_dir> [log]  |  check_refs.py --selftest")
+        return 2
+    log = Path(sys.argv[2]) if len(sys.argv) > 2 else Path.cwd() / "_refs_report.txt"
+    return run(Path(sys.argv[1]), log)[0]
 
 
 if __name__ == "__main__":
