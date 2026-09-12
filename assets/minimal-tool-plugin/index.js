@@ -9,9 +9,14 @@
  *
  * ⚠️ 绝对不要写 export default。函数式插件用命名导出；
  *    写了 default 会被 Loader 当成「服务类」解析，进而丢弃函数插件的命名空间。
+ *
+ * 为什么这个骨架是**纯 JavaScript、零构建**：
+ *   「发布前必须构建好产物（lib/），因为 dsh 不会跑你的 build」
+ *   （出处：本技能 references/06-workflow.md，对应上游 packages/… 的打包约定）。
+ *   骨架默认让你免于踩「main 指向一个还没生成的 index.js」这个坑——
+ *   它开箱即可 `dsh plugin add`。要用 TypeScript 的话见本目录 README 的「升级到 TS」。
  */
 
-import type { Context } from '@deepseek-ai/cordis'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 
 /** 插件名。全局唯一，建议与包名一致。 */
@@ -24,7 +29,8 @@ export const name = 'dsh-tool-greet'
  */
 export const inject = ['tools']
 
-export function apply(ctx: Context): void {
+/** @param {import('@deepseek-ai/cordis').Context} ctx */
+export function apply(ctx) {
   ctx.tools.register(defineTool({
     /** 模型看到的工具名：下划线风格，全局唯一。'run_code' 是保留名，不能用。 */
     name: 'greet',
