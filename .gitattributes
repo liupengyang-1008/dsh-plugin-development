@@ -7,11 +7,12 @@
 # Python scripts likewise
 *.py text eol=lf
 
-# Markdown / YAML / TS / JSON are reviewed as text
+# Markdown / YAML / TS / JS / JSON are reviewed as text
 *.md text eol=lf
 *.yml text eol=lf
 *.yaml text eol=lf
 *.ts text eol=lf
+*.js text eol=lf
 *.json text eol=lf
 
 # Binary assets
