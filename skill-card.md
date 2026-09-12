@@ -51,7 +51,7 @@ Mitigation: Review generated files and the `cordis.patch.yml` diff before instal
 **Other Properties Related to Output:** [Produces copy-ready plugin scaffolds, `package.json` and patch manifests, probe and version-diff command output, and tabular change reports; generated files must be verified in a real DSH profile before being treated as working.] <br>
 
 ## Skill Version(s): <br>
-1.0.4 (source: skill package) <br>
+1.0.5 (source: skill package) <br>
 
 ## Ethical Considerations: <br>
 Users should evaluate whether this skill is appropriate for their environment, review any generated or modified files before relying on them, and apply their organization's safety, security, and compliance requirements before deployment. <br>
