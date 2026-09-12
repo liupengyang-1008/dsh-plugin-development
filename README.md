@@ -57,7 +57,6 @@ This skill follows the SkillHub / ClawHub package layout. Once published there, 
 
 ```
 SKILL.md                    entry layer — routing, workflow, smoke criteria, contracts, red lines (≤ 500 lines)
-skill-card.md               marketplace listing card (fixed 10-section format)
 references/
   00-version-gate.md        mandatory step 0: anti-staleness protocol + probe self-reliability
   api-claims.md             claims register: every fact graded S/M/V/N with its verification method
