@@ -33,9 +33,10 @@
 | **这是什么** | 一套写给 AI Agent 的 DSH 插件开发手册 + 一包可执行的校验工具 |
 | **谁用** | 装了 DSH、想给它写插件的人；以及替人写插件的 AI Agent |
 | **怎么用** | **对它说话**——不是敲命令行工具。加载后它指导 Agent 完成开发全流程 |
+| **装在哪** | 装进你的 **AI 客户端**的 skills 目录。它遵循通用的 **Agent Skills** 开放格式，**不绑定任何一家客户端**——Claude Code / Codex / Cursor / Gemini CLI / Copilot / OpenClaw（社区昵称「小龙虾」）/ WorkBuddy 等都能用 |
 | **它给你什么** | 12 个可复制模板 · 23 条踩坑 · 8 个校验脚本 · 1 套防过时版本闸门 · 10 个结对提示词 |
 | **它不给你什么** | ❌ 现成的可装插件（那是它帮你**做**的东西）❌ DSH 运行时依赖 |
-| **前提** | 目标机器上有 DSH（DeepSeek Harness）源码或安装、有 Python 3 或 bash |
+| **对你的环境要求** | ① 一个能加载 `SKILL.md` 的 AI 客户端 ② 能执行 shell（`python3` 或 `bash`）③ 可选：一份 DSH 源码，用于核验 API——没有也能用，走降级规则 |
 
 ### 一句话判断它适不适用
 
@@ -46,32 +47,93 @@
 
 ## 1. 安装
 
-### 方式一 · 从技能市场装（推荐）
+### 1.1 它是一份通用技能，不绑定任何客户端
 
-```bash
-skillhub install dsh-plugin-development --namespace user_9d594bab
-```
+本技能用的是开放的 **Agent Skills** 格式：一个目录，里面是 `SKILL.md`（必需）+ `references/` + `scripts/` + `assets/`。该格式最初由 Anthropic 提出，后开放为标准，已被大量 AI 客户端实现。
 
-技能会落在客户端的 skills 目录下，例如 `~/.workbuddy/skills/dsh-plugin-development/`。
+**判定标准只有一条：**
 
-> 本技能在 **SkillHub**（<https://skillhub.cn/skills/dsh-plugin-development>）与 **ClawHub**（搜索 `dsh-plugin-development`）上均有发布。两个渠道的版本可能不同步，以技能内 `SKILL.md` 的 `version` 为准。
+> 你的 Agent 能加载 `SKILL.md`，它就能用这个技能。
 
-### 方式二 · 手动放置（从 GitHub 或 zip）
+它**不依赖任何客户端的私有能力**，只需要两件事：Agent 能读文件、能执行 shell 命令。已确认可用（列表不穷举）：
+
+**Claude Code** · **OpenAI Codex** · **Cursor** · **Gemini CLI** · **GitHub Copilot** · **Windsurf** · **OpenCode** · **Kiro** · **OpenClaw（社区昵称「小龙虾」）** · **WorkBuddy** · 以及任何实现该标准的客户端。
+
+> ⚠️ **别把两个「层」搞混**：本技能装进**你的 AI 客户端**；它帮你产出的那个 `dsh.bundle` 才装进 **DSH**。**DSH 是它的目标平台，不是它的宿主。**
+
+### 1.2 安装（三种方式，任选其一）
+
+#### 方式 A · 用客户端自带的安装命令（最省事）
+
+| 客户端 | 命令 |
+|---|---|
+| **OpenClaw（小龙虾）· 从 Git 装（推荐，拿最新版）** | `openclaw skills install git:liupengyang-1008/dsh-plugin-development@main` |
+| **OpenClaw · 从本地目录装** | `openclaw skills install ./dsh-plugin-development --as dsh-plugin-development` |
+| **OpenClaw · 从 ClawHub 装** | `openclaw skills install @liupengyang-1008/dsh-plugin-development` |
+| **OpenClaw · 更新** | `openclaw skills update --all`（工作区）/ `--all --global`（全局） |
+| **skillhub.cn** | `skillhub install dsh-plugin-development --namespace user_9d594bab` |
+| **Claude Code / Codex / 其他** | 这些客户端目前主要靠「把目录放到 skills 路径」——用方式 B |
+
+> OpenClaw 默认装进**当前 workspace** 的 `skills/`；加 `--global` 才装进 `~/.openclaw/skills/`，对所有本地 agent 可见。
+> **版本提示**：ClawHub / SkillHub 的发布版本可能落后于 GitHub，**以技能内 `SKILL.md` 的 `version` 为准**；要最新版就按方式 B 从 Git 装。
+
+#### 方式 B · 从 Git 仓库放置（最通用，任何客户端都行）
 
 ```bash
 git clone https://github.com/liupengyang-1008/dsh-plugin-development.git
 ```
 
-然后把整个目录放到客户端的 skills 目录下：
+然后把整个目录放进你的客户端会扫描的 skills 路径。默认路径参考：
 
+| 客户端 | 用户级（对所有项目生效） | 项目级（只对当前项目） |
+|---|---|---|
+| **WorkBuddy** | `~/.workbuddy/skills/` | — |
+| **Claude Code** | `~/.claude/skills/` | `.claude/skills/` |
+| **OpenAI Codex** | `~/.agents/skills/`（部分版本：`~/.codex/skills/`） | `.agents/skills/`（同上：`.codex/skills/`） |
+| **OpenClaw（小龙虾）** | `~/.openclaw/skills/` | `<workspace>/skills/` |
+| **Cursor** | `~/.cursor/skills/` | `.cursor/skills/` |
+| **Gemini CLI** | `~/.gemini/skills/` | `.gemini/skills/` |
+| **GitHub Copilot** | `~/.copilot/skills/` | `.github/skills/` |
+| **Windsurf** | `~/.codeium/windsurf/skills/` | `.windsurf/skills/` |
+| **OpenCode** | `~/.config/opencode/skills/` | `.opencode/skills/` |
+| **Kiro** | `~/.kiro/skills/` | `.kiro/skills/` |
+
+Windows 下把 `~` 换成 `C:\Users\<你的用户名>\`。
+
+> 🔎 **路径不确定时不要猜——直接问你的 Agent：**
+> 「你的 skills 目录在哪？」
+> 这是最可靠的办法：各客户端路径随版本变动，而 Agent 自己知道它从哪里加载技能。
+
+> ⚠️ **目录名必须保持 `dsh-plugin-development`。** Agent Skills 规范要求 frontmatter 的 `name` 与父目录名一致（本技能两者都是 `dsh-plugin-development`）。**重命名目录会让技能加载失败。**
+
+#### 方式 C · 从发布包解压
+
+把 `dsh-plugin-development.zip` 解压到上面任一路径，得到 `<skills 目录>/dsh-plugin-development/`。
+
+### 1.3 多个客户端想共用一份？用 symlink，别复制
+
+复制多份会各自漂移。**维护一份权威副本，symlink 到各个客户端：**
+
+```bash
+# 唯一权威副本
+git clone https://github.com/liupengyang-1008/dsh-plugin-development.git ~/skills-src/dsh-plugin-development
+
+# 链到你用的每个客户端
+ln -s ~/skills-src/dsh-plugin-development ~/.claude/skills/dsh-plugin-development
+ln -s ~/skills-src/dsh-plugin-development ~/.agents/skills/dsh-plugin-development
+ln -s ~/skills-src/dsh-plugin-development ~/.openclaw/skills/dsh-plugin-development
 ```
-macOS / Linux :  ~/.workbuddy/skills/dsh-plugin-development/
-Windows       :  C:\Users\<你的用户名>\.workbuddy\skills\dsh-plugin-development\
+
+之后升级只需一条命令：
+
+```bash
+git -C ~/skills-src/dsh-plugin-development pull
 ```
 
-或用发布包 `dist/dsh-plugin-development.zip` 解压到同一位置。
+> 部分客户端对 symlink 有路径包含检查（要求 `SKILL.md` 的真实路径仍落在技能目录内）。本技能是**普通目录结构**，不跨出技能目录，因此不受影响。
+> OpenClaw 支持 `git:` 与本地目录安装，并明确支持 symlink 的技能文件夹。
 
-### 装完怎么确认
+### 1.4 装完怎么确认
 
 目录里应当是这套结构（`SKILL.md` + 三个资源目录）：
 
@@ -82,7 +144,15 @@ scripts/          ← 8 个确定性校验工具
 assets/           ← 可直接复制改名的工程骨架
 ```
 
-**功能验证**：向 AI 提一个 DSH 插件相关的问题（例如「帮我判断这个插件该用哪种形态」）。如果回答里出现「**第 0 步 · 版本闸门**」、模板编号（`T1`~`T12`）或「冒烟判定」这类概念，说明技能已被加载。
+**结构自检**（不依赖任何客户端）：
+
+```bash
+python scripts/check_refs.py .        # 引用一致性：期望 exit 0
+```
+
+**功能验证**：向 AI 提一个 DSH 插件相关的问题（例如「帮我判断这个插件该用哪种形态」）。如果回答里出现「**第 0 步 · 版本闸门**」、模板编号（`T1`~`T12`）或「冒烟判定」这类概念，说明技能已被成功加载。
+
+> 技能加载是**渐进式**的：Agent 启动时只读 `SKILL.md` 的 `name` + `description`（约 100 token），判定相关后才加载正文，`references/` 与 `scripts/` 只在真正需要时才读。所以装了很多技能也不会撑爆上下文。
 
 ---
 

@@ -33,9 +33,10 @@ An engineering skillset for developers and AI agents building plugins on **DSH (
 | **What is it** | A DSH plugin development handbook written for AI agents, plus a bundle of executable verification tools |
 | **Who is it for** | People who have DSH installed and want to write plugins for it; and the AI agents writing those plugins on their behalf |
 | **How do I use it** | **You talk to it** — there is no CLI to drive. Once loaded, it steers the agent through the whole development flow |
+| **Where it goes** | Into your **AI client's** skills directory. It follows the open **Agent Skills** format and is **not tied to any one client** — Claude Code / Codex / Cursor / Gemini CLI / Copilot / OpenClaw / WorkBuddy and more |
 | **What you get** | 12 copy-ready templates · 23 catalogued pitfalls · 8 verification scripts · 1 anti-staleness version gate · 10 agent prompt templates |
 | **What you do not get** | ❌ A ready-made installable plugin (that is what it helps you *build*) ❌ A DSH runtime dependency |
-| **Prerequisites** | A DSH (DeepSeek Harness) checkout or install on the target machine; Python 3 or bash |
+| **What your environment needs** | ① An AI client that can load `SKILL.md` ② A shell (`python3` or `bash`) ③ Optional: a DSH checkout, used to verify APIs — without it the skill falls back to its explicit degradation rule |
 
 ### Does it apply to your task?
 
@@ -46,30 +47,93 @@ An engineering skillset for developers and AI agents building plugins on **DSH (
 
 ## 1. Installation
 
-### Option A · From the skill marketplace (recommended)
+### 1.1 One portable skill, tied to no single client
 
-```bash
-skillhub install dsh-plugin-development --namespace user_9d594bab
-```
+This skill uses the open **Agent Skills** format: a directory containing `SKILL.md` (required) plus `references/`, `scripts/` and `assets/`. The format was originally developed by Anthropic, released as an open standard, and is now implemented by a large number of AI clients.
 
-The skill lands in your client's skills directory, e.g. `~/.workbuddy/skills/dsh-plugin-development/`.
+**The only test that matters:**
 
-> It is published on **SkillHub** (<https://skillhub.cn/skills/dsh-plugin-development>) and on **ClawHub** (search for `dsh-plugin-development`). The two channels may lag each other; the authoritative version is `version` in the skill's `SKILL.md`.
+> If your agent can load a `SKILL.md`, it can use this skill.
 
-### Option B · Manual placement (from GitHub or the zip)
+It depends on **no client-specific capability** — only on two things: the agent can read files, and it can run shell commands. Confirmed to work with (non-exhaustive):
+
+**Claude Code** · **OpenAI Codex** · **Cursor** · **Gemini CLI** · **GitHub Copilot** · **Windsurf** · **OpenCode** · **Kiro** · **OpenClaw** · **WorkBuddy** · and any other client implementing the standard.
+
+> ⚠️ **Do not confuse the two layers**: this skill installs into **your AI client**; the `dsh.bundle` package it helps you produce is what installs into **DSH**. **DSH is its target platform, not its host.**
+
+### 1.2 Install (pick one of three)
+
+#### Option A · The client's own skill-install command (least effort)
+
+| Client | Command |
+|---|---|
+| **OpenClaw · from Git (recommended, gets the newest)** | `openclaw skills install git:liupengyang-1008/dsh-plugin-development@main` |
+| **OpenClaw · from a local directory** | `openclaw skills install ./dsh-plugin-development --as dsh-plugin-development` |
+| **OpenClaw · from ClawHub** | `openclaw skills install @liupengyang-1008/dsh-plugin-development` |
+| **OpenClaw · update** | `openclaw skills update --all` (workspace) / `--all --global` |
+| **skillhub.cn** | `skillhub install dsh-plugin-development --namespace user_9d594bab` |
+| **Claude Code / Codex / others** | These currently rely on placing the directory in a skills path — use Option B |
+
+> OpenClaw installs into the **current workspace's** `skills/` by default; add `--global` to install into `~/.openclaw/skills/`, visible to all local agents.
+> **Version note**: ClawHub / SkillHub releases may lag GitHub. **`version` in the skill's `SKILL.md` is authoritative**; for the newest build, install from Git via Option B.
+
+#### Option B · Place it from the Git repo (most portable — works with any client)
 
 ```bash
 git clone https://github.com/liupengyang-1008/dsh-plugin-development.git
 ```
 
-Then move the whole directory into your client's skills folder:
+Then move the whole directory into a skills path your client scans. Default paths for reference:
 
-```
-macOS / Linux :  ~/.workbuddy/skills/dsh-plugin-development/
-Windows       :  C:\Users\<your-user>\.workbuddy\skills\dsh-plugin-development\
+| Client | User scope (all projects) | Project scope (current project only) |
+|---|---|---|
+| **WorkBuddy** | `~/.workbuddy/skills/` | — |
+| **Claude Code** | `~/.claude/skills/` | `.claude/skills/` |
+| **OpenAI Codex** | `~/.agents/skills/` (some versions: `~/.codex/skills/`) | `.agents/skills/` (or `.codex/skills/`) |
+| **OpenClaw** | `~/.openclaw/skills/` | `<workspace>/skills/` |
+| **Cursor** | `~/.cursor/skills/` | `.cursor/skills/` |
+| **Gemini CLI** | `~/.gemini/skills/` | `.gemini/skills/` |
+| **GitHub Copilot** | `~/.copilot/skills/` | `.github/skills/` |
+| **Windsurf** | `~/.codeium/windsurf/skills/` | `.windsurf/skills/` |
+| **OpenCode** | `~/.config/opencode/skills/` | `.opencode/skills/` |
+| **Kiro** | `~/.kiro/skills/` | `.kiro/skills/` |
+
+On Windows, replace `~` with `C:\Users\<your-user>\`.
+
+> 🔎 **Not sure about the path? Do not guess — ask your agent:**
+> "Where is your skills directory?"
+> That is the most reliable method: paths move between versions, and the agent knows where it loads skills from.
+
+> ⚠️ **Keep the directory named `dsh-plugin-development`.** The Agent Skills spec requires the frontmatter `name` to match the parent directory name (this skill uses `dsh-plugin-development` for both). **Renaming the directory makes the skill fail to load.**
+
+#### Option C · Unpack the release archive
+
+Unzip `dsh-plugin-development.zip` into any of the paths above, yielding `<skills dir>/dsh-plugin-development/`.
+
+### 1.3 Sharing one copy across clients? Symlink, do not duplicate
+
+Duplicated copies drift apart. **Keep one canonical copy and symlink it into each client:**
+
+```bash
+# canonical copy
+git clone https://github.com/liupengyang-1008/dsh-plugin-development.git ~/skills-src/dsh-plugin-development
+
+# link it into every client you use
+ln -s ~/skills-src/dsh-plugin-development ~/.claude/skills/dsh-plugin-development
+ln -s ~/skills-src/dsh-plugin-development ~/.agents/skills/dsh-plugin-development
+ln -s ~/skills-src/dsh-plugin-development ~/.openclaw/skills/dsh-plugin-development
 ```
 
-### Verifying the install
+Updating is then a single command:
+
+```bash
+git -C ~/skills-src/dsh-plugin-development pull
+```
+
+> Some clients apply path-containment checks to symlinked skills (the resolved realpath of `SKILL.md` must stay inside the skill directory). This skill is a **plain directory tree** that never steps outside itself, so it is unaffected.
+> OpenClaw explicitly supports both `git:` installs and symlinked skill folders.
+
+### 1.4 Verifying the install
 
 The directory should look like this (`SKILL.md` plus three resource folders):
 
@@ -80,7 +144,15 @@ scripts/          ← 8 deterministic verification tools
 assets/           ← engineering skeletons you can copy and rename
 ```
 
-**Functional check**: ask your AI a DSH plugin question (e.g. "which plugin form should this use?"). If the reply mentions the **"Step 0 · version gate"**, a template ID (`T1`–`T12`), or a "smoke criterion", the skill is loaded.
+**Structural self-check** (needs no client):
+
+```bash
+python scripts/check_refs.py .        # reference integrity: expect exit 0
+```
+
+**Functional check**: ask your AI a DSH plugin question (e.g. "which plugin form should this use?"). If the reply mentions the **"Step 0 · version gate"**, a template ID (`T1`–`T12`), or a "smoke criterion", the skill loaded successfully.
+
+> Skill loading is **progressive**: at startup the agent reads only the `name` + `description` from `SKILL.md` (~100 tokens), loads the body only when the task matches, and reads `references/` or `scripts/` only when a step actually needs them. Installing many skills therefore does not blow up the context window.
 
 ---
 
