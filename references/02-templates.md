@@ -1,4 +1,4 @@
-<!-- 本文件由 DSH 插件开发手册套件整合生成，请勿手工编辑；改动请回到工作区源文档。 -->
+> **文件来源**：本文件由 DSH 插件开发手册套件整合生成。直接编辑会在下次整合时被覆盖，因此维护性改动记录在工作区源文档中。
 
 > **本文件用途**：由易到难的 12 个可直接复制的插件模板（T1~T12），覆盖零代码组合包、补丁语法、工具、命令、配置、服务、UI、设置卡片、流程拦截、外部集成、工程骨架。后接【官方逐字源码附录】（7 类官方模板全文 + 40 个 UI 插槽名全清单 + 官方 AGENTS.md 硬约束）与【社区零代码组合包全文】。T3/T5/T6 与附录模板 3/4/5 是同一件事的两种粒度：正文给讲解与坑，附录给可逐字照抄的完整源码——两边都要看，冲突时以附录的官方源码为准。
 > **合成来源**：DSH插件开发实战补充-模板与踩坑.md（第二篇） + E-official-templates.md + H-community-bundle.md
@@ -76,13 +76,22 @@ my-plugin/
         transport: stdio
         command: uvx
         args:
+          # ⚠️ 主包必须写精确版本。uvx 会在启动时去索引取包并执行，写浮动规格
+          #    （省略版本 / latest）等于「每次启动跑的都是当时的线上最新版」——
+          #    这份配置被审阅之后，实际执行的代码仍然会变。
+          #    另外注意：**上游原文只固定了辅助依赖（mcp==2.0.0），没有固定主包**。
+          #    照抄上游写法时，「把版本固定住」是必须自行补上的那一步。
+          #    下面的 1.4.0 是占位，请换成你核对过的精确版本。
           - --from
-          - 'ouroboros-ai[mcp]'
+          - 'ouroboros-ai[mcp]==1.4.0'
           - --with
           - 'mcp==2.0.0'
           - ouroboros
           - mcp
           - serve
+        # ⚠️ 下面列出的每个凭据，都会被上面那个「运行时下载下来的子进程」读到，
+        #    且它以 DSH 同等权限运行（可读写文件、可发网络请求）。
+        #    优先用低配额、可随时撤销的专用 key，不要用通用主 key。
         env:
           OUROBOROS_LLM_BACKEND: !!js process.env.OUROBOROS_LLM_BACKEND ?? ''
           OUROBOROS_AGENT_RUNTIME: !!js process.env.OUROBOROS_AGENT_RUNTIME || 'host'
@@ -2388,8 +2397,14 @@ my-plugin/
         transport: stdio
         command: uvx
         args:
+          # ⚠️ 主包必须写精确版本。uvx 会在启动时去索引取包并执行，写浮动规格
+          #    （省略版本 / latest）等于「每次启动跑的都是当时的线上最新版」——
+          #    这份配置被审阅之后，实际执行的代码仍然会变。
+          #    另外注意：**上游原文只固定了辅助依赖（mcp==2.0.0），没有固定主包**。
+          #    照抄上游写法时，「把版本固定住」是必须自行补上的那一步。
+          #    下面的 1.4.0 是占位，请换成你核对过的精确版本。
           - --from
-          - 'ouroboros-ai[mcp]'
+          - 'ouroboros-ai[mcp]==1.4.0'
           - --with
           - 'mcp==2.0.0'
           - ouroboros
@@ -2417,6 +2432,8 @@ my-plugin/
         # is the one exception: it falls back to the literal `'host'` rather
         # than `''`, because dsh has no installable execution CLI to fall back
         # to on its own — see the comment above.
+        # ⚠️ 这里每一行都会被上面那个「运行时下载下来的子进程」读到，且它以 DSH
+        #    同等权限运行。只列真正需要的那把，优先用低配额、可撤销的专用 key。
         env:
           OUROBOROS_LLM_BACKEND: !!js process.env.OUROBOROS_LLM_BACKEND ?? ''
           OUROBOROS_AGENT_RUNTIME: !!js process.env.OUROBOROS_AGENT_RUNTIME || 'host'

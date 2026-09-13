@@ -1,4 +1,4 @@
-<!-- 本文件由 DSH 插件开发手册套件整合生成，请勿手工编辑；改动请回到工作区源文档。 -->
+> **文件来源**：本文件由 DSH 插件开发手册套件整合生成。直接编辑会在下次整合时被覆盖，因此维护性改动记录在工作区源文档中。
 
 > **本文件用途**：社区真实仓库的原始调研素材，按方向归档（UI / 工具与外部调用 / 服务与状态 / 宿主与组合包）。每条坑点与模板都标注了出处文件与行号。这是生成本手册的一手材料，比 05-pitfalls 更细但更粗糙——先读 05，需要追根究底时再查这里。体量大，不要通读，用 grep 按关键词检索。
 > **合成来源**：A-ui-plugins.md + B-tools-external.md + C-services-state.md + D-host-bundle.md（原始调研笔记）
@@ -1664,9 +1664,9 @@ d7ab37c7 feat(plugins): add OpenViking memory for DSH (#3993)
 
 ### 坑 O1（最重要，且是“静默失效”类）：用 system prompt 注入记忆会被 persona 的 `complete: true` 整段丢弃
 
-- **来源**：`volcengine_OpenViking + examples/dsh-memory-plugin/README.md`，原文（Design notes 小节）：
+- **来源**：`volcengine_OpenViking + examples/dsh-memory-plugin/README.md` 的 Design notes 小节（以下是对该文档的叙述性转述，不是逐字引用）。
 
-  > `Recall and profile context enter through the agent/pre-step waterfall as durable, source-attributed user messages (source: { kind: 'plugin', … }). They are deliberately **not** added to the system prompt: a DSH preset whose persona declares `complete: true` (the stock `minimal` preset does) restores that persona as the sole prompt section after assembly, silently discarding every other contribution — a system-prompt-based memory plugin loses its context under such presets with no error.`
+  该文档记录的实现选择是：记忆与画像上下文经 `agent/pre-step` waterfall 作为「持久的、带来源归属的 user 消息」进入（`source: { kind: 'plugin', … }`），而没有走 system prompt 通道。它给出的理由是一条 DSH 机制 —— 当某个 preset 的 persona 声明了 `complete: true`（内置 `minimal` preset 即如此），组装完成后 persona 段会被还原为**唯一**的 prompt 段，其它贡献随之被静默丢弃；因此走 system prompt 的记忆插件在这类 preset 下会丢掉上下文，而且不报错。本技能引用这条设计说明，是为了解释下面为什么推荐 `agent/pre-step` 而非 system prompt。
 
 - **现象**：记忆/画像注入“看起来装好了”，但在 `minimal` 这类 preset 下完全没有生效，且**没有任何报错**。
 - **根因**：dsh 的 persona 若声明 `complete: true`，组装后会用 persona 段覆盖成“唯一 prompt 段”，其它 system prompt 贡献被静默丢弃。

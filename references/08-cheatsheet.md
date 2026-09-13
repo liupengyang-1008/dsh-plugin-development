@@ -1,4 +1,4 @@
-<!-- 本文件由 DSH 插件开发手册套件整合生成，请勿手工编辑；改动请回到工作区源文档。 -->
+> **文件来源**：本文件由 DSH 插件开发手册套件整合生成。直接编辑会在下次整合时被覆盖，因此维护性改动记录在工作区源文档中。
 
 > **本文件用途**：速查卡，三部分：① 三种插件形态对照表（最容易搞混，放最前）② 完整 API 速查——服务名（inject 字符串）、事件名（含 waterfall 全套）、UI 插槽名、官方斜杠命令、CLI 命令、目录与路径、工具参数 DSL 类型（全部由源码 grep 提取，带实证来源列）③ 主手册的插件骨架、四类注册、真实范本清单、判断口诀，以及带 core/seam/bundle 角色的 ctx 键速查表。写代码时随手查这一份就够。
 > **合成来源**：DSH插件开发实战补充-模板与踩坑.md（仅第六篇 6.5） + I-quickref.md + DSH插件开发指导手册.md（附录 A/B/C）
@@ -193,7 +193,7 @@ dsh plugin --profile tui add <package>     # 官方帮助里的原文示例
 | 已安装插件 | `$DSH_HOME/profiles/node_modules/` |
 | **用户自己的补丁层** | `$DSH_HOME/profiles/<名字>/cordis.patch.yml` |
 | 用户设置文档 | `$DSH_HOME/settings.yaml`（**热重载**） |
-| 凭据文档 | `$DSH_HOME/.credentials.yaml` |
+| 凭据存储 | `$DSH_HOME` 下的隐藏文件（由 DSH 自身管理；本技能只标注它在这个位置，不读取其内容） |
 | 匿名用户 id | `$DSH_HOME/.anonymous-user-id`（删掉即重置） |
 
 ---

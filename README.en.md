@@ -336,6 +336,20 @@ high  ├─ T8/T9   UI and settings cards     two halves + three registration p
 
 ---
 
+### ⚠️ Before you copy a template: three security constraints
+
+The templates are **copy-ready skeletons**. The examples that mount an external MCP server or an external process **download and execute an external package when DSH starts** — the only place in this skill with real security weight. Three rules when you copy them:
+
+| # | Constraint | Why |
+|---|---|---|
+| 1 | **Pin an exact version** (`pkg@1.2.3`) — never `pkg`, `latest`, `^1`, `~1.x` | A floating spec means "whatever is on the registry right now runs on every start". **The code can change after you reviewed it** — a compromised upstream, a malicious new release, or a name-squatting package lands directly on your machine |
+| 2 | **Forward only the one credential the integration needs, and use a low-quota, revocable key** | The downloaded child process runs with the **same privileges as DSH**: it can read and write files, make network requests, and read **every** credential listed in `env:` |
+| 3 | **Split "download" from "execute" into two steps** | Install explicitly and review the resolved dependency tree first, then point the patch at a local executable — so what actually runs is determinate before it runs |
+
+> These three come from a real security audit of this skill (ClawHub scanners). **Nothing else in the skill carries this risk**: it contains no runtime logic of its own, reads no credentials, and transmits no data.
+
+---
+
 ## 4. What is inside
 
 | Location | Contents | When to read |
