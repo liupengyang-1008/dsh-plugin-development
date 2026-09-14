@@ -3,8 +3,8 @@ name: dsh-plugin-development
 slug: dsh-plugin-development
 displayName: DSH Plugin Development
 summary: Develop DSH (DeepSeek Harness) / Cordis plugins end to end — plugin forms, templates, an API cookbook, catalogued pitfalls, packaging and publishing, plus a mandatory version gate for the pre-stable upstream.
-description: A development-time skill for building plugins on DSH (DeepSeek Harness) / Cordis. It is not itself an installable DSH plugin; it is the tooling that guides a developer or AI agent through creating, debugging, packaging, and publishing one. This skill should be used when the user asks to develop a DSH plugin, write or modify a cordis plugin, add a tool, slash command, config schema, service, UI slot or HTTP route to DSH, run a periodic task inside a plugin, fix a plugin that fails to load or stays in PENDING, or package a plugin bundle for installation or distribution. It covers the plugin forms and the official engineering conventions, with 12 templates, 23 catalogued pitfalls, and copy-ready prompts for AI-agent pair development. Because DSH is pre-stable and ships breaking changes on a short cadence, it also ships a mandatory version gate to answer before writing any DSH code, a probe that re-verifies its own API and negative claims against a live source checkout, and a per-tag history of upstream breaking changes.
-version: 1.0.9
+description: A development-time skill for building plugins on DSH (DeepSeek Harness) / Cordis. It is not itself an installable DSH plugin; it is the tooling that guides a developer or AI agent through creating, debugging, packaging, and publishing one. This skill should be used when the user asks to develop a DSH plugin, write or modify a cordis plugin, add a tool, slash command, config schema, service, UI slot or HTTP route to DSH, run a periodic task inside a plugin, fix a plugin that fails to load or stays in PENDING, or package a plugin bundle for installation or distribution. It covers the plugin forms and official conventions, with 12 templates, 23 catalogued pitfalls, and copy-ready prompts for AI-agent pair development. Because DSH is pre-stable and ships breaking changes on a short cadence, it also ships a mandatory pre-coding version gate, a probe that re-verifies its own claims against a live source checkout, and a per-tag history of upstream breaking changes.
+version: 1.0.10
 license: MIT-0
 agent_created: true
 metadata:
@@ -107,7 +107,7 @@ bash   <skill>/scripts/dsh-api-probe.sh <DSH 仓库路径>    # 备选：仅当 
 
 **不要从最难的开始。** 先做能跑通的最小闭环，再逐级加复杂度：零代码组合包（T1/T2，低）→ 斜杠命令（T5，低）→ 工具插件（T3/T4，中）→ 可配置插件（T6，中）→ 服务插件（T7，中高）→ UI 与设置卡片（T8/T9，高）→ Agent 流程拦截（T10，高）→ 外部集成 / 完整工程骨架（T11/T12，高）。
 
-12 个模板的完整代码、官方 7 类模板的逐字源码、常用 UI 插槽名速查（**节选，非全清单**），都在 `references/02-templates.md`。
+12 个模板的完整代码、常用 UI 插槽名速查（**节选，非全清单**）在 `references/02-templates.md`；**官方 7 类模板的逐字源码**在 `references/02b-official-templates.md`。
 
 ## 标准工作流
 
@@ -210,7 +210,7 @@ DSH 里最常见的「我明明装了啊」有五种成因，全部落在这 5 �
 1. 插件装上了但**完全没反应** → `06-workflow.md` 第 ④ 部分（`--dump-config` + PENDING 审计）
 2. 报错信息看不懂 → `05-pitfalls.md` 的「报错信息 / 现象对照表」
 3. 已知症状检索 → `05-pitfalls.md`（23 条坑，按症状编号 P1~P22b）
-4. 追根究底（原始社区提交、行号级出处）→ `10-community-casebook.md`
+4. 追根究底（原始社区提交、行号级出处）→ `10-community-casebook.md`（**总索引**，再进 `10a`~`10d` 对应方向分册）
 
 ## 端到端示例（一次完整的装配）
 
@@ -249,52 +249,85 @@ DSH 里最常见的「我明明装了啊」有五种成因，全部落在这 5 �
 
 用户常让 Agent 代写插件代码。此时：给 Agent 的提示词模板见 `09-agent-pairing.md`（两套来源共 10 个可直接复制的模板）；要求 Agent **每次附出处**（文件 + 行号），无出处不予采纳；交付后按 `07-conventions.md` 的门禁清单验收。
 
-## 资源索引
+## 资源索引与加载条件
 
-### `references/`（按主题组织，共 17 篇：编号 `00`~`15` + `api-claims`）
+**默认只读本文件。** 上面 10 个步骤全部可以只靠 `SKILL.md` 完成；`references/` 是**触发才读**的加分项，不是必读项。
 
-| 文件 | 何时读 |
-|---|---|
-| `references/00-version-gate.md` | **写任何 DSH 代码前**；探针报 STALE 后；讨论「会不会过时」时 |
-| `references/api-claims.md` | 想知道「这条事实属于 S/M/V/N 哪一级、该怎么核验」时 |
-| `references/01-mental-model.md` | 开始任何插件前；搞不清形态 / profile / 组合包加载机制 / 该选哪个模板时 |
-| `references/02-templates.md` | 要抄代码时。12 个模板（T1~T12）+ 官方 7 类模板逐字源码 + 常用 UI 插槽名速查（节选）+ 社区零代码组合包全文 |
-| `references/03-api-cookbook.md` | 写工具 / 配置 / 命令 / 事件 / 服务 / 终端功能时 |
-| `references/04-ui-and-slots.md` | 做 UI 插件或设置卡片时 |
-| `references/05-pitfalls.md` | **写代码前通读；出问题时检索**。23 条坑 + 症状速查表 + 报错对照表 + 官方 4 篇事故复盘全文 |
-| `references/06-workflow.md` | 环境准备 / 安装与 CLI 机制 / 打包分发 / 调试排错——四部分顺序阅读 |
-| `references/07-conventions.md` | 想做得像官方包一样规范时（官方约定 + 命名/测试/门禁 + 版本兼容军规） |
-| `references/08-cheatsheet.md` | **随手查**：三形态对照表 + 服务名/事件名/插槽名/命令/CLI/路径/参数 DSL 全表 |
-| `references/09-agent-pairing.md` | 与 Agent 结对开发（10 个提示词模板 + 十条红线） |
-| `references/10-community-casebook.md` | 追根究底：原始社区素材、行号级出处（6.6k 行，**最后再读**，用 grep 检索而非整读） |
-| `references/11-glossary-and-provenance.md` | 查术语、来源、素材代号对照（§A.2）、已知边界与官方文档矛盾 |
-| `references/12-community-plugins.md` | 选型参考、找可借鉴的社区高星插件 |
-| `references/13-version-history.md` | **目标版本高于基线时必读**；查 tag 版本史、破坏性变更、更新流程 |
-| `references/14-inbound-http-and-timers.md` | 要暴露 HTTP 接口 / 写定时任务 / 搞清客户端产物格式时 |
-| `references/15-skill-scope-and-maintenance.md` | 评估本技能是否适用、或要修改本技能时（已知边界 + 维护守则） |
+### 加载纪律（三条，先读再看表）
 
-### `assets/`（可直接复制 / 改名）
+1. **不要为「保险」通读 `references/`。** 全量约 18 万词，通读既装不下也不必要——这是本技能最贵的误用方式。
+2. **按「读法」列执行，只有三种**：
+   - **整读** —— 文件不大，直接整份读；
+   - **定点读** —— 先 `grep -n '<锚点>' <文件>` 拿行号，再只读那一节（`Read` 带 `offset` / `limit`）；
+   - **禁止整读** —— 只允许 grep 命中后定点读，整读会挤爆上下文。
+3. **`references/` 里有两类内容，别把第二类当第一类读**：
+   - **前段 = 面向任务的整理稿**（编号小节，可直接照做）；
+   - **后段 = 一手素材档案** —— 标题带「（原始素材）」或紧跟 `<!-- ↓ 源：… -->` 标记，是整理稿的**上游原始记录**，比整理稿更细也更粗糙。**只在你需要追查某条结论的原始出处时才读它**，平时整段跳过。每个大文件头部都插了导航块，标出这段从哪开始。
 
-- `assets/minimal-bundle/` —— 零代码组合包（T1 形态，0 行 JS）
-- `assets/minimal-tool-plugin/` —— 最小工具插件（T3 形态，`defineTool` + 参数 Schema）
-- `assets/plan-template.md` —— 决策留痕模板（复制到插件项目的 `docs/plan.md`）
+### `references/`（按主题组织，共 23 篇：编号 `00`~`15` + `api-claims` + 6 个上游素材分册）
 
-### `scripts/`（确定性工具，用法与退出码见脚本头部注释）
+> 编号带字母后缀的（`02b`、`02c`、`10a`~`10d`）是**上游素材分册** —— 由超大引用文件按来源拆出，
+> 内容为原文的逐行搬迁。它们**不是整理稿**：性质不一（既有官方文档逐字摘录，也有调研期粗笔记）。
 
-| 脚本 | 作用 | 关键点 |
+| 触发条件（满足才读） | 文件 | 读法 | 成本 |
+|---|---|---|---|
+| **写任何 DSH 代码之前**，回答版本三问；探针报 STALE 后 | `references/00-version-gate.md` | 整读 | 中 |
+| 拿不准某条事实属 S/M/V/N 哪一级、该怎么核验 | `references/api-claims.md` | 定点：`grep -n '^### '` | 中 |
+| 开始任何插件前；搞不清形态 / profile / 组合包加载机制 / 该选哪个模板 | `references/01-mental-model.md` | 整读 | 中 |
+| **要抄代码时** | `references/02-templates.md` | **定点**：`grep -n '^## T[0-9]'` 取 T1~T12（纯整理稿，1.2k 行） | 中 |
+| 要**逐字照抄官方 7 类模板**的完整源码 | `references/02b-official-templates.md` | 定点：册内 `grep -n '^## '` | 高 |
+| 要一个社区零代码组合包全文范本 | `references/02c-community-bundle.md` | 整读（仅 254 行） | 低 |
+| 写工具 / 配置 / 命令 / 事件 / 服务 / 终端功能 | `references/03-api-cookbook.md` | 定点：`grep -n '^## '` | 高 |
+| 做 UI 插件或设置卡片 | `references/04-ui-and-slots.md` | 定点：`grep -n '^## '` | 中 |
+| **写代码前通读整理稿**；出问题按症状检索 | `references/05-pitfalls.md` | 整读整理稿段；`grep -n '^### 坑 P'` 定位单条 | 中 |
+| 环境准备 / 安装与 CLI 机制 / 打包分发 / 调试排错（四部分按需选读） | `references/06-workflow.md` | 定点：`grep -n '^## '` | 中 |
+| 需要像官方包一样规范：README 强制节 / 门禁清单 / 命名 / 测试 | `references/07-conventions.md` | 定点：`grep -n '^## '` | 中 |
+| **随手查**任何符号名（服务名 / 事件名 / 插槽名 / 命令 / CLI / 路径 / 参数 DSL） | `references/08-cheatsheet.md` | 定点：`grep -n` | 中 |
+| 与 AI Agent 结对开发，需要可直接复制的提示词模板 | `references/09-agent-pairing.md` | 整读 | 低 |
+| **追查某条结论的原始社区出处**（先在此定位方向） | `references/10-community-casebook.md` | 整读索引（仅 38 行） | 低 |
+| 已定位到 **UI 方向**，要读该方向原始素材 | `references/10a-casebook-ui.md` | **定点**：`grep -n '^# [ABCD] · '` 定位小节 | 高 |
+| 已定位到**工具 / 外部调用**方向 | `references/10b-casebook-tools.md` | **定点**：同上 | 高 |
+| 已定位到**服务 / 状态内核**方向 | `references/10c-casebook-services.md` | **定点**：同上（该册用二级标题） | 高 |
+| 已定位到**宿主 / 组合包**方向 | `references/10d-casebook-host-bundle.md` | **定点**：同上 | 高 |
+| 查术语 / 素材代号对照（§A.2）/ 已知边界与官方文档矛盾 | `references/11-glossary-and-provenance.md` | 整读 | 低 |
+| 选型参考；找可借鉴的社区高星插件 | `references/12-community-plugins.md` | 整读 | 中 |
+| **目标 DSH 版本高于本技能基线时**（否则不读）；查 tag 版本史、破坏性变更 | `references/13-version-history.md` | 定点：`grep -n '^## '` | 中 |
+| 要暴露 HTTP 接口 / 写定时任务 / 搞清客户端产物格式 | `references/14-inbound-http-and-timers.md` | 整读 | 中 |
+| 评估本技能是否适用 / 要修改本技能（已知边界 + 维护守则） | `references/15-skill-scope-and-maintenance.md` | 整读 | 低 |
+
+> 「成本」= 一次装载的上下文代价，粗分低 / 中 / 高 / 极高。**只有标「禁止整读」的那个才真的不能整读**，其余按需选读即可。
+
+### `assets/`（可直接复制 / 改名，**不进上下文**）
+
+| 何时复制 | 目录 | 形态 |
 |---|---|---|
-| `dsh-api-probe.py <仓库路径>` | **防过时探针（首选）**：核验 43 条正向 + 5 条反向断言 | 退出码 0/1/2/3；纯标准库、零外部命令依赖 |
-| `dsh-api-probe.sh <仓库路径>` | 同上的 bash 版（断言表须与 .py 版同步） | 依赖 coreutils；**缺 `grep` 会报假 STALE** |
-| `verify_absorbed_claims.py <仓库路径>` | **第二批断言核验器**：27 条（入站 HTTP / 定时器 / 客户端产物 / 插槽 / 防编造否定） | 先跑 `--selftest` 证明它能失败 |
-| `extract_slots.py <仓库路径> <skill目录>` | 从源码抽取**权威插槽清单**并与本技能声明比对 | 写「插槽名」前用它，不要凭表抄 |
-| `check_refs.py <skill目录>` | **资源引用一致性**：悬空引用 / 生成期素材路径 / 本机绝对路径 | 退出码 0 = 全部可在技能内解析 |
-| `dsh-sync.sh` | 把 DSH 源码拉进技能目录（`vendor/dsh-src/`） | 首次约 200 MB，**必须先经开发者确认**；**绝不执行 pnpm install** |
-| `dsh-version-diff.sh <仓库路径>` | 出「基线 → 最新」差异，六维度 + 作者自报的 `!:` 提交 | 需要本地是 git 仓库；输出可追加到 `13-version-history.md` |
-| `dsh-tag-matrix.sh <仓库路径> [out.tsv]` | 历史矩阵复核：对全部 tag 逐条核验 API 面 | 只在质疑「API 名是否稳定」这类**历史结论**时用 |
+| 只是把已有插件装到一起 | `assets/minimal-bundle/` | 零代码组合包（T1），0 行 JS |
+| 要加工具 / 命令 / 事件（**绝大多数情况**） | `assets/minimal-tool-plugin/` | 最小工具插件（T3），`defineTool` + 参数 Schema |
+| **每次开发都建议做**（决策留痕与交接） | `assets/plan-template.md` | 复制到插件项目的 `docs/plan.md` |
 
-**大文件检索**（`references/` 单文件最大 6.6k 行，优先检索而非整读）：
+> `assets/` 是**产出物**不是文档：它们会被复制进用户工程，所以**不要改成「说明本技能」的口吻**，要写成「说明这个插件」的口吻。改动后必须过 WSL 真机核验（它们要被真实 DSH 组合器接受）。
+
+### `scripts/`（确定性工具，**跑它而不是读它**）
+
+「必须跑的时机」列是硬要求——跳过对应核验会直接产出坏代码：
+
+| 必须跑的时机 | 脚本 | 用法与退出码 |
+|---|---|---|
+| **写任何 DSH 代码之前**（强制，与版本闸门是同一件事） | `dsh-api-probe.py <仓库路径>` | 核验 43 正向 + 5 反向断言。`0`=全成立 / `1`=有 STALE（**不要照抄**）/ `2`=路径错 / `3`=断言表空（结果无效）。纯标准库、零外部命令依赖，**首选** |
+| 同上，但仅在 shell 有完整 coreutils 时 | `dsh-api-probe.sh <仓库路径>` | 断言表须与 `.py` 版同步；**缺 `grep` 会报几十条假 STALE**，拿不准就用 Python 版 |
+| 用到**入站 HTTP / 定时器 / 客户端产物 / 插槽**任一项 | `verify_absorbed_claims.py <仓库路径>` | 27 条第二批断言。**先跑 `--selftest` 证明它能失败**，再跑正向 |
+| **要写插槽名之前**（不要凭表抄） | `extract_slots.py <仓库路径> <skill目录>` | 从源码抽**权威插槽清单**并双向 diff |
+| **改过本技能的任何文档或资源之后** | `check_refs.py <skill目录>` | 悬空引用 / 生成期素材路径 / 本机绝对路径；`0`=全部可在技能内解析 |
+| 目标版本高于基线，且需要本地源码 | `dsh-sync.sh` | 把 DSH 源码拉进技能目录（`vendor/dsh-src/`）。首次约 200 MB，**必须先经开发者确认**；**绝不执行 pnpm install** |
+| 目标版本高于基线，要看上游到底改了什么 | `dsh-version-diff.sh <仓库路径>` | 六维度差异 + 作者自报的 `!:` 破坏性提交；输出可追加到 `13-version-history.md` |
+| 质疑「API 名是否稳定」这类**历史结论**时 | `dsh-tag-matrix.sh <仓库路径> [out.tsv]` | 对全部 tag 逐条核验 API 面 |
+
+### 检索配方（**不要整读，先检索**）
 
 ```bash
-grep -rn "ctx.slots.inject" references/ | head -30        # 某 API 名出现在哪
-grep -n -A 40 "^### 坑 P7" references/05-pitfalls.md      # 某个坑的全文（按编号）
+grep -rn "ctx.slots.inject" references/                    # 某个 API 名出现在哪
+grep -n '^## T[0-9]' references/02-templates.md            # 定位某个模板（T1~T12）
+grep -n -A 40 "^### 坑 P7" references/05-pitfalls.md       # 某个坑的全文（按编号）
+grep -rn '^#\{1,2\} [ABCD] · 一、' references/            # 四个素材方向各有哪一册（档案册）
+grep -n '（原始素材）' references/05-pitfalls.md            # 找「整理稿 → 上游素材」的分界
 ```

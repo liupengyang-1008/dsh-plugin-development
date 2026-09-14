@@ -149,23 +149,28 @@
 
 | 素材 | 内容 | 原行数 | 已并入 |
 |---|---|---|---|
-| **A** | UI 方向坑点 | 1445 | `10-community-casebook.md` |
-| **B** | 工具 / 外部调用（52 坑 + 4 模板 + 10 规范） | 2273 | `10-community-casebook.md`；另经实战补充并入 `02-templates.md`、`05-pitfalls.md` |
-| **C** | 服务 / 记忆 / 状态内核（19 坑 + 14 模板） | 1517 | `10-community-casebook.md` |
-| **D** | 宿主 / 桌面 / 组合包（32 坑 + 4 模板） | 1189 | `10-community-casebook.md` |
-| **E** | 官方 7 类模板 + 插槽名提取（当时 40 个，⚠️ 非全量——真实约 59 个公开键） | 1044 | `02-templates.md` 附录 E |
+| **A** | UI 方向坑点 | 1445 | `10a-casebook-ui.md`（原 `10-community-casebook.md`，2026-09-14 拆册） |
+| **B** | 工具 / 外部调用（52 坑 + 4 模板 + 10 规范） | 2273 | `10b-casebook-tools.md`；另经实战补充并入 `02-templates.md`、`05-pitfalls.md` |
+| **C** | 服务 / 记忆 / 状态内核（19 坑 + 14 模板） | 1517 | `10c-casebook-services.md` |
+| **D** | 宿主 / 桌面 / 组合包（32 坑 + 4 模板） | 1189 | `10d-casebook-host-bundle.md` |
+| **E** | 官方 7 类模板 + 插槽名提取（当时 40 个，⚠️ 非全量——真实约 59 个公开键） | 1044 | `02b-official-templates.md`（原 `02-templates.md` 附录 E，2026-09-14 拆册） |
 | **F** | 官方 4 篇事故复盘 | 195 | `05-pitfalls.md` 附录 |
 | **G** | 安装 / CLI 机制逐字实证 | 254 | `06-workflow.md` 第 G 篇 |
-| **H** | ouroboros 零代码组合包全文 | 231 | `02-templates.md` 附录 H |
+| **H** | ouroboros 零代码组合包全文 | 231 | `02c-community-bundle.md`（原 `02-templates.md` 附录 H） |
 | **I** | 速查表（服务 / 事件 / 插槽 / 命令） | 187 | `08-cheatsheet.md` |
 | **J** | 官方包工程约定 | 143 | `07-conventions.md` 第 J 篇 |
+
+> **2026-09-14 拆册说明**：素材 A~D 原本全部塞在 `10-community-casebook.md`（6.6k 行 / 7.9 万词，
+> 单文件远超「<5K 词」实务指引），E/H 原本追加在 `02-templates.md` 尾部。现按**来源**拆成 6 个独立分册
+> （`10a`~`10d`、`02b`、`02c`），正文为**逐行搬迁、未改写**；`10-community-casebook.md` 转为**总索引**，
+> `02-templates.md` 只留 T1~T12 整理稿。**原文件名全部保留，零删除。**
 
 另有两份**源手册**（同样不随本 skill 发布）也是本套 references 的合成来源：《DSH 插件开发指导手册》与《DSH 插件开发实战补充：模板库·踩坑百科》。各 reference 文件头的「合成来源」行写明了每一篇由谁合成。
 
 > **坑点总量**：四个方向合计 **约 130 条**有 commit 或源码实证的坑/教训（A 100+ / B 52 / C 19 / D 32，部分重叠）。本套 references 精选了其中 **23 条最高频、最致命**的整理成症状索引（见 `05-pitfalls.md`）。
 
 **社区仓库快照与 git 历史**（13 个仓库，**不随本 skill 发布**）：生成期曾在本地以 `<工作区>/src/<仓库>/`（完整源码）与 `<工作区>/repos/<仓库>/`（提交历史）两处存放。
-⚠️ 后者是**部分克隆**，**无文件 blob**：`git log` / `ls-tree` 可用，`git show <hash>:<path>` 会报 bad object。`10-community-casebook.md` 里的「快照路径」行即指这批素材。
+⚠️ 后者是**部分克隆**，**无文件 blob**：`git log` / `ls-tree` 可用，`git show <hash>:<path>` 会报 bad object。`10a`~`10d` 里的「快照路径」行即指这批素材。
 
 ## A.3 ⚠️ 三条诚实声明
 

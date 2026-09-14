@@ -398,7 +398,7 @@ DSH 处于 pre-stable / rc 阶段，**tag 间隔中位数约 1.1 天**，并且�
 | 已知症状检索 | `references/05-pitfalls.md`（23 条坑，编号 P1~P22b） |
 | 改了代码不生效 | `SKILL.md` 的「改完代码怎么生效」表——**只改 `src/`，永远不要手改 `lib/`** |
 | 界面崩了 / slot 报错 | `references/04-ui-and-slots.md` |
-| 想追到原始社区提交与行号级出处 | `references/10-community-casebook.md` |
+| 想追到原始社区提交与行号级出处 | `references/10-community-casebook.md`（总索引）→ `10a`~`10d` 分方向分册 |
 
 > **「我明明装了啊」的五大成因**，全部落在 `SKILL.md` 的**合同不变量 5 条**上：缺 `dsh.bundle.patch`、`type`/`main`/`exports` 不全、UI 半侧声明不成对、名称三处不一致（`package.json#name` = patch 的 `id` = 客户端 `ModuleLoader.id`）、误把 `react` 打进 bundle。
 > 打包前对照这 5 条逐项打勾，能省掉大部分返工。
@@ -452,7 +452,7 @@ DSH 处于 pre-stable / rc 阶段，**tag 间隔中位数约 1.1 天**，并且�
 - 探针只覆盖它断言的 48 条事实，**不覆盖 `V` 级实现细节**。探针全绿 ≠ 你的插件能跑。
 - 文档里引用的**行号会漂移**，请按符号名核验，不要按行号。
 - 版本史只登记「会让已有代码 / 配置失效」的变更，它**不是 changelog**。
-- `references/10-community-casebook.md` 与 `12-community-plugins.md` 引用了社区仓库代码片段，**授权混杂**（含 AGPL-3.0 与 NOASSERTION），复用前请自行复核。
+- `references/10a-casebook-ui.md` ~ `10d-casebook-host-bundle.md` 与 `12-community-plugins.md` 引用了社区仓库代码片段，**授权混杂**（含 AGPL-3.0 与 NOASSERTION），复用前请自行复核。
 - 本技能**不提供**「托管静态文件」与「发布 DSH skill」两类能力面，属有意保留的空白，理由见 `references/15-skill-scope-and-maintenance.md`。
 
 ### 许可

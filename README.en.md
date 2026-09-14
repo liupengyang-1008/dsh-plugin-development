@@ -398,7 +398,7 @@ So this skill does not promise to stay current. It promises one thing: **stalene
 | Looking up a known symptom | `references/05-pitfalls.md` (23 pitfalls, IDs P1–P22b) |
 | Code changes have no effect | the "how changes take effect" table in `SKILL.md` — **edit `src/` only, never hand-edit `lib/`** |
 | UI crashed / slot errors | `references/04-ui-and-slots.md` |
-| Want line-level provenance back to the original submission | `references/10-community-casebook.md` |
+| Want line-level provenance back to the original submission | `references/10-community-casebook.md` (index) → the `10a`~`10d` per-direction volumes |
 
 > **"But I installed it!"** has five root causes, all captured by the **5 contract invariants** in `SKILL.md`: missing `dsh.bundle.patch`; incomplete `type`/`main`/`exports`; unpaired UI-half declarations; a name that is not identical in all three places (`package.json#name` = the patch's `id` = the client `ModuleLoader.id`); and shipping a second copy of `react` inside the bundle.
 > Ticking those five off before packaging eliminates most rework.
@@ -452,7 +452,7 @@ Because those numbers are **reproducible**. The project rule is that any stateme
 - The probe only covers the 48 facts it asserts. **It does not cover `V`-level implementation details.** A green probe does not mean your plugin runs.
 - Line numbers cited in `references/` **will drift**. Verify by symbol name, not by line.
 - The version history lists only changes that break existing code or configuration. **It is not a changelog.**
-- `references/10-community-casebook.md` and `12-community-plugins.md` quote community repositories under **mixed licenses** (including AGPL-3.0 and NOASSERTION). Review before reusing any code from them.
+- `references/10a-casebook-ui.md` through `10d-casebook-host-bundle.md`, plus `12-community-plugins.md`, quote community repositories under **mixed licenses** (including AGPL-3.0 and NOASSERTION). Review before reusing any code from them.
 - The skill deliberately does **not** cover "hosting static files" or "publishing a DSH skill". Rationale in `references/15-skill-scope-and-maintenance.md`.
 
 ### License

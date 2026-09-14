@@ -7,6 +7,11 @@
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
 
+> **本文件导航 —— 共 609 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
+> - **上游素材原文**：约 200 行（32%），起点：`F-official-pitfalls.md`（文件末尾）。**不是本技能重写的整理稿**；性质不一——**有的是官方文档逐字摘录（属权威原文），有的是调研期粗笔记（仅备查）**。读某一段前，务必连带读**该段开头的取材说明**。
+> - **其余部分 = 面向任务的整理稿**，可直接照做；但它同样是基线快照，写代码前先过版本闸门。
+> - 常用检索：`grep -n '^### 坑 P'`（按编号定位单条坑）、`grep -n '^# F\.'`（档案起点）
+
 ---
 
 <!-- ↓ 源：DSH插件开发实战补充-模板与踩坑.md 区间 1257-1620 -->
@@ -73,7 +78,7 @@
   "dsh": { "bundle": { "patch": "./cordis.patch.yml" } }
   ```
   且包里**必须真的带**那个文件。
-- **来源**：`apps/cli/src/plugin.ts`；社区侧印证见素材 B 坑 M1（已并入 `10-community-casebook.md`）。
+- **来源**：`apps/cli/src/plugin.ts`；社区侧印证见素材 B 坑 M1（已拆入 `10b-casebook-tools.md`）。
 
 ### 坑 P2 · `files` 漏了补丁文件 ★★
 
@@ -104,7 +109,7 @@
       disabled: !!js <判断条件>
     ```
 - **⛔ 顺序敏感提醒**：`disabled: !!js` 里能看到的**只有同一补丁内它之前的行**（官方 `better-sidebar` 补丁注释原文：`only rows before this one are visible`）。所以"退让判断"必须写在被判断的那些行**之后**。
-- **来源**：素材 D 坑 4.2（better-sidebar）、坑 3.x（anchored-standard），已并入 `10-community-casebook.md`。
+- **来源**：素材 D 坑 4.2（better-sidebar）、坑 3.x（anchored-standard），已拆入 `10d-casebook-host-bundle.md`。
 
 ### 坑 P4 · 补丁顶层写成了两个值 ★
 
@@ -220,7 +225,7 @@
   ```
 - **官方硬规则原文**：
   > Registry contributions prove disposal through the HMR-safety test required by testing policy: **dispose the fiber and observe removal.**
-- **来源**：`packages/AGENTS.md`；社区侧素材 B 坑 R2、素材 D 坑 4.3（均已并入 `10-community-casebook.md`）。
+- **来源**：`packages/AGENTS.md`；社区侧素材 B 坑 R2（`10b-casebook-tools.md`）、素材 D 坑 4.3（`10d-casebook-host-bundle.md`）。
 
 ### 坑 P12 · UI 插件改了没生效 —— 其实需要重启 ★★★
 
@@ -246,7 +251,7 @@
   3. **查 DOM 锚点**：`document.querySelector('[data-slot="<你的插槽全名>"]')` ——
      **不在 = 插槽名错了；在 = 渲染/优先级问题**。
   4. 另外：`catch(e) {}` 空捕获是这类 bug 的头号帮凶 —— 先把异常打出来。
-- **来源**：素材 A 坑 C1/C2/C4（已并入 `10-community-casebook.md`）。
+- **来源**：素材 A 坑 C1/C2/C4（已拆入 `10a-casebook-ui.md`）。
 
 ### 坑 P14 · 页面白屏，报 `window.__DSH_BOOT__ is missing` ★★
 
@@ -283,7 +288,7 @@
 - **怎么修**（社区维护者原话）：
   > `AutoSettingsPanel` now binds both methods to the scope with `useMemo` (`settings.subscribe.bind(settings)`)
 - **通用规则**：**凡是把类实例的方法交给 React 当回调，一律 `.bind(instance)`**。闭包 store（`createSnapshotStore` 之类）不用 bind。
-- **来源**：素材 A §二.3.3（已并入 `10-community-casebook.md`）。
+- **来源**：素材 A §二.3.3（已拆入 `10a-casebook-ui.md`）。
 
 ### 坑 P22 · 卸载后刷新 404 ★
 
@@ -320,7 +325,7 @@
 - **现象**：往 system prompt 里加内容，完全不生效。
 - **根因**：`agent preset` 的 persona 若声明了 `complete: true`，会**丢弃其它插件贡献的 system prompt 段**。
 - **怎么修**：加内容前先确认当前 persona 有没有 `complete: true`；有就换注入方式（如走 `agent/pre-step` 改消息）。
-- **来源**：`volcengine/OpenViking` 事故，见素材 B 坑 O1（已并入 `10-community-casebook.md`）。
+- **来源**：`volcengine/OpenViking` 事故，见素材 B 坑 O1（已拆入 `10b-casebook-tools.md`）。
 
 ---
 
