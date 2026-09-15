@@ -325,7 +325,7 @@
 - **现象**：往 system prompt 里加内容，完全不生效。
 - **根因**：`agent preset` 的 persona 若声明了 `complete: true`，会**丢弃其它插件贡献的 system prompt 段**。
 - **怎么修**：加内容前先确认当前 persona 有没有 `complete: true`；有就换注入方式（如走 `agent/pre-step` 改消息）。
-- **来源**：`volcengine/OpenViking` 事故，见素材 B 坑 O1（已拆入 `10b-casebook-tools.md`）。
+- **来源（官方一手源，MIT）**：**DSH 自身机制**，见素材 B 坑 O1（已拆入 `10b-casebook-tools.md`）。官方出处：`packages/preset/persona/src/index.ts:42-43,52,67` + 官方单测 `packages/core/system-prompt/tests/system-prompt.spec.ts:380-385`。**该条的社区来源（AGPL-3.0）已于 2026-09-16 移出本技能的引用集合。**
 
 ---
 

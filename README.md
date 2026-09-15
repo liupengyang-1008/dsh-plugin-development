@@ -452,7 +452,7 @@ DSH 处于 pre-stable / rc 阶段，**tag 间隔中位数约 1.1 天**，并且�
 - 探针只覆盖它断言的 48 条事实，**不覆盖 `V` 级实现细节**。探针全绿 ≠ 你的插件能跑。
 - 文档里引用的**行号会漂移**，请按符号名核验，不要按行号。
 - 版本史只登记「会让已有代码 / 配置失效」的变更，它**不是 changelog**。
-- `references/10a-casebook-ui.md` ~ `10d-casebook-host-bundle.md` 与 `12-community-plugins.md` 引用了社区仓库的代码与文档片段，**授权混杂**（含 **AGPL-3.0**），复用前请自行复核上游许可。完整的「来源 × 许可 × 落点」对照见根目录 `LICENSE` 末段与 `references/12-community-plugins.md`。其中 AGPL-3.0 来源的机制类内容已改用 MIT 的官方 DSH 源码重新溯源。
+- `references/10a-casebook-ui.md` ~ `10d-casebook-host-bundle.md` 与 `12-community-plugins.md` 引用了社区仓库的代码与文档片段，**许可为 MIT / Apache-2.0 / BSD-3-Clause 三类**（三者均为 permissive、**零 copyleft**；另有混合许可来源已逐包标注）。🔴 **本技能不引用任何 copyleft 来源** —— 此前引用的一个 **AGPL-3.0** 来源已于 2026-09-16 整体排除（其通用教训改写为自撰建议保留）。复用前请自行复核上游许可。完整的「来源 × 许可 × 落点」对照见根目录 `LICENSE` 末段与 `references/12-community-plugins.md`。
 - 本技能**不提供**「托管静态文件」与「发布 DSH skill」两类能力面，属有意保留的空白，理由见 `references/15-skill-scope-and-maintenance.md`。
 
 ### 许可
@@ -461,7 +461,7 @@ DSH 处于 pre-stable / rc 阶段，**tag 间隔中位数约 1.1 天**，并且�
 
 ### 第三方许可 / Third-party licensing
 
-本技能引用或复现的**第三方片段仍适用其各自许可**（含 MIT、Apache-2.0，另有 AGPL-3.0 **仅作出处标注、不复制正文**）。完整的「来源 × 许可 × 落点」清单见 [`LICENSE`](LICENSE) 末段的来源表；版权与归属声明见随包分发的 [`NOTICE`](NOTICE)。
+本技能引用或复现的**第三方片段仍适用其各自许可**（**MIT / Apache-2.0 / BSD-3-Clause 三类**，均为 permissive；另有混合许可来源按子包逐一标注）。Apache-2.0 来源的归属声明、变更声明与上游 NOTICE 已按 §4(b)(c)(d) 落在随包分发的 [`NOTICE`](NOTICE)；BSD-3-Clause 的版权声明与**无背书条款**同样落在 `NOTICE`。许可正文分别在 [`licenses/Apache-2.0.txt`](licenses/Apache-2.0.txt)、[`licenses/MIT.txt`](licenses/MIT.txt)、[`licenses/BSD-3-Clause.txt`](licenses/BSD-3-Clause.txt)。完整的「来源 × 许可 × 落点」清单见 [`LICENSE`](LICENSE) 末段的来源表；版权与归属声明见 [`NOTICE`](NOTICE)。
 
 本技能**不是**任何上游项目的官方产物，也**不代表**上游项目立场。
 

@@ -29,18 +29,25 @@ project; MIT-0 does not extend to them.
 | Source | License | Quoted in |
 |---|---|---|
 | deepseek-ai/deepseek-harness — Copyright (c) 2026 DeepSeek | MIT | 01, 02b, 03, 04, 06, 07, 08, 13, 14, assets/ |
-| volcengine/OpenViking | AGPL-3.0 | 10b |
-| zhu1090093659/dsh-web | Apache-2.0 | 02, 02b, 10a, 10d |
+| zhu1090093659/dsh-web | Apache-2.0 at the repo root; BSD-3-Clause in four of its packages | 01, 08, 10a, 10c, 10d, 13, 14 |
 | MemTensor/MemOS | Apache-2.0 | 10c |
 | huangruiteng/loopx | Apache-2.0 | 10c |
 | Tencent/WeKnora | MIT | 02, 10b |
 | anywhere-labs/dsh-desktop | MIT | 02, 02b, 10d |
-| yjh051108/dsh-routing-suite | MIT | 10b |
+| yjh051108/dsh-routing-suite | BSD-3-Clause (declared in package.json); MIT at the repo root; `graded/` ships Apache-2.0 | 10b |
 | Q00/ouroboros | MIT | 02c, 10d |
 | omdsh-dev/DSH-better-sidebar | MIT | 10d |
 | liustack/modlens | MIT | 10b |
 | xiaobright/dsh-anchored-standard | MIT | 10d |
 | tt-a1i/archify | MIT | 10c |
+
+Change notice (Apache-2.0 section 4(b)): this package redistributes no
+upstream file. What it carries are short excerpts and paraphrases,
+re-formatted into a different document and annotated in Chinese by this
+skill's author, together with repository file:line locators. Where upstream
+material has been abridged or reworded, that is stated at the point of use.
+No upstream file is therefore modified in place; this paragraph is the change
+notice for every excerpt taken from an Apache-2.0 source.
 
 Apache-2.0 sources: as required by Apache-2.0 sections 4(a) and 4(c), a copy
 of the Apache License 2.0 is included at licenses/Apache-2.0.txt, and the
@@ -53,10 +60,33 @@ MIT-licensed sources: the copyright notices retained from those sources, and
 the common MIT permission notice, are reproduced in NOTICE and at
 licenses/MIT.txt.
 
-A note on the AGPL-3.0 source: OpenViking (AGPL-3.0) is cited for provenance
-only. No source code from it is reproduced anywhere in this package, and no
-documentation of it is reproduced verbatim — such passages have been rewritten
-as original structural descriptions carrying repository file:line locators,
-and the mechanism behind each pitfall has been re-sourced to the MIT-licensed
-DSH sources that define it. What remains is attribution and locators.
+BSD 3-Clause sources: a copy of the BSD 3-Clause licence text is included at
+licenses/BSD-3-Clause.txt, and the copyright notices retained from those
+sources are reproduced in NOTICE. BSD 3-Clause is permissive, not copyleft —
+it adds only a no-endorsement clause (clause 3) on top of MIT, and this skill
+honours that clause. The two sources it covers are both mixed-licence
+repositories; the per-package breakdown is in NOTICE.
+
+Licence scope inside mixed-licence sources: two upstream repositories are not
+uniformly covered by a single licence, and this skill quotes only the parts
+named in the table above.
+
+  - zhu1090093659/dsh-web — Apache-2.0 at the root; BSD-3-Clause in
+    packages/dsh-{community-plugins,doctor,plugin-manager} and in one skin
+    directory. Four further skin asset directories are CC BY-NC-SA 4.0
+    (non-commercial). This skill reproduces nothing at all from those skin
+    asset directories: only repository-root material and `packages/` sources
+    are quoted, as set out in references/10a.
+
+  - yjh051108/dsh-routing-suite — self-inconsistent. Its root LICENSE is MIT,
+    while its package.json files declare BSD-3-Clause (root, injector/) and
+    Apache-2.0 (graded/), and injector/ ships no LICENSE file at all. This
+    skill applies the BSD-3-Clause terms to injector/ material, since they
+    carry strictly more obligations than MIT, and the Apache-2.0 terms to
+    graded/ material. The per-file breakdown is in NOTICE.
+
+A note on AGPL sources: this package cites no AGPL-licensed project. One such
+source had been used by references/10b-casebook-tools.md; it was removed from
+the cited set on 2026-09-16, with its generic lessons restated as the author's
+own advice. See the removal list at the end of that file's section 1.2.
 

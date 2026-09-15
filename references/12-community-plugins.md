@@ -59,7 +59,7 @@
 | 1 | [nexu-io/open-design](https://github.com/nexu-io/open-design) | **95,472** | TS | `@open-design/dsh-runtime` | `packages/dsh-runtime` | Web/设计集成 | Apache-2.0 |
 | 2 | [tt-a1i/archify](https://github.com/tt-a1i/archify) | **57,636** | JS | `@tt-a1i/archify-dsh` | `integrations/deepseek-harness` | 工具+图表渲染 | MIT |
 | 3 | [reactive-resume/app](https://github.com/reactive-resume/app) | **42,448** | TS | `dsh-plugin-reactive-resume` | `packages/dsh-plugin` | Web UI | MIT |
-| 4 | [volcengine/OpenViking](https://github.com/volcengine/OpenViking) | **36,559** | Python | `@openviking/dsh-memory-plugin` | `examples/dsh-memory-plugin` | 记忆服务 | AGPL-3.0 |
+| 4 | ~~volcengine/OpenViking~~ | — | — | — | — | 记忆服务 | 🔴 **AGPL-3.0 —— 2026-09-16 起本技能不再引用该来源**（见下方 ⚠️ 3 与 §9 说明） |
 | 5 | [anywhere-labs/dsh-desktop](https://github.com/anywhere-labs/dsh-desktop) | **25,403** | TS | `dsh-plugin-desktop` | `dsh-plugin-desktop` | 桌面宿主 | MIT |
 | 6 | [Tencent/WeKnora](https://github.com/Tencent/WeKnora) | **22,166** | Go | `@wxg-prc-cpg/dsh-weknora` | `packages/dsh-weknora` | 工具插件 | MIT（正文为准） |
 | 7 | [MemTensor/MemOS](https://github.com/MemTensor/MemOS) | **11,277** | TS | `@memtensor/memos-local-plugin` | `apps/memos-local-plugin` | 记忆 | Apache-2.0 |
@@ -72,7 +72,7 @@
 
 - **open-design** — 本地优先的桌面设计应用，把编码 Agent 变成设计引擎（原型 / landing page / dashboard / 幻灯片）
 - **archify** — 从代码库或系统描述生成经验证的、自包含交互式架构图 / 时序图 / 数据流图
-- **OpenViking** — `pre-step 自动召回 + profile 注入`、会话捕获、`viking://` URI 守卫、recall/write 记忆工具
+- ~~**OpenViking**~~ — 🔴 **AGPL-3.0 来源，2026-09-16 起本技能不再引用**（原描述：`pre-step` 自动召回 + profile 注入、会话捕获、URI 守卫、recall/write 记忆工具）
 - **dsh-desktop** — "万物皆插件，桌面本身也是插件"，轻量桌面端
 - **WeKnora** — ⭐ **4 个只读工具**挂在 WeKnora 知识库上：列知识库 / 混合检索 / 按序重组文档分块 / 带引用的 RAG 或 ReAct 回答
 - **dsh-web** — 任务看板、Git 图谱、侧栏、远程移动 UI、宠物、实时 token 统计、皮肤中心（**同一 monorepo 内 10+ 个独立插件**）
@@ -137,7 +137,7 @@
 | **第三方扩展点设计** | ⭐ **omdsh-dev/DSH-better-sidebar** | 第 9 章 slots | 侧边栏底座，演示"如何给别人留插槽" |
 | **设置页里的市场** | **dsh-market/dsh-market** | 第 10 章设置卡片 | 官方清单推荐，含客户端半侧 + 服务端半侧完整样例 |
 | **把已有产品接成插件** | **nexu-io/open-design**（95k） | 第 11 章打包 | 重量级集成，看大项目如何切出插件边界 |
-| **本地服务接入（Memory）** | **volcengine/OpenViking** | 第 4、7 章 | `pre-step` 钩子 + 记忆工具 + URI 守卫，看服务型插件全貌 |
+| **本地服务接入（Memory）** | **`zilliztech/memsearch`**（MIT） | 第 4、7 章 | 记忆类插件的服务型写法：MCP 客户端接入 + 工具注册 + 生命周期回收。**原列此处的一个 AGPL-3.0 来源已于 2026-09-16 排除** |
 | **多插件 monorepo 组织** | **zhu1090093659/dsh-web** | 第 14 章工程规范 | 同仓管理 10+ 插件，看 workspace / 命名 / 发布流水线 |
 
 ---
@@ -191,7 +191,7 @@ dsh plugin --profile web add dsh-find-plugin
 |---|---|
 | ⚠️ 1 | **star 数不等于插件质量**。≥5000 档里 16/27 是蹭 topic 的无关仓库；反过来说，生态里被广泛使用的插件（如 `dsh-find-plugin`、各类主题包）star 只有几百 |
 | ⚠️ 2 | **生态极年轻**。清单里创建的插件绝大多数是 2026-08 之后建的（不到一个月）。star 数还在快速变动，本清单会很快过时 |
-| ⚠️ 3 | **授权混杂**。OpenViking 是 **AGPL-3.0**（传染性）；WeKnora 的 LICENSE 正文实为 **MIT** —— GitHub API 报 `NOASSERTION` 是因为它用了自定义 LICENSE 文本（正文第 8 行明写 "licensed under the MIT License except for the third-party components"），**不等于无授权**。想抄代码进自己项目前**务必核对 license 正文**，不要只信 API 字段 |
+| ⚠️ 3 | **授权务必看正文 + 看子包**。本技能踩过三类误判：① 自动分类在超长复合文本上误报（`WeKnora` 的 158 KB 文本被判成 Apache-2.0，实为 **MIT** 主体 —— 正文第 8 行明写 "licensed under the MIT License except for the third-party components"）；② GitHub API 报 `NOASSERTION` 只是**解析不了**自定义文本，**不等于无授权**；③ **根 LICENSE 与子包声明可以不一致** —— `dsh-web` 根为 Apache-2.0，但 `packages/dsh-{community-plugins,doctor,plugin-manager}` 是 **BSD-3-Clause**，资源目录还含 **CC BY-NC-SA 4.0**。想抄代码进自己项目前**两处都要核**，不要只信 API 字段。**另：一个 AGPL-3.0 来源已于 2026-09-16 从本技能的引用集合中排除。** |
 | ⚠️ 4 | **topic 会被滥用**。任何仓库都能自己加 `dsh-plugin` topic。判据永远是**看它有没有 `dsh.bundle`**，不是看 topic |
 | ⚠️ 5 | 本清单基线为 **2026-09-11**，DSH 版本 `0.1.5-rc.2`（commit `c291e7961a`）。项目处于 pre-stable，插件 API 可能破坏性变更 |
 
@@ -204,13 +204,12 @@ dsh plugin --profile web add dsh-find-plugin
 | 来源 | 许可 | 本技能内的落点 |
 |---|---|---|
 | `deepseek-ai/deepseek-harness`（Copyright (c) 2026 DeepSeek） | MIT | `01`、`02b`、`03`、`04`、`06`、`07`、`08`、`13`、`14`、`assets/` |
-| `volcengine/OpenViking` | **AGPL-3.0** | `10b`（**仅 §1.2**；**不收录其代码，也不转载其文档原文** —— 只保留自撰的机制描述与 `文件:行号` 出处） |
-| `zhu1090093659/dsh-web` | Apache-2.0 | `02`、`02b`、`10a`、`10d` |
+| `zhu1090093659/dsh-web` | Apache-2.0（根）；**四个子包为 BSD-3-Clause** | `01`、`08`、`10a`、`10c`、`10d`、`13`、`14` |
 | `MemTensor/MemOS` | Apache-2.0 | `10c` |
 | `huangruiteng/loopx` | Apache-2.0 | `10c` |
 | `Tencent/WeKnora` | MIT | `02`、`10b` |
 | `anywhere-labs/dsh-desktop` | MIT | `02`、`02b`、`10d` |
-| `yjh051108/dsh-routing-suite` | MIT | `10b` |
+| `yjh051108/dsh-routing-suite` | **BSD-3-Clause**（`package.json` 声明；根 LICENSE 却是 MIT，`injector/` 无 LICENSE 文件）；`graded/` 自带 Apache-2.0 全文 | `10b` |
 | `Q00/ouroboros` | MIT | `02c`、`10d` |
 | `omdsh-dev/DSH-better-sidebar` | MIT | `10d` |
 | `liustack/modlens` | MIT | `10b` |
@@ -220,7 +219,9 @@ dsh plugin --profile web add dsh-find-plugin
 **两条判读纪律（都踩过）**：
 
 1. **许可证类别只以 LICENSE 正文为准**，不要用 GitHub API 的 `license` 字段。它对自定义文本会返回 `NOASSERTION` —— 那是「**解析不了**」，不是「**没有许可**」。WeKnora 即此例：API 报 `NOASSERTION`，正文第 8 行实为 MIT。
-2. **Apache-2.0 的来源在再分发时需保留其归属声明**（Apache-2.0 §4(c)），**并在上游自带 NOTICE 时逐字转载其 NOTICE**（§4(d)）。本技能已把这两件事落在随包分发的 `NOTICE` 里（`huangruiteng/loopx` 的 NOTICE 原文逐字转载于一节），并按 §4(a) 随包附上 `licenses/Apache-2.0.txt`。
+2. **Apache-2.0 的来源在再分发时需保留其归属声明**（§4(c)）、**修改须带变更声明**（§4(b)）、**并在上游自带 NOTICE 时逐字转载其 NOTICE**（§4(d)）。本技能已把这三件事落在随包分发的 `NOTICE` 里：`loopx` 的**两份** NOTICE（仓库根 + `packages/dsh-loopx-plugin/`）均逐字转载于 §1，§0 是统一的变更声明；并按 §4(a) 随包附上 `licenses/Apache-2.0.txt`。
+3. **BSD-3-Clause 的来源**：也属 permissive（**非 copyleft**），但比 MIT **多一条无背书条款** —— 不得用版权人或贡献者名义为衍生品背书。本技能已把**版权声明 + 无背书条款**落在随包 `NOTICE` 的 §2，许可正文随包附在 `licenses/BSD-3-Clause.txt`（逐字取自上游 `packages/dsh-doctor/LICENSE`，1,521 B）。
+4. **本技能不引用任何 copyleft 来源。** 引用集合只有 **MIT / Apache-2.0 / BSD-3-Clause** 三类，全部 permissive（另有两个「根 LICENSE 与子包声明不一致」的混合许可来源，已在第 1 点的表格里**逐包**标注）。
 
 ---
 

@@ -452,7 +452,7 @@ Because those numbers are **reproducible**. The project rule is that any stateme
 - The probe only covers the 48 facts it asserts. **It does not cover `V`-level implementation details.** A green probe does not mean your plugin runs.
 - Line numbers cited in `references/` **will drift**. Verify by symbol name, not by line.
 - The version history lists only changes that break existing code or configuration. **It is not a changelog.**
-- `references/10a-casebook-ui.md` through `10d-casebook-host-bundle.md`, plus `12-community-plugins.md`, quote code and documentation from community repositories under **mixed licenses** (including **AGPL-3.0**). Review the upstream license before reusing anything. For the full source × license × location table see the end of the root `LICENSE` and `references/12-community-plugins.md`. The mechanism-level content that came from the AGPL-3.0 source has been re-sourced to the MIT-licensed official DSH sources.
+- `references/10a-casebook-ui.md` through `10d-casebook-host-bundle.md`, plus `12-community-plugins.md`, quote code and documentation from community repositories under **MIT, Apache-2.0 or BSD-3-Clause** licences — all three are permissive, none is copyleft (two sources are mixed-licence monorepos whose subpackages differ, annotated package by package). 🔴 **This skill cites no copyleft source** — one AGPL-3.0 source had been cited earlier and was removed from the cited set on 2026-09-16 (its general lessons restated as the author's own advice). Review the upstream licence before reusing anything. For the full source × licence × location table see the end of the root `LICENSE` and `references/12-community-plugins.md`.
 - The skill deliberately does **not** cover "hosting static files" or "publishing a DSH skill". Rationale in `references/15-skill-scope-and-maintenance.md`.
 
 ### License
@@ -461,7 +461,7 @@ This skill's **original content** (prose, tooling scripts, templates) is release
 
 ### Third-party licensing
 
-**Quoted or reproduced third-party fragments remain under their own licenses** (including MIT and Apache-2.0; AGPL-3.0 appears as a provenance note only, with no text reproduced). The full source × license × location list is in the source table at the end of [`LICENSE`](LICENSE); the copyright and attribution notices are in the [`NOTICE`](NOTICE) file distributed with this package.
+**Quoted or reproduced third-party fragments remain under their own licenses** (**MIT, Apache-2.0 and BSD-3-Clause** — all permissive; the two mixed-licence sources are annotated package by package). For Apache-2.0 sources the attribution notices, the change notice required by section 4(b) and the upstream NOTICE texts required by section 4(d) are all reproduced in the [`NOTICE`](NOTICE) file. For BSD-3-Clause sources the copyright notices and the no-endorsement clause (clause 3) are handled in the same file. The licence texts ship at [`licenses/Apache-2.0.txt`](licenses/Apache-2.0.txt), [`licenses/MIT.txt`](licenses/MIT.txt) and [`licenses/BSD-3-Clause.txt`](licenses/BSD-3-Clause.txt). The full source × license × location list is in the source table at the end of [`LICENSE`](LICENSE).
 
 This skill is **not** an official product of any upstream project, and does **not** represent the position of any upstream project.
 

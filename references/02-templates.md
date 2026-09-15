@@ -1085,7 +1085,7 @@ ctx.on('事件名', async (payload, next) => {
 
 ### 10.4 ⚠️ 社区真实事故：**用 system prompt 注入内容会被 persona 整段丢弃**
 
-来自 `volcengine/OpenViking` 的坑（详见 `05-pitfalls.md` 坑 P17 与素材 B 坑 O1）：
+来自 DSH **自身机制**的坑（**官方一手源，MIT**；详见 `05-pitfalls.md` 坑 P17 与素材 B 坑 O1）：
 **`agent preset` 的 persona 若声明了 `complete: true`，会丢弃其它插件贡献的 system prompt 段。**
 → 想往 system prompt 里加内容时，**先确认当前 persona 有没有 `complete: true`**。
 

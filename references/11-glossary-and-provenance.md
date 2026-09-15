@@ -122,7 +122,7 @@
 
 # 附录 · 素材来源与边界（**请务必读**）
 
-## A.1 本补充用到的 13 个真实仓库
+## A.1 本补充用到的真实仓库（原列 13 个，其中 1 个为 AGPL-3.0，已于 2026-09-16 排除）
 
 | 仓库 | ★ | 本补充用它讲什么 |
 |---|---|---|
@@ -131,7 +131,7 @@
 | `omdsh-dev/DSH-better-sidebar` | 3,383 | 侧栏底座与**扩展点设计** |
 | `dsh-market/dsh-market` | 3,625 | 设置页可视化插件市场 |
 | `Tencent/WeKnora` | 22,166 | **最干净的社区工具插件范本** |
-| `volcengine/OpenViking` | 36,559 | 记忆服务 + 事件钩子 |
+| ~~`volcengine/OpenViking`~~ | — | 🔴 **AGPL-3.0 —— 2026-09-16 起不再引用**（原用途：记忆服务 + 事件钩子） |
 | `liustack/modlens` | 1,050 | bundle + client 双声明 |
 | `yjh051108/dsh-routing-suite` | 7,162 | 运行时注入 / 事件拦截 |
 | `MemTensor/MemOS` | 11,277 | **服务生命周期 + 副作用回收** |

@@ -6,14 +6,13 @@
 > **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `v0.1.5-rc.2` / commit `c291e7961a`，2026-09-10），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
-> ⚠️ **许可警示（本册特有，务必先读）**：本册涉及的第三方仓库**许可混杂** ——
-> · `volcengine/OpenViking`（§1.2）为 **AGPL-3.0**（**强 copyleft，含网络服务条款**）；
-> · `Tencent/WeKnora`（§1.1）、`liustack/modlens`（§1.3）、`yjh051108/dsh-routing-suite`（§1.4）为 **MIT**。
-> **关于 AGPL-3.0 来源：本册不收录其代码，也不转载其文档原文。** §1.2 中来自该仓库的内容
-> **一律是自撰的结构性描述**（每条都标注了对应的 `仓库 文件:行号` 定位），措辞已按确定性表述重写，
-> 不再使用「在可行范围内」这类留有余地的说法。需要字段级原文时请自行查阅上游仓库。
-> **照抄任何第三方片段进你的项目前，都要先核对它的上游许可** —— 尤其是 AGPL-3.0 的传染条款。
-> 完整来源、许可与版权声明对照见本技能根目录 `LICENSE` 末段与随包分发的 `NOTICE`。
+> 🔴 **许可警示（本册特有，务必先读）**：**本册只引用 MIT / Apache-2.0 / BSD-3-Clause 三类来源，不含任何 copyleft 内容。**（三者均为 permissive；BSD-3-Clause 比 MIT 只多一条无背书条款。）
+> · `Tencent/WeKnora`（§1.1）· `liustack/modlens`（§1.3）为 **MIT**；
+> · `yjh051108/dsh-routing-suite`（§1.4）**许可自相矛盾**：根 `LICENSE` 是 MIT，但根 `package.json` 与 `injector/package.json` 声明 **BSD-3-Clause**（`injector/` 又**没有** LICENSE 文件），`graded/` 自带 **Apache-2.0** 全文。→ 本技能对 `injector/` 内容**按更严的 BSD-3-Clause 处理**（BSD-3 的义务严格多于 MIT），`graded/` 内容按 Apache-2.0 处理。逐包对照见随包 `NOTICE` §2；
+> · `zhu1090093659/dsh-web` 为 **Apache-2.0（仓库根）**，但其**四个子包**为 **BSD-3-Clause**，另有资源目录属 **CC BY-NC-SA 4.0（非商业）** —— 本册**不引用任何资源目录内容**。
+> 🔴 **2026-09-16 来源政策收紧**：本册此前引用的一个 **AGPL-3.0** 来源**已整体移出本技能的引用集合**（原为 §1.2 的内容承载方）。
+> 该来源**已整体移出本技能的引用集合**：其**私有实现类坑全部删除**，**通用教训提炼为 8 条自撰建议**保留在 §1.2 —— 知识不丢，来源不再引用。移除清单见 §1.2 末尾。
+> **照抄任何第三方片段进你的项目前，都要先核对它的上游许可。** 完整来源、许可与版权声明对照见本技能根目录 `LICENSE` 末段与随包分发的 `NOTICE`。
 
 ---
 
@@ -24,7 +23,7 @@
 > 用途：《DSH 插件开发实战手册·补充篇》原始素材。读者定位：零软件工程经验。
 > 调研对象（4 个仓库，均为 dsh 0.1.x 生态真实插件）：
 > 1. `Tencent_WeKnora` → 包 `packages/dsh-weknora`（`@wxg-prc-cpg/dsh-weknora`）
-> 2. `volcengine_OpenViking` → 包 `examples/dsh-memory-plugin`（`@openviking/dsh-memory-plugin`）
+> ~~2. `volcengine_OpenViking` → `@openviking/dsh-memory-plugin`~~ —— 🔴 **AGPL-3.0 来源，2026-09-16 已整体移出本技能的引用集合**（其通用教训已提炼为 §1.2 的 8 条自撰建议）
 > 3. `liustack_modlens` → 包根即插件（`@liustack/modlens`，`dsh/` 目录为 dsh 半边）
 > 4. `yjh051108_dsh-routing-suite` → `injector/`（`@dsh-external/dsh-super-injector`）+ `graded/`（`@dsh-external/dsh-graded-mode`）
 >
@@ -187,13 +186,15 @@ a68bc532 docs: link dsh-weknora to its npm package page
 
 ---
 
-## 1.2 volcengine_OpenViking / `examples/dsh-memory-plugin`（`@openviking/dsh-memory-plugin`）
+## 1.2 DSH 自身机制类坑（**官方一手源 · MIT**）
 
-该包 dsh 相关提交（`git log --oneline -- examples/dsh-memory-plugin`，节选）：
+> 🔴 **本节来源政策（2026-09-16 起）**：本节只收录**能定位到官方 `deepseek-harness`（MIT）源码行号**的机制类坑。
+> 原列入本节的「社区记忆服务插件」内容承载方为 **AGPL-3.0** 来源，其**私有实现类坑已整体移除**（见本节末的移除清单）——
+> 那些条目讲的是「怎么接某个特定的记忆服务」，不是「DSH 插件怎么写」，且其许可**不在本技能保留的来源集合内**
+> （保留下来的第三方来源只有 **MIT** 与 **Apache-2.0** 两类）。
+> 标为「自撰建议」的条目不受此限：它们不引用任何上游代码，只给判据。
 
-  > 📌 该片段属 `volcengine/OpenViking`（**AGPL-3.0**）来源，按本技能的许可整改要求**不再转录代码** —— 出处行号见上一段。涉及的 DSH 通用 API 用法见 `03-api-cookbook.md`。
-
-> 注意：后几条（`187657bb`/`b02f6025`/`daf5fb17`/`3b1db208`/`cf5cc308`）的 commit message **只有标题、正文为空**；不得为其编造细节，只能引用标题。
+下列三条机制的权威出处都是**官方源码 + 官方单测**，而不依赖任何社区仓库：
 
 ### 坑 O1（最重要，且是“静默失效”类）：用 system prompt 注入记忆会被 persona 的 `complete: true` 整段丢弃
 
@@ -208,7 +209,7 @@ a68bc532 docs: link dsh-weknora to its npm package page
 
   **机制**：当某个 preset 的 persona 声明了 `complete: true`（内置 `minimal` preset 即如此），组装完成后 persona 段会被还原为**唯一**的 prompt 段，其它贡献随之被静默丢弃；因此走 system prompt 的记忆插件在这类 preset 下会丢掉上下文，而且不报错。本技能引用这条机制，是为了解释下面为什么推荐 `agent/pre-step` 而非 system prompt。
 
-  > ⚠️ 本坑最初由社区仓库 `volcengine/OpenViking`（**AGPL-3.0**）的 `examples/dsh-memory-plugin` 在其设计说明里记录下来——它是「谁先踩到」的见证者。本技能此处**已改用官方一手出处**，不再转述该仓库的文档。
+  > 📌 本坑早期由一份外部设计说明记录过（该来源为 AGPL-3.0，已按本节来源政策移除）。本技能此处**只保留官方一手出处**，不转述任何社区文档。
 
 - **现象**：记忆/画像注入“看起来装好了”，但在 `minimal` 这类 preset 下完全没有生效，且**没有任何报错**。
 - **根因**：dsh 的 persona 若声明 `complete: true`，组装后会用 persona 段覆盖成“唯一 prompt 段”，其它 system prompt 贡献被静默丢弃。
@@ -227,152 +228,53 @@ a68bc532 docs: link dsh-weknora to its npm package page
   ```
 
   **要点**：`{ prepend: true }` 让**下游监听器先跑**，所以**必须先 `await next()` 拿到最终结果再追加**，不能凭空造——这样本插件才是「最后说话的人」。这个选项是官方 API，官方另有用法见 `packages/core/system-prompt/tests/system-prompt.spec.ts:391`。
-  注入的消息应当用 **dsh 自己的消息构造器**生成，而不是手搓对象字面量——这样 identity、规范化与未来的 Message 不变量都由宿主保证；生成的消息带 `source: { kind: 'plugin', … }` 归属标记，下游可据此区分来源。（原出处为社区仓库 `volcengine/OpenViking` 的 `examples/dsh-memory-plugin/runtime.mjs:406-417`，此处不再贴其代码；构造器本身的用法与契约以当前 DSH 源码为准。）
+  注入的消息应当用 **dsh 自己的消息构造器**生成，而不是手搓对象字面量——这样 identity、规范化与未来的 Message 不变量都由宿主保证；生成的消息带 `source: { kind: 'plugin', … }` 归属标记，下游可据此区分来源。（构造器本身的用法与契约以当前 DSH 源码为准；本技能不引用该外部说明的原文。）
 - **给手册的教训**：**“没有报错的失效”是最危险的坑**。往 system prompt 塞内容前，先确认目标 preset 的 persona 是否 `complete: true`；插件注入优先走消息通道。
 
-### 坑 O2：直连服务端 `/mcp` → `tools/list` 永不返回
+> **已移除**：原坑 O2（直连服务端 `/mcp` → `tools/list` 永不返回）—— 承载来源为 AGPL-3.0，**不在本技能保留的来源集合内**（见本节末移除清单）。
 
-- **来源**：`volcengine/OpenViking`（**AGPL-3.0**）— `examples/dsh-memory-plugin/README.md`（**仅作出处标注，不转载原文**）。
+- **通用结论（自撰观察，与任何上游实现无关）**：`dsh plugin` 把安装动作转发给 profile 目录下的 pnpm，所以插件必须是**真实包**；`dsh plugin add ./path/to/plugin` 这种源码链接只有在那个 checkout 自带 `node_modules` 时才行 —— 因为 Node 会从**源树的 realpath** 解析 dsh peers，而不是从 profile 目录解析。
 
-  **机制（自撰归纳，非上游文本）**：服务端以 `stateless_http=True` 运行时，`GET /mcp` 会回一条**一直挂着不结束**的 200 流式响应。MCP SDK 客户端把这条流当成会话通道接管过去之后，后续 POST 的响应就没有人去解析了 —— 外在表现就是 `tools/list` 永远等不到结果。自建 stdio 代理不碰这条流，所以只有「直连服务端」这一路会中招。
+> **已移除**：原坑 O3（凭据形状环境变量在继承链上被丢掉）与坑 O4（失败写入的 latch 只在会话初始化时复位）—— 承载来源均为 AGPL-3.0，**不在本技能保留的来源集合内**（见本节末移除清单）。两条的**通用教训**保留如下（自撰建议，不引用任何上游代码）：
 
-- **现象**：MCP 桥接后模型看不到任何工具，`tools/list` 一直挂起。
-- **根因**：`stateless_http=True` 的服务端对 `GET /mcp` 返回一个“空闲 200 SSE 流”，MCP SDK 客户端一旦打开这条独立流就不再解析 POST 响应。
-- **怎么修**：改用**自建的 stdio 代理**（`servers/mcp-proxy.mjs`），由代理自己拥有传输层。`mcp.mjs:6-7 / 44-46`：
-
-  > 📌 该片段属 `volcengine/OpenViking`（**AGPL-3.0**）来源，按本技能的许可整改要求**不转录代码**，只作出处标注（`mcp.mjs:6-7 / 44-46`）。涉及的 DSH 通用 API 用法见 `03-api-cookbook.md`。
-  README 同时写明：`mcp.mjs` 挂载 `@deepseek-ai/dsh-mcp-client`，与其它 harness 的集成完全一致，**这样模型拿到的是服务端全量工具集，而不是手维护的子集**。
-- **附带结论（安装方式）**：`dsh plugin` 转发给 profile 目录下的 pnpm，所以插件必须是**真实包**；`dsh plugin add ./examples/dsh-memory-plugin` 这种源码链接只有在那个 checkout 有自己的 `node_modules` 时才行，因为 Node 从**源树的 realpath** 解析 dsh peers，而不是从 profile。
-
-### 坑 O3：dsh 会 scrub 掉继承环境里的“凭据形状”变量，子进程看不到 Cordis patch
-
-- **来源**：`volcengine/OpenViking`（**AGPL-3.0**）— `examples/dsh-memory-plugin/mcp.mjs:9-17`（**仅出处标注，不转载原文**）。
-
-  **机制（自撰归纳）**：这个 bundle 解析凭据的顺序是「以 `OPENVIKING_` 为前缀的环境变量 → 凭据文件 → 另一份配置」，**再加上 Cordis patch 里写的内容**；解析出来的结果要靠**子进程环境**带下去。问题出在两处：DSH 会把名字长得像凭据的变量从**继承来的环境**里剔掉，而 Cordis patch 对子进程**不可见**。两边一夹，运行时明明已经解析好的值，到子进程那里就没了 —— 所以必须显式传。
-
-- **现象**：MCP 代理子进程连不上服务端（凭据为空）。
-- **根因**：dsh 把形如凭据的环境变量从**继承环境**里剔除；子进程又读不到 Cordis patch。
-- **怎么修**：宿主在 `apply()` 里已解析好的值，**显式写进子进程 env**。`mcp.mjs:18-36`：
-
-  > 📌 该片段属 `volcengine/OpenViking`（**AGPL-3.0**）来源，按本技能的许可整改要求**不再转录代码** —— 出处行号见上一段。涉及的 DSH 通用 API 用法见 `03-api-cookbook.md`。
-
-### 坑 O4：失败写入的 latch 只在会话初始化时重置 → 长驻进程卡死到重启
-
-- **来源**：`volcengine/OpenViking`（**AGPL-3.0**）— commit `3841e6f2`（`fix(plugins): drain the dsh pending queue in-process so a transient write failure self-heals`，#4779）。**仅引标题作出处，不转载正文。**
-
-  **机制（自撰归纳）**：插件在**第一次可重试的写入失败**时就把 capture/commit 置成「锁存」状态（`hasPendingWrites`），而这个锁**只在会话初始化时**才复位 —— 于是长驻的 dsh 进程一旦中招，就再也写不进去，直到重启。修法是在进程内加一个**单飞 drainer**（默认 60s 一次，间隔可用 `OPENVIKING_PENDING_DRAIN_INTERVAL_MS` 调）：它按会话启动的流程走一遍 —— 先探健康、再回放队列、**回放时不消耗重试预算** —— 最后从队列**重新推导**每个会话的锁存状态。回放这一步还加了个可选开关，让 drainer 把失败认领**退回原文件名**而不是累加重试计数。
-
-- **现象**：网络抖一下之后，capture/commit **永久不工作**，直到重启 dsh。
-- **根因**：第一次可重试写失败就置 `hasPendingWrites = true`（“锁存”），而这个锁只在 session init 时重置。
-- **怎么修**：进程内**单飞 drainer**，默认 60s 一次，先探健康再回放队列，回放时**不消耗重试预算**。`runtime.mjs:344-388` 关键片段：
-
-  > 📌 该片段属 `volcengine/OpenViking`（**AGPL-3.0**）来源，按本技能的许可整改要求**不再转录代码** —— 出处行号见上一段。涉及的 DSH 通用 API 用法见 `03-api-cookbook.md`。
-  启动与清理都挂 `ctx.effect`，`index.mjs:24-31`：
-
-  > 📌 该片段属 `volcengine/OpenViking`（**AGPL-3.0**）来源，按本技能的许可整改要求**不再转录代码** —— 出处行号见上一段。涉及的 DSH 通用 API 用法见 `03-api-cookbook.md`。
-  定时器 `unref()` 避免阻止进程退出（`runtime.mjs:386`：`this.drainTimer.unref?.();`）。
-- **给手册的教训**：**“锁存式失败”是长驻进程的隐形炸弹**。任何 `failed = true` 的降级开关，都必须有一条自动恢复路径（这里是一条后台 drainer）。
+- **教训 1**：宿主在 `apply()` 里**已经解析好**的配置值，不要指望子进程自己再解析一遍 —— **显式写进子进程的 `env`**。凭据类配置尤其如此：继承环境里「长得像凭据」的变量会被宿主清理，而配置补丁对子进程不可见；两头都不通时，运行时表现为「凭据为空」，而不是报错。
+- **教训 2**：**「锁存式失败」是长驻进程的隐形炸弹**。任何 `failed = true` 的降级开关，都必须配一条自动恢复路径（后台重放 + 状态重推导），并给定时器加 `unref()`，免得它阻止进程退出。
 
 ### 坑 O5：DSH 工具结果用 camelCase 的 `isError`，插件只认 `is_error` → 失败的调用被记成“成功”
 
-- **来源**：`volcengine/OpenViking`（**AGPL-3.0**）— commit `98f24e16`（`fix(plugins): treat camelCase isError as an error tool result`，#4724）。**仅引标题作出处，不转载正文。**
+- **来源（官方一手源码，MIT）**：这是 **DSH 自身的契约**，官方有三处记载 ——
 
-  **机制（自撰归纳）**：DSH 吐出的 tool-result 块里，错误标志用的是 camelCase 的 `isError`；而共享的捕获工具只检查了 `is_error` / `error` / `state.error` 这几种写法。两边对不上，**失败的调用就被记成 `completed`** —— 错误文本其实还在 `tool_output` 里，但状态字段是错的。这个错标**不会**影响 LLM 的记忆抽取（上游端到端验证过），但会污染所有**看状态行事**的消费方：经验血缘、用量统计、工作记忆格式化、训练产物。修法是让判定同时认这两种拼写。
+  | # | 官方出处（MIT） | 原文/要点 |
+  |---|---|---|
+  | ① | `packages/llm/llm/src/types.ts:105` | 工具结果块里字段名就是 camelCase：`isError?: boolean` |
+  | ② | `packages/extensions/tool-cordis/src/api-catalog.ts:6111` | 契约全文：`export interface ToolResultBlock { type: 'tool-result'; toolCallId: ToolCallId; content: ContentBlock[]; isError?: boolean; }` |
+  | ③ | `packages/acp/acp/src/updates.ts:82` | 官方生产代码即用它判成败：`status: result.isError === true ? 'failed' : 'completed'` |
 
-- **现象**：工具调用**失败了**，但捕获下来的 `tool_status` 是 `completed`（错误文本仍在 `tool_output`）。
-- **根因**：dsh 的 tool-result 块字段是 camelCase `isError`，插件只检查了 snake_case `is_error`。
-- **怎么修**：两个拼写都认。`shared/capture-utils.mjs:155-157`：
+- **现象**：消费方自己写「失败判定」时按 snake_case `is_error` 去读，**永远读不到** —— 失败的调用被记成 `completed`（错误文本仍在 `tool_output` 里，只是状态字段是错的）。
+- **根因**：契约字段是 camelCase `isError`，而不少 JS / Python 生态的同类字段惯例是 snake_case `is_error`；照习惯手写判定就会静默错标。
+- **怎么修（自撰建议）**：判定里**两种拼写都认**（`result.isError ?? result.is_error` 一类的兼容读法），并且**给这个判定补一条测试**。这类错标只影响「看状态行事」的消费方（血缘、用量统计、工作记忆格式化、训练产物），不会当场报错，是最难发现的一类。
+- **给手册的教训**：读宿主回传的结构时，**字段命名的拼写变体（snake_case vs camelCase）是一类系统性坑**。**判据永远是 DSH 自己的类型声明，不是别的生态的命名习惯。**
 
-  > 📌 该片段属 `volcengine/OpenViking`（**AGPL-3.0**）来源，按本技能的许可整改要求**不再转录代码** —— 出处行号见上一段。涉及的 DSH 通用 API 用法见 `03-api-cookbook.md`。
-  同时补了一个针对该共享受阻工具的测试用例，并把它登记进 CI 的 plugin-tests 列表（此前只有作者本地会跑，CI 不会覆盖）。
-- **给手册的教训**：读宿主回传的结构时，**字段命名的拼写变体（snake_case vs camelCase）是一类系统性坑**；判错只影响“统计/下游消费”，不会立刻报错，最难发现。
+> **已移除**：原坑 O6（代理自身超时被误报为「服务器不可达」）、坑 O7（URI 守卫把文件正文当路径扫）、坑 O8（Electron 下 `process.execPath` 不是 Node）—— 承载来源均为 AGPL-3.0，**不在本技能保留的来源集合内**（见本节末移除清单）。三条的**通用教训**保留如下（自撰建议，不引用任何上游代码）：
 
-### 坑 O6：MCP 代理**自身超时**被当成“服务器不可达”上报
+- **教训 3（错误分类）**：**错误码要能区分「对方挂了」与「我们等太短」**。把「本端超时」混进 catch-all 兜底，会把健康服务报成故障，用户就去查一个根本没坏的东西。超时错误要在消息里点名：**耗时预算 + 端点 + 放宽它的那个旋钮名**。
+- **教训 4（参数级校验）**：做参数级校验（例如拦截某种协议的 URI）时，先分清哪些字段是**位置**、哪些是**内容**。对「剩下的全部参数值」无差别全扫，会让**正文里恰好提到该协议**的正常写入被误拒 —— 拦截器误伤比放行更烦人。误拦时要给出「改用哪个工具 + 一个可抄的调用示例」。
+- **教训 5（跨平台子进程）**：桌面宿主（Electron 一类）里 **`process.execPath` 是宿主二进制、不是 Node**。要让 Electron 以 Node 模式跑脚本，标准解法是显式设 `ELECTRON_RUN_AS_NODE=1`；且**启动子进程的方案要按宿主类型分支，不能一把梭** —— 同一处曾出现「改动 → 回滚」的往复，正是「一把梭」的代价。
 
-- **来源**：`volcengine/OpenViking`（**AGPL-3.0**）— commit `f7c6e843`（`fix(memory-plugins): report client-side MCP proxy timeouts as -32004 instead of unreachable`，#4741）。**仅引标题作出处，不转载正文。**
+> **已移除**：原坑 O9（re-seed 后 profile 被重复注入）、坑 O10（URI 有歧义 → 做成 breaking change），连同「其它相关提交」与「文档线索表」中依赖该来源的条目 —— 承载来源均为 AGPL-3.0，**不在本技能保留的来源集合内**（见本节末移除清单）。保留的**通用教训**如下（自撰建议，不引用任何上游代码）：
 
-  **机制（自撰归纳）**：被**代理自己的超时预算**掐断的请求，会掉进 `mapError()` 的兜底分支，于是被报成「连不上，去查 URL / 服务端可达性」—— 可服务端明明是健康的、还在算。带 rerank 的检索**动辄几十秒**，本来就超过默认的 15s 预算，这类调用**全被误报成故障**。修法是在兜底之前**先判 `AbortError`**，单独返回一个专用错误码，并在消息里点名：耗时预算、端点、以及调哪个旋钮（`OPENVIKING_TIMEOUT_MS`）。原有「连不上」的错误码保持原含义不变；空响应已经占了另一个码，所以超时用新码。
+- **教训 6（幂等注入）**：任何「每会话只注入一次」的东西，都必须有**幂等判据** —— 建议直接用宿主给消息打的 `source.kind` / `plugin` / `form` 三件套，去查「本会话历史里是否已经有本插件的 instructions 消息」。**并且要同时覆盖 `session.events` 与「inbox 待发队列」两条路径**，否则会话重建（re-seed）之后会重复注入。
+- **教训 7（歧义即拒绝）**：URI / 路径里出现「保留字 vs 真实名」的歧义时（例如 `scheme://user/<name>` 里的 `<name>` 既可能是保留段、也可能是真实用户名），**宁可在请求边界直接拒绝并给出正确写法，也不要猜**；配套要把历史写法做兼容归一化。
+- **教训 8（前缀即命名空间）**：以固定前缀承载配置与身份（如 `XXX_` 一族环境变量）时，**API key 是最常被漏的一项**；上线前用一条「缺哪个变量」的自检把它变成可报错的事，而不是等运行时空值。
 
-- **现象**：服务端健康、任务还在算，调用却报 `-32001 check the URL / server reachable`（误判为断连）。
-- **根因**：代理自己的超时（默认 15s）抛 `AbortError`，落进了 catch-all 分支。
-- **怎么修**：在 catch-all **之前**先判 `AbortError`，返回专用错误码 `-32004`，消息里点名“耗时预算 + 端点 + `OPENVIKING_TIMEOUT_MS` 旋钮”。`shared/mcp-proxy-core.mjs:295-309` 片段：
+#### 一条与任何插件无关的通用事实：包版本自守
 
-  > 📌 该片段属 `volcengine/OpenViking`（**AGPL-3.0**）来源，按本技能的许可整改要求**不再转录代码** —— 出处行号见上一段。涉及的 DSH 通用 API 用法见 `03-api-cookbook.md`。
-- **给手册的教训**：**错误码要能区分“对方挂了”和“我们等太短”**，否则用户会去查一个根本没坏的服务。错误消息里要给出“调哪个环境变量可以放宽”。
+写插件包时，让「包内自报版本」与 `package.json` 的 `version` **由一个脚本守一致**（例如一条 `check:version`）。否则「装的到底是哪个版本」会在排查时变成口径打架。
 
-### 坑 O7：URI guard 把“文件内容”当成“路径”扫 → 本地写入提到 viking:// 就被拒
-
-- **来源**：`volcengine/OpenViking`（**AGPL-3.0**）— commit `24185a08`（`fix(memory-plugin): stop the uri-guard from reading file content as a path`，#4188 / #4233）。**仅引标题作出处，不转载正文。**
-
-  **机制（自撰归纳）**：URI 守卫先检查一组「路径形状」的键，然后把**剩下的全部参数值**再扫一遍。问题在于「剩下的」里混着**内容字段** —— 一次本地写入如果**正文里**只是提到了一句 `viking://…`，整次写入就被拒，文件根本没建出来。修法是保留全扫（正是它兜住了奇怪或嵌套的路径键），但**按字段名跳过那些携带内容而非位置的参数**（内容、新串、旧串、文件文本等）。而出现在路径类字段、未知的嵌套路径键、或 bash 命令里的 URI，**仍然照拒**。
-
-- **现象**：本地 `write`/`edit` 的文件**正文里**只是提到了一句 `viking://…`，整次写入被 deny，文件没建出来。
-- **根因**：guard 先查已知路径键，然后“扫剩余全部参数值”，把正文也扫了。
-- **怎么修**：保留全扫（用于兜住奇怪/嵌套的路径键），但**按名字跳过内容类字段**。`shared/uri-guard.mjs:17-45`（**仅出处，不转录代码**）：
-
-  > 📌 该片段属 `volcengine/OpenViking`（**AGPL-3.0**）来源，按本技能的许可整改要求**不再转录代码** —— 出处行号见上一段。涉及的 DSH 通用 API 用法见 `03-api-cookbook.md`。
-  deny 时的提示消息也很讲究（`shared/uri-guard.mjs:69-78`）：
-
-  > 📌 该片段属 `volcengine/OpenViking`（**AGPL-3.0**）来源，按本技能的许可整改要求**不再转录代码** —— 出处行号见上一段。涉及的 DSH 通用 API 用法见 `03-api-cookbook.md`。
-- **给手册的教训**：**“拦截器误伤”比“放行”更烦人**。做参数级校验时，先想清楚哪些字段是“位置”、哪些是“内容”；误拦时要给出“改用哪个工具 + 一个可抄的调用示例”。
-
-### 坑 O8：Electron 桌面宿主下，`process.execPath` 不是 Node → 代理启不来（经历一次 revert）
-
-- **来源（三条，按时间）**：
-  - `volcengine_OpenViking + 187657bb + fix(dsh): run MCP proxy as Node under Electron (#4272)`（**正文为空**，仅标题）
-  - `volcengine_OpenViking + 26aae04a + fix(dsh): launch MCP proxy with node command (#4263)`（**仅引标题**；大意是改用一条稳定的 Node 命令来拉起 stdio MCP 代理，免得 Electron 桌面宿主把自己的应用二进制当成代理运行时去启动）
-  - `volcengine_OpenViking + 028d34a0 + Revert "fix(dsh): launch MCP proxy with node command (#4263)" (#4343)`（**正文为空**，这是一次回滚——说明“换成固定 node 命令”的方案后来被撤了）
-- **现象**：dsh 桌面版（Electron）里 MCP 代理起不来，Electron 把 `process.execPath` 当成自己的可执行文件，于是试图“再开一个桌面实例”。
-- **根因**：Electron 下 `process.execPath` = Electron 二进制，不是独立 Node。
-- **最终修法**（当前源码 `mcp.mjs:28-35`）：仍用 `process.execPath`，但**显式加 `ELECTRON_RUN_AS_NODE: "1"`** 让 Electron 以 Node 模式运行脚本：
-
-  > 📌 该片段属 `volcengine/OpenViking`（**AGPL-3.0**）来源，按本技能的许可整改要求**不再转录代码** —— 出处行号见上一段。涉及的 DSH 通用 API 用法见 `03-api-cookbook.md`。
-- **给手册的教训**：桌面宿主里“`process.execPath` 是宿主而不是 Node”是常见陷阱；**`ELECTRON_RUN_AS_NODE=1` 是标准解法**。同时注意：这里有一次 `feat → revert` 的往复，说明**跨平台启动子进程的方案要按宿主类型分支，不能一把梭**。
-
-### 坑 O9：re-seed 之后 profile 被重复注入
-
-- **来源**：`volcengine_OpenViking + b02f6025 + fix(dsh): prevent duplicate profile injection after re-seed (#4231)`（**正文为空**，仅标题）。
-- **现象/根因**：标题即结论——会话 re-seed 后 profile 被注入两次。修复方向（可从当前源码印证）：插件自己检查“本会话历史里是否已经有本插件的 instructions 消息”，有则不再注入。`runtime.mjs:419-435`：
-
-  > 📌 该片段属 `volcengine/OpenViking`（**AGPL-3.0**）来源，按本技能的许可整改要求**不再转录代码** —— 出处行号见上一段。涉及的 DSH 通用 API 用法见 `03-api-cookbook.md`。
-- **给手册的教训**：任何“每会话只注入一次”的东西，都必须有**幂等判据**（这里靠 `source.kind/plugin/form` 三件套），并且要覆盖 `session.events` 与 “inbox 待发队列”两条路径。
-
-### 坑 O10：`viking://user/<segment>` 有歧义 → 直接做成 breaking change
-
-- **来源**：`volcengine/OpenViking`（**AGPL-3.0**）— commit `a83b8171`（`feat(uri)!: remove uid-less current-user shorthand in favor of viking://~`，#4196）。**仅引标题作出处，不转载正文。**
-
-  **机制（自撰归纳）**：旧写法 `viking://user/<segment>`（省略 user id，后接 memories / resources / skills / peers / privacy / sessions 之一）与「真的就叫这个名字的用户」**有歧义** —— 一个恰好叫 `memories` 的真实用户，对 USER / ADMIN 调用方来说**永远够不到**。新的 `viking://~` home 别名（#4167）能无歧义地覆盖同一需求，于是这种省略写法改为**在请求边界直接失败**，不再尝试展开。
-
-- **现象**：所有用旧写法的调用开始 400（`viking://user/<segment>` 这种省略 user id 的形式）。改用 `viking://~/<segment>` 或显式的 `viking://user/{user_id}/<segment>` 即可。
-- **根因**：`viking://user/memories` 里 `memories` 既可能是“保留段”也可能是“一个真叫 memories 的用户”。
-- **怎么修**：**fail closed**（拒绝并给出纠正提示），并**迁移仓库内所有第一方 emitter**；对存储里的历史写法做兼容归一化。README 顶部也加了醒目提示（**自撰转述，非上游原文**）：该包需要服务端支持 `viking://~` home 别名；召回走的是调用方自己的上下文空间（`viking://~/memories`、`viking://~/skills`），而省略 user id 的旧写法会被较新版本的服务端拒绝。
-- **给手册的教训**：URI / 路径里有“保留字 vs 真实名”的歧义时，**宁可在边界直接拒绝并给出正确写法**，也不要猜。
-
-### 其它相关提交（只有标题，不展开）
-
-- `cf5cc308 fix(codex): avoid stale actor peer in MCP proxy (#4400)`（标题；正文空）——代理里 actor peer 会变陈旧。
-- `3b1db208 fix(memory-plugin): setup wizard first-run path, proxy hint, config source reporting (#4387)`（标题；正文空）。
-- `5356ced5 fix(plugin): honor explicit recall context timeout (#4256)`（**仅引标题**；大意是让运维显式配置的 recall 超时**照样生效** —— 即便这次 context recall 跳过了重写与查询扩展，低延迟配置也仍然能主动放宽请求截止时间。该提交还要求把修复**同步进共享源码**，否则生成的插件副本会与共享实现不一致）。
-- `708dba60 feat(plugins): configurable regex input filters for recall queries and captured turns (#4858)`（标题；正文在 `shared/input-filters.mjs` 可印证功能）。
-
-### 文档线索（OpenViking）
-
-> **自撰描述，未复制上游文本。** 下表归纳的是「这个插件在宿主里怎么算装对了、怎么探活、怎么排错」的**机制**，
-> 不是上游文档的转载；如需字段级权威清单，请直接查阅上游仓库。
-
-| 机制 | 作用（自撰归纳） | 上游定位 |
-|---|---|---|
-| 插件安装名 `openviking-memory` | 「装没装上」最快的判据：`dsh --profile <name> --dump-config` 的输出里应当能看到这个名字。看不到就没有注入、也没有它的工具 | `volcengine/OpenViking` — `docs/zh/agent-integrations/17-dsh.md` |
-| profile 选择 | 安装器默认往 `web` profile 装；要装到别的 profile 得显式指定 profile 名 | 同上 |
-| 本机健康检查端点 | 插件暴露一个本机 HTTP 健康检查口供宿主探测可用性；召回不出东西时先打它，再查端点配置与查询长度下限 | 同上 |
-| 凭据族（`OPENVIKING_` 前缀） | 一组以 `OPENVIKING_` 为前缀的环境变量承载配置与身份：API key 是最常被漏的一项；可信模式部署还额外要求 account 与 user 两类 | 同上 |
-| 召回范围隔离 | 有一个开关可把召回限定在「本人」范围，用于避免把别的项目的记忆串进来 | 同上 |
-| 待写队列与重放 | 排队中的写入会在**下一次会话开始**时重放；commit 由 token 阈值与 teardown 触发 —— 所以进程崩溃后「看不到 commit」是预期行为，不等于丢数据 | 同上 |
-| 依赖安装的冷静期（通用 pnpm 行为） | pnpm 默认拒绝解析**发布不满 24 小时**的版本，且 `pnpm config get` **不展示**这个内置默认值（查它什么都不显示）。后果：带 `@latest` 的安装会被**静默回退到更旧的版本**。写死精确版本号即可绕过 —— 那会被当作明确指定而非版本解析 | 非上游特有；pnpm ≥ 11 的 `minimumReleaseAge` 行为 |
-
-> 出处：`volcengine/OpenViking`（**AGPL-3.0**）。**本文件不复制其代码与文档原文**，仅保留上述机制的自撰归纳与出处定位。
-
-README 另一处重要提示：`The bundle has no runtime npm dependencies.`（peerDependencies 由 DSH 自己安装；本包不额外加依赖）。以及 `PLUGIN_VERSION` 必须与 `package.json` 版本一致（`package.json` 的 `check:version` 脚本会校验）。
+> 🔴 **§1.2 移除清单（2026-09-16，来源政策收紧）**
+> 以下条目原承载来源为 **AGPL-3.0**，已整体移除；其**通用教训已提炼为上面 8 条自撰建议**，不丢知识、也不再引用该来源：
+> 坑 O2（直连 `/mcp` 时 `tools/list` 永不返回）· 坑 O3（凭据形状环境变量在继承链上被丢）· 坑 O4（失败写入 latch 只在会话初始化复位）· 坑 O6（代理自身超时被误报为服务器不可达）· 坑 O7（URI 守卫把正文当路径扫）· 坑 O8（Electron 下 `process.execPath` 不是 Node）· 坑 O9（re-seed 后 profile 重复注入）· 坑 O10（URI 歧义改为 breaking change）· 「其它相关提交」4 条 · 「文档线索表」6 行。
+> **保留**：坑 O1（persona `complete: true`）、坑 O5（`isError` camelCase）—— 二者的权威出处均已换成**官方 `deepseek-harness` 源码行号**（MIT）。
 
 ---
 
@@ -1439,65 +1341,41 @@ modlens 的 dsh 相关修复提交极多（`git log --oneline -i --grep='dsh'` �
   ```
   **逐字要点**：① `parameters` 是标准 JSON Schema，对象级 `required` 数组；这里无参就写 `{ type: 'object', properties: {}, additionalProperties: false }`；② **`output.schema` 必须描述返回值结构**（模型看到的是它），`render` 把它变成给人/模型看的文本块；③ `execute` 只返回**纯数据**，把 `unknown` 逐字段收窄（`typeof x === 'string' ? x : ''`），保证输出是可序列化 JSON；④ `isConcurrencySafe: () => true` 表示只读、可并发。
 
-## 模板二：OpenViking 记忆服务插件（`ctx.provide` + 事件钩子）
+## 模板二：有状态服务型插件（官方 `persona`，**MIT**）
 
-- **快照路径**：生成期素材 `volcengine_OpenViking/examples/dsh-memory-plugin/`（不随本 skill 发布）
-- **为什么值得看**：它是**“有状态服务型插件”**的标准形态——`inject` 多个服务、`ctx.provide('openvikingMemory', runtime)` 暴露一个运行时可被别的插件 `ctx.get('openvikingMemory')` 取用；用 `agent/pre-step` waterfall 往会话注入上下文；用 `session/event` 捕获事件；用 `tools/pre-execute` 做工具调用守卫。
-- **插件形态**：**手写 JS（`.mjs`）**，不编译、不打包，天然自包含（避免 R18）。这与模板一的 TS 编译形态是两条路线，新手可对比。
-- **目录树**（实际快照文件）：
+> 🔴 **2026-09-16 来源政策收紧**：本模板原以一份社区记忆服务插件（**AGPL-3.0**）为载体，该来源**已移出本技能的引用集合** —— 其目录树与结构表整体删除。改用**官方一手范本**替代：更短、更权威，且是 MIT，可直接照抄。
 
-  ```
-  examples/dsh-memory-plugin/
-  ├── package.json          # peerDependencies + overrides + dsh.bundle
-  ├── cordis.patch.yml      # group + isolate 装配
-  ├── index.mjs             # 入口：name / inject / apply + 事件钩子（80 行）
-  ├── config.mjs            # 手写 resolveConfig（181 行）
-  ├── runtime.mjs           # 服务主体：drainer / capture / recall（436 行）
-  ├── client.mjs            # OpenViking HTTP 客户端
-  ├── mcp.mjs               # 挂 MCP 服务（stdio 代理）
-  ├── lifecycle.mjs         # 启动 profile 注入
-  ├── uri-guard.mjs         # tools/pre-execute 守卫
-  ├── skills.mjs            # 挂 skills 目录
-  ├── shared/
-  │   ├── retryable.mjs
-  │   ├── uri-guard.mjs
-  │   ├── capture-utils.mjs
-  │   └── mcp-proxy-core.mjs
-  ├── servers/
-  └── skills/
-  ```
+**为什么用官方 `persona` 当范本**：它把**服务型插件的四要素**（声明依赖的服务 → 发布自己的服务 → 副作用回收 → 配置 schema）压在一份 75 行的文件里，且每一行都可照抄。出处是 DSH 自己，**不存在「版本对不上」的问题**。
 
-- **`package.json` 的必备字段（该仓库原文为 AGPL-3.0，此处只列字段语义，不转录原文）**：
+- **快照路径**：官方仓库内 `packages/preset/persona/`（只读参考源，不随本 skill 发布）
+- **插件形态**：TypeScript 源码（官方包，构建后发布）。若要**零构建**形态，见模板一。
 
-  | 字段 | 值 / 要点 |
-  |---|---|
-  | `name` / `version` / `type` | 包名；语义化版本；`"module"`（ESM） |
-  | `main` / `exports` | 入口指向构建产物；`exports` 至少给出 `"."` |
-  | `dsh.bundle.patch` | **指向 `cordis.patch.yml`** —— 这是 `dsh plugin add` 能识别的关键声明 |
-  | `scripts.check` / `test` / `prepublishOnly` | 语法自检（`node --check`）+ 单测 + 发布前串联 |
-  | `scripts.check:version` | **断言代码里的版本常量与 `package.json` 的 `version` 一致**，防「改了代码忘改版本」 |
-  | `peerDependencies` | 写**区间**（如 `>=0.1.0-rc.6 <0.2.0`），不要钉死某个 rc 号 |
-  | `engines.node` | 与宿主一致的 Node 范围 |
+### 服务型插件的通用骨架（**自撰归纳**，API 名以 `08-cheatsheet.md` 为准）
 
-  > 原文见 `examples/dsh-memory-plugin/package.json`（**AGPL-3.0**）。上表字段语义属 **DSH 官方约定**，权威出处见 `07-conventions.md` 与官方包模板。
+| 要素 | 服务型插件通常要做的事 |
+|---|---|
+| 插件形态 | 函数式三件套：`export const name` / `export const inject = [...]` / `export function apply(ctx, config)` |
+| 暴露服务 | `ctx.provide('服务名', 值)` → 其它插件用 `ctx.get('服务名')` 取到 |
+| 资源回收 | 每个需回收的资源挂 `ctx.effect(() => () => dispose(), "标签")`；**第二个参数是给人看的标签**，dispose 时能对上是哪一项 |
+| 会话级生命周期 | 在会话开始事件里再挂一次 `ctx.effect(…)`，把回收绑定到**会话作用域**而非插件作用域 |
+| 消息注入 | `ctx.on("agent/pre-step", …, { prepend: true })`，先 `await next()` 再追加（原理见坑 O1） |
+| 事件捕获 | 监听会话事件与会话 flush 事件两条路径 |
+| 工具前置守卫 | `ctx.on("tools/pre-execute", …)` |
+| 长的子模块挂载 | **故意不 `await`** —— 阻塞式挂载会卡住它之后的所有注册 |
 
-- **入口 `index.mjs` 的职责与结构要点（该仓库代码为 AGPL-3.0，此处不再逐字贴出）**：
+### 服务型插件通用的 `package.json` 字段（**DSH 官方约定**）
 
-  该仓库的入口是一个 **80 行的 `apply`**，把「服务暴露 + 资源回收 + 会话生命周期 + 事件钩子 + 子模块挂载」串在一起。
-  **结构值得学**，但正文属该仓库的 AGPL-3.0 内容 —— 因此这里只留**结构、要点与出处行号**，代码请自行去上游查阅：
+| 字段 | 值 / 要点 |
+|---|---|
+| `name` / `version` / `type` | 包名；语义化版本；`"module"`（ESM） |
+| `main` / `exports` | 入口指向构建产物；`exports` 至少给出 `"."` |
+| `dsh.bundle.patch` | **指向 `cordis.patch.yml`** —— 这是 `dsh plugin add` 能识别的关键声明 |
+| `scripts.check` / `test` / `prepublishOnly` | 语法自检（`node --check`）+ 单测 + 发布前串联 |
+| `scripts.check:version` | **断言代码里的版本常量与 `package.json` 的 `version` 一致**，防「改了代码忘改版本」 |
+| `peerDependencies` | 写**区间**（如 `>=0.1.0-rc.6 <0.2.0`），不要钉死某个 rc 号 |
+| `engines.node` | 与宿主一致的 Node 范围 |
 
-  | 要素 | 该入口的做法 | 出处（`examples/dsh-memory-plugin/index.mjs`，AGPL-3.0） |
-  |---|---|---|
-  | 插件形态 | 函数式三件套：`export const name` / `export const inject = ["agents","sessions","tools"]` / `export function apply(ctx, config)` | `:9-12` |
-  | 暴露服务 | `ctx.provide("openvikingMemory", runtime)` → 其它插件可用 `ctx.get('openvikingMemory')` 取到 | `:25` |
-  | 资源回收 | 每个需回收的资源都挂 `ctx.effect(() => () => dispose(), "标签")`；**第二个参数是给人看的标签**，dispose 时能对上是哪一项 | `:26-38` |
-  | 会话级生命周期 | 在 `ctx.on("agent/session-start", …)` 里再挂 `agent.ctx.effect(…)`，把回收**绑定到会话作用域**而非插件作用域 | `:40-48` |
-  | 消息注入 | `ctx.on("agent/pre-step", …, { prepend: true })` + 先 `await next()` 再追加（原理见坑 O1） | `:50-63` |
-  | 事件捕获 | `ctx.on("session/event", …)` 与 `ctx.on("session/flush", …)` | `:65-74` |
-  | 工具前置守卫 | `ctx.on("tools/pre-execute", guardVikingUri)` | `:76` |
-  | 子模块挂载 | `mountOpenVikingMcp(ctx, config)` **故意不 `await`**（它会阻塞在第一次 `tools/list`，服务器"连上却不回话"时会卡住上面所有注册，见坑 O2） | `:78-82` |
-
-  ⚠️ 上表**只描述结构**，其中的 `provide`/`effect`/`on` 都是 **DSH 官方 API**，与它的 AGPL 许可无关；被 AGPL 覆盖的是该仓库**具体的实现代码**。
+> 权威出处见 `07-conventions.md` 与官方包模板；本表只是导航，判据以官方 `package.json` 为准。
 
 - **想要「官方 + 最小 + 可直接抄」的服务型插件范本，看这个（MIT）**：`packages/preset/persona/src/index.ts`（全 75 行）。
   它把**服务型插件的四要素**压到最小，且每一行都可照抄：
@@ -1852,7 +1730,6 @@ modlens 的 dsh 相关修复提交极多（`git log --oneline -i --grep='dsh'` �
 
 - **共识证据**：
   - WeKnora `src/index.ts`：`export const name = 'dsh-weknora'`、`export const inject = ['tools'] as const`、`export function apply(ctx, config)`（无 default）。
-  - OpenViking `index.mjs`：`export const name = "openviking-memory"`、`export const inject = ["agents","sessions","tools"]`、`export function apply(ctx, input = {})`。
   - injector `SCAFFOLD_TOOLKIT`：`export const name = ...`、`export const inject = ['tools']`、`export function apply(...)`。
   - modlens `dsh/index.js`（grep 见 `export const name`/`apply`）。
 - **要点**：`inject` 声明你依赖的服务（`tools`/`agents`/`sessions`/`llm`/`slots`/`timer`/`systemPrompt`…），Cordis **等这些服务就绪后才 apply**；用了某服务却没在 `inject` 声明，会报 `cannot get property 'X' without inject`（见 R23）。
@@ -1861,7 +1738,6 @@ modlens 的 dsh 相关修复提交极多（`git log --oneline -i --grep='dsh'` �
 
 - **共识证据**：
   - injector `injector/CHANGELOG.md` [0.1.0]：明确要求“插件把资源注册挂 `ctx.effect`”，并把它写成**强制登记守卫**（发现裸注册即报错）。
-  - OpenViking `index.mjs`：`ctx.provide`、`stopDrainer`、`disposeSession` 全部包 `ctx.effect`。
   - injector `SCAFFOLD_TOOLKIT`：注释“资源注册必须挂 ctx.effect（热重载/卸载自动清理）”。
   - WeKnora `index.ts` 注释：“Each registration is an effect, so unloading or reconfiguring the plugin withdraws the tools without a restart.”（`ctx.tools.register` 返回 disposer）。
 - **要点**：裸注册（直接 `ctx.tools.register(x)` 不挂 effect）在热重载/卸载时**不注销**，导致 `duplicate`、僵尸闭包（见 R2/R19）。
@@ -1870,7 +1746,6 @@ modlens 的 dsh 相关修复提交极多（`git log --oneline -i --grep='dsh'` �
 
 - **共识证据**：
   - WeKnora `dsh: { bundle: { patch: "./cordis.patch.yml" } }`；`files` 含 `dist`、`cordis.patch.yml`。
-  - OpenViking 同上，`files` 含全部 `.mjs` 与 `cordis.patch.yml`。
   - modlens `dsh` 同时含 `bundle` 与 `client`；`files` 含 `dsh`、`cordis.patch.yml`。
   - injector `dsh` 同时含 `bundle` 与 `client`；`files` 含 `lib`、`cordis.patch.yml`、`scripts/*`。
 - **要点**：漏了 `cordis.patch.yml` 进 `files` → 发布后用户装了但**没有装配补丁**；漏了构建脚本 → 从 tgz 装时建不了依赖（见 R14、[0.2.4]）。
@@ -1900,14 +1775,13 @@ modlens 的 dsh 相关修复提交极多（`git log --oneline -i --grep='dsh'` �
 
 - **共识证据**：
   - injector：`"@deepseek-ai/dsh-tools": ">=0.0.1-rc <2"`、`"cordis": ">=4.0.0-rc <5"`；并用 tsdown host bundle 自包含（[0.3.3]，见 R18）。
-  - OpenViking：`">=0.1.0-rc.6 <0.2.0"`。
   - WeKnora：**零 runtime 依赖**，类型自镜像。
 - **要点**：钉死 rc 号会在 DSH 升级后报废（见 R13）；官方 `dsh plugin add <目录>` 对 `link:` 依赖**不装 peers**（见 R18）。
 
 ## 规范 7：waterfall 事件（`agent/pre-step`、`system-prompt/assemble`、`llm/stream`）必须 `await next()` / `return next()`
 
 - **共识证据**：
-  - OpenViking `index.mjs`：`agent/pre-step` 里 `const decision = await next()`，`llm/stream` 注释亦要求委托。
+  - 官方 `docs/user/develop/framework/events.zh.md:64-81`：waterfall 监听器**必须调用 `next()`**，不调用会短路整条流水线。
   - injector `SCAFFOLD_TOOLKIT` 与 `docs/SPEC.md` 第 6 节：“Waterfall 必须 `await next()`、`agent` 判空、晋升从持久日志推导、只裁剪本插件工具”。
 - **要点**：不 `next()` = 吃掉后续所有监听者与真实调用；`{ prepend: true }` 表示“最后说话”，需先 `await next()` 拿最终结果再改。
 
@@ -1928,14 +1802,14 @@ modlens 的 dsh 相关修复提交极多（`git log --oneline -i --grep='dsh'` �
 
 - **共识证据**：
   - 用 schemastery：injector（`import z from 'schemastery'` + `export const Config = z.object({...})`）、injector scaffold。
-  - 手写：WeKnora `config.ts` 的 `resolveConfig()`（收集所有错误一次性报）、OpenViking `config.mjs` 同理。
+  - 手写：WeKnora `config.ts` 的 `resolveConfig()`（收集所有错误一次性报）。
 - **要点**：两种都行；关键是**在 `apply` 入口就校验**，拼错字段要“加载即失败”，别拖到运行中。
 
 ## 明确“**未找到共识**”的项（不要当规范写）
 
-- 插件目录用 `src/`（TS 编译，WeKnora/injector）还是根目录 `.mjs`（OpenViking）还是 `dsh/`（modlens）——**三种并存，无共识**。
+- 插件目录用 `src/`（TS 编译，WeKnora/injector）还是根目录手写 `.mjs` 还是 `dsh/`（modlens）——**并存，无共识**。
 - 构建工具：WeKnora 用 `tsc`；injector/modlens 用 `tsdown`/`vite`——**无共识**。
-- 是否要 client 面板：WeKnora/OpenViking 无 client，modlens/injector 有——**按需**。
+- 是否要 client 面板：WeKnora 无 client，modlens/injector 有——**按需**。
 
 ---
 
@@ -1977,27 +1851,10 @@ packages/dsh-weknora/
 └── tsconfig.json / tsconfig.build.json
 ```
 
-### A2. OpenViking · `@openviking/dsh-memory-plugin`（手写 .mjs 服务插件）
+### A2.（已移除）~~OpenViking · `@openviking/dsh-memory-plugin`~~
 
-```
-examples/dsh-memory-plugin/
-├── README.md
-├── cordis.patch.yml
-├── package.json / package-lock.json
-├── index.mjs            # 入口：provide + 事件钩子
-├── config.mjs / client.mjs / runtime.mjs
-├── capture.mjs / lifecycle.mjs / mcp.mjs / skills.mjs / uri-guard.mjs
-├── servers/mcp-proxy.mjs
-├── shared/
-│   ├── capture-utils.mjs / credentials.mjs / debug-log.mjs
-│   ├── input-filters.mjs / mcp-proxy-config.mjs / mcp-proxy-core.mjs
-│   ├── pending-queue.mjs / profile-inject.mjs
-│   ├── recall-compress-core.mjs / recall-core.mjs / retryable.mjs
-│   ├── session-model.mjs / uri-guard.mjs
-│   └── workspace-identity.mjs / workspace-peer.mjs
-├── skills/openviking-memory/SKILL.md
-└── *.test.mjs（index/config/runtime/mcp/capture/lifecycle/skills/uri-guard/live-recall/pending-queue/runtime-drain/bundle）
-```
+> 🔴 该来源为 **AGPL-3.0**，2026-09-16 起**整体移出本技能的引用集合** —— 目录树不再收录。
+> 若需「手写 `.mjs`、零构建」形态的服务型插件范本，用**官方 MIT 的 `packages/preset/persona/`** 替代（见 §模板二）。
 
 ### A3. modlens · `@liustack/modlens`（bundle + client 双声明）
 
@@ -2041,30 +1898,30 @@ yjh051108_dsh-routing-suite/
     └── router.test.mjs / router.integration.test.mjs
 ```
 
-## 附录 B：四仓库坑位统计（本次实际挖到）
+## 附录 B：三仓库坑位统计（本次实际挖到）
 
 | 仓库 | 坑编号 | 数量 | 最主要的 3 个 |
 |---|---|---|---|
 | WeKnora | W1–W4 | 4 | W1 无 scope 检索不透明 400；W2 `resource://` 渲染 + 403 降级记忆；W3 SSE 截断当完整答案 |
-| OpenViking | O1–O10 | 10 | O1 persona `complete:true` 吞 system prompt；O2 直连 `/mcp` 卡死 `tools/list`；O8 Electron `process.execPath` |
+| ~~OpenViking~~ | — | **0（原 10）** | 该来源为 **AGPL-3.0**，已整体移出引用集合；其中 8 条私有实现类坑移除、教训提炼为 8 条自撰建议；坑 **O1/O5 保留**，权威出处已换为官方 `deepseek-harness` 源码（MIT） |
 | modlens | M1–M10 | 10 | M1 缺 `dsh.bundle` + pnpm 冷静期；M2 工具名撞 scoped 层被遮蔽；M8 Windows 黑框 |
 | routing-suite | R1–R28 | 28 | R1 属性级 `required` 不允许；R4 `duplicate loader entry id` 启动即崩；R18 官方装配不装 peers |
 
-**总计 52 条**（WeKnora 4 + OpenViking 10 + modlens 10 + routing-suite 28）。
+**总计 42 条**（WeKnora 4 + modlens 10 + routing-suite 28），另有 **2 条机制类坑（O1 / O5）改由官方 MIT 源码承载**。原 AGPL 来源的 10 条中，8 条私有实现类已移除、其教训提炼为 8 条自撰建议（见 §1.2）。
 
 ## 附录 C：本次实际读取的源码/文档文件（去重后清单，供复核）
 
 - **WeKnora**：`package.json`、`src/index.ts`、`src/tools.ts`、`src/client.ts`、`src/config.ts`、`src/harness.ts`、`src/render.ts`、`cordis.patch.yml`、`README.md`、`test/fixtures/api-contract.json`、根 `.github/workflows/dsh-plugin.yml`（约 11 个）
-- **OpenViking**：`package.json`、`index.mjs`、`config.mjs`、`runtime.mjs`、`mcp.mjs`、`lifecycle.mjs`、`uri-guard.mjs`、`shared/retryable.mjs`、`shared/uri-guard.mjs`、`shared/capture-utils.mjs`、`shared/mcp-proxy-core.mjs`、`cordis.patch.yml`、`README.md`、`docs/zh/agent-integrations/17-dsh.md`（约 14 个）
+- ~~**OpenViking**~~：该来源已整体移出引用集合，其读取清单不再收录（现存 **0** 个文件计入）。
 - **modlens**：`package.json`、`cordis.patch.yml`、`AGENTS.md`、`docs/troubleshooting.zh-CN.md`、`docs/harness-setup.zh-CN.md`、`docs/output-schema.md`、`CHANGELOG.md`、`dsh/index.js`、`dsh/client.js`、`dsh/spawnHidden.js`、`dsh/vision-schema.json`（约 11 个）
 - **routing-suite**：`injector/package.json`、`injector/cordis.patch.yml`、`injector/src/index.ts`、`injector/src/client/index.ts`、`injector/docs/SPEC.md`、`injector/CHANGELOG.md`、`graded/package.json`、`graded/cordis.patch.yml`、`graded/dsh.plugin.json`、`graded/src/tools.js`、`graded/src/index.js`、`graded/CHANGELOG.md`、`package.json`、`cordis.patch.yml`（约 14 个）
 
-**四仓库合计约 50 个文件**（另含 git 提交元数据查询若干次）。
+**三仓库合计约 36 个文件**（另含 git 提交元数据查询若干次）。
 
 ## 附录 D：结论来源索引（按坑号反查）
 
 - W1–W4 → `src/Tencent_WeKnora/packages/dsh-weknora/**`（tools.ts / client.ts / .github/workflows）
-- O1–O10 → `src/volcengine_OpenViking/examples/dsh-memory-plugin/**` + `docs/zh/agent-integrations/17-dsh.md`
+- O1、O5 → 官方 `deepseek-harness` 源码（MIT）：`packages/preset/persona/src/index.ts`、`packages/llm/llm/src/types.ts:105`、`packages/acp/acp/src/updates.ts:82`（原 AGPL 来源的定位已整体移除）
 - M1–M10 → `src/liustack_modlens/**`（package.json / docs/troubleshooting.zh-CN.md / dsh/**）
 - R1–R28 → `src/yjh051108_dsh-routing-suite/**`（injector/CHANGELOG.md、graded/CHANGELOG.md、injector/src/index.ts）+ `repos/yjh051108_dsh-routing-suite` git 提交元数据
 
