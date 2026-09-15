@@ -155,7 +155,7 @@
 | 官方文档存在**两处内部矛盾** | 需人工阅读理解 | 重读 `11-glossary-and-provenance.md` 记录的矛盾点是否被官方修正 |
 | `!!js` 写在 `config:`/`disabled:` 之外**静默失效（不报错）** | 运行时行为，静态搜不出来 | 写一个错位用例实跑一次 |
 | 未声明 `inject` 就访问 `ctx.x` 会 **PENDING 或崩** | 同上 | 同上 |
-| 补丁行 `id` 重复**启动即崩**（而非仅报错） | M11 只断言了报错文案，未断言行为 | 造一个重复 id 的补丁跑一次 |
+| 补丁行应用失败**不回滚**、失败行留在树上（0.1.6-alpha.1 起） | 加载器行为，静态搜不出来 | 造一个 `apply()` 抛错的插件行：看该行是否仍在 `--dump-config`、日志是否只有一条 error 而无回滚 |
 
 ---
 
@@ -223,7 +223,7 @@
 | # | 位置 | 原表述（错） | 现状（核验后） |
 |---|---|---|---|
 | 1 | `02b-official-templates.md`（2 处）、`05-pitfalls.md`（1 处） | 浏览器半侧「平台种子表允许的**四个**：`react` / `cordis` / `ui-slots` / `ui-primitives`」 | 种子表实为 **9 个 specifier**，且是**全名**（含 `react-dom`、`react-dom/client`、`@deepseek-ai/dsh-client-store`、`@deepseek-ai/dsh-client-ui-dockkit`）；另有 `dsh.client.external` 可追加请求。以 `packages/client/web/src/platform.ts:8-14` 为准 |
-| 2 | `02b-official-templates.md` 插槽清单标题 | 「官方全部 UI 插槽名（**40 个**，实测提取）」 | 实为 **75 个声明侧键**（并集 77；剔除 18 个测试专用键后**约 59 个公开可用**），且**漏了内建的 `root`**。已把 4 处「40 个」的说法改成「节选/低估」并给出可复现命令（`08-cheatsheet.md`、`11-glossary-and-provenance.md`、`api-claims.md` 同批修正） |
+| 2 | `02b-official-templates.md` 插槽清单标题 | 「官方全部 UI 插槽名（**40 个**，实测提取）」 | 实为 **75 个声明侧键**（并集 77；剔除 18 个测试专用键后**约 59 个公开可用** —— 2026-09-16 对 0.1.6-alpha.1 重抽为 **77 / 79 / 约 61**，见 §三），且**漏了内建的 `root`**。已把 4 处「40 个」的说法改成「节选/低估」并给出可复现命令（`08-cheatsheet.md`、`11-glossary-and-provenance.md`、`api-claims.md` 同批修正） |
 
 **教训（与 §6 同源）**：「全清单」「四个」这类**完备性措辞**本身就是一种断言，而它往往来自一次不完整的 grep——用 `slots\.(inject|register)\(\s*'` 提取，永远抓不到用 `renderSlot('root')` 渲染的内建键。**凡写「全部/仅/只有 N 个」，都要能给出可复现的抽取命令。**
 

@@ -56,7 +56,7 @@
 ```json
 {
   "name": "@deepseek-ai/dsh-base",
-  "version": "0.1.5-rc.2",
+  "version": "0.1.6-alpha.1",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/types/index.d.ts",
@@ -181,7 +181,7 @@ export {}
 ```json
 {
   "name": "@deepseek-ai/dsh-client-ui-brand-official",
-  "version": "0.1.5-rc.2",
+  "version": "0.1.6-alpha.1",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/types/index.d.ts",
@@ -371,7 +371,7 @@ export default clientBundle('@deepseek-ai/dsh-client-ui-brand-official', ['lib/t
 ```json
 {
   "name": "@deepseek-ai/dsh-tool-ask-user",
-  "version": "0.1.5-rc.2",
+  "version": "0.1.6-alpha.1",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/types/index.d.ts",

@@ -746,6 +746,8 @@ modlens 的 dsh 相关修复提交极多（`git log --oneline -i --grep='dsh'` �
 
 ### 坑 R4：`duplicate loader entry id` → 整个 plugin tree 加载失败（启动即崩），且插件无法自愈
 
+> 🔴 **0.1.6-alpha.1 起本条的行为已变**：加载器改回**非事务化**后，重复 `id` **不再报这个错、也不再拦截** —— 同 id 两行互相覆盖（后者胜）。下面记录的 2026-09 事故是**当时版本的真实行为**，作为「为什么 id 必须全局唯一」的历史证据保留；**当前写法的判据以 `05-pitfalls.md` 坑 P3 为准。**
+
 - **来源**：`yjh051108_dsh-routing-suite + injector/src/index.ts:721-730` 注释原文：
 
   > ```
@@ -1888,7 +1890,7 @@ yjh051108_dsh-routing-suite/
 | WeKnora | W1–W4 | 4 | W1 无 scope 检索不透明 400；W2 `resource://` 渲染 + 403 降级记忆；W3 SSE 截断当完整答案 |
 | ~~OpenViking~~ | — | **0（原 10）** | 该来源为 **AGPL-3.0**，已整体移出引用集合；其中 8 条私有实现类坑移除、教训提炼为 8 条自撰建议；坑 **O1/O5 保留**，权威出处已换为官方 `deepseek-harness` 源码（MIT） |
 | modlens | M1–M10 | 10 | M1 缺 `dsh.bundle` + pnpm 冷静期；M2 工具名撞 scoped 层被遮蔽；M8 Windows 黑框 |
-| routing-suite | R1–R28 | 28 | R1 属性级 `required` 不允许；R4 `duplicate loader entry id` 启动即崩；R18 官方装配不装 peers |
+| routing-suite | R1–R28 | 28 | R1 属性级 `required` 不允许；R4 `duplicate loader entry id` 启动即崩（**0.1.6 起行为已变，见 `05-pitfalls.md` 坑 P3**）；R18 官方装配不装 peers |
 
 **总计 42 条**（WeKnora 4 + modlens 10 + routing-suite 28），另有 **2 条机制类坑（O1 / O5）**，其权威出处为**官方 `deepseek-harness` 源码行号**（MIT）；以及 8 条以「自撰建议」形式保留的通用教训（见 §1.2）。
 

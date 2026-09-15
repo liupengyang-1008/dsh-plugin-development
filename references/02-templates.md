@@ -178,7 +178,7 @@ export {}
 
 | 字段 | 必填 | 含义 |
 |---|---|---|
-| `id` | ✅ | 行标识。**后续层靠它覆盖该行**（逐行 last-write-wins）。**全局唯一**，重复会报 `duplicate loader entry id` 且**启动即崩** |
+| `id` | ✅ | 行标识。**后续层靠它覆盖该行**（逐行 last-write-wins）。**全局唯一** —— ⚠️ 0.1.6-alpha.1 起重复不再报错，而是**后者静默覆盖前者** |
 | `name` | ✅ | 包名。可以指向子路径，如 `@deepseek-ai/dsh-tool-subagent-control/list-agents`。**也可以写相对路径**（见 2.5） |
 | `disabled` | ❌ | `true` 关闭该行；支持 `!!js` 表达式 |
 | `config` | ❌ | 传给插件的配置对象。**覆盖时整段替换，不合并** |
@@ -226,7 +226,7 @@ export {}
 | 1 | **行的书写顺序不影响加载顺序** —— 激活由「服务可用性」驱动，不是顺序 | 官方 base 补丁注释：`Row order carries no load semantics (activation is service-availability driven)` |
 | 2 | `config` 是**整段替换**，不是深合并 | 同上：`A patch replaces the targeted row's whole config rather than merging into it` |
 | 3 | `!!js` 的**可见范围**是「同一补丁内、它之前的行」 | `omdsh-dev/DSH-better-sidebar` 补丁注释：`only rows before this one are visible` |
-| 4 | 同一个 `id` 重复 → **启动即崩**，且插件无法自愈 | 见 `第三篇 · 坑 P4` |
+| 4 | 同一个 `id` 重复 → **0.1.6-alpha.1 起静默覆盖**（后者胜），不再崩溃 | 见 `05-pitfalls.md` 坑 P3 |
 | 5 | 补丁文件**顶层是单个数组**（一个 `- insert:`），不要写成两个顶层值 | 见 `第三篇 · 坑 P3` |
 
 ### 2.5 相对路径 `name` 的真相（官方文档自相矛盾，以源码为准）

@@ -1,5 +1,6 @@
 # 补丁文件顶层是「单个数组」，不是对象，也不要写两个顶层值。
-# 每一行都必须有全局唯一的 id —— 重复会报 duplicate loader entry id 且启动即崩。
+# 每一行都必须有全局唯一的 id。⚠️ 0.1.6-alpha.1 起加载器不再拦截重复 id：同 id 两行会**互相覆盖（后者胜）**，
+# 不再报错 —— 也就是说，写错 id 的后果从「启动即崩」变成了「静默生效的是别人」。详见 references/05-pitfalls.md 坑 P3。
 - insert:
     # 示例：把一个 MCP server 挂进来（真实范本见 Q00/ouroboros 的 dsh-plugin）
     - id: mcp-my-capability

@@ -15,7 +15,7 @@
 1. **`dsh.bundle.patch` 不能少。** 少了它，`dsh plugin add` 会打一条 `declares no dsh.bundle` 警告，然后**什么都不做** —— 这是新手最常见的「我明明装了啊」。
 2. **`files` 里必须包含 `cordis.patch.yml`。** 漏了它，发布后补丁文件不会进 npm 包，装上有警告、功能全无。
 3. **`exports` 要显式声明 `'./cordis.patch.yml'` 与 `'./package.json'`。** 本包是零代码组合包，**没有 JS 入口，所以不要加 `'.'`**（没有可指向的文件）。官方 6 个 bundle 包全部带 `'.'`、`'./cordis.patch.yml'`、`'./package.json'`，部分还有 `'./src/*'`；组合包取与本包实际路径相符的那两个即可，与官方约定保持一致。
-4. **`id` 全局唯一。** 重复会报 `duplicate loader entry id` 且**启动即崩**。
+4. **`id` 全局唯一。** ⚠️ 0.1.6-alpha.1 起重复 `id` **不再报错**，而是同 id 两行互相覆盖（后者胜，静默生效）；`--dump-config` 里两行都在，但只有一行真的起作用。
 5. **`config` 是整段替换，不是深合并。** 后续层覆盖某一行时，必须把整个 `config` 重述一遍。
 
 ## 安全使用（含 MCP 示例，必读）

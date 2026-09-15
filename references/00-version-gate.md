@@ -119,7 +119,7 @@ bash <skill>/scripts/dsh-version-diff.sh <DSH 仓库路径>
 #    脚本已内置 ②-b 的 `!:` 维度，正常情况下跑这一个就够
 
 # ③-b 版本史速查（离线可用，无需源码）
-#    见 references/13-version-history.md —— 16 个 tag 的逐版本破坏性变更表
+#    见 references/13-version-history.md —— 17 个 tag 的逐版本破坏性变更表
 
 # ④ 直接读源码（终极权威）
 #    packages/*/*/src        —— 功能包

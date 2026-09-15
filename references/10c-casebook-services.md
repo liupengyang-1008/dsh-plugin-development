@@ -991,7 +991,7 @@ function disposeAll(disposers: Array<() => void>): void {
 
 **可抄点 2 —— 工具注册的失败安全**：`register*` 函数内部维护 `disposers` 数组，整个注册包在 `try/catch` 里；任何一个工具注册失败就 `disposeAll` 已注册的、再把错误抛出去；成功则返回 `() => disposeAll(disposers)`。这与 §2.4 的 `registrations` 是**同一个模式**，只是作用域更小。
 
-### 2.6 【最小范本·服务生命周期】loopx 包根 Host 插件（`src/index.ts` 全文，逐字，共 29 行）
+### 2.6 【最小范本·服务生命周期】loopx 包根 Host 插件（`src/index.ts` 全文，逐字，共 29 行；⚠️ **该快照取自 loopx `e602dd9273`** —— 上游已前移到 `26eaefc214`，**同一文件现为 75 行**（已重写）。下面的逐字全文是**当时**的形态，抄之前请先取上游最新）
 
 ```ts
 import type { Context } from '@deepseek-ai/cordis'
