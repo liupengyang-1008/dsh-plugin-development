@@ -65,8 +65,8 @@ if [ ! -d "$REPO/packages" ] || { [ ! -d "$REPO/vendor/loader" ] && [ ! -d "$REP
 fi
 
 # ── 0. 报告核验基线：当前仓库的版本与 commit ────────────────────────────────
-BASELINE_COMMIT="c291e7961a"
-BASELINE_VER="0.1.5-rc.2"
+BASELINE_COMMIT="0a15e36e7f"
+BASELINE_VER="0.1.6-alpha.1"
 
 LIVE_VER="$(node -e "try{console.log(require('$REPO/package.json').version||'unknown')}catch(e){console.log('unknown')}" 2>/dev/null || echo unknown)"
 LIVE_COMMIT="$(git -C "$REPO" rev-parse --short=10 HEAD 2>/dev/null || echo unknown)"
@@ -99,7 +99,10 @@ fi
 # ── 1. 断言表 ────────────────────────────────────────────────────────────────
 # 格式：ID,等级,说明,模式,作用域
 #   等级：S = 结构性公理（衰减极慢） / M = 接口名（每次使用前核验）
+#         N = 否定性论断（语义反向：未命中 = HOLDS；命中 = STALE）
 #   模式：g:<ERE> 用 grep 核验 / f:<相对路径> 文件必须存在 / d:<相对路径> 目录必须存在
+#         N 级：nf:<文件名> / nd:<目录名> / nt:<tag 正则> / nl:<提交信息正则> / na:<内容正则>
+#         `na:` 是 2026-09-16 新增的**内容**否定模式，用于「旧名已被改名取代且无别名」这类结论。
 # 断言表内联为字符串字面量（**不要改回 `cat <<'EOF'` 形式**）。
 # 原因：本机 Git Bash 环境缺 `cat` 等 coreutils，`$(cat <<EOF ... )` 会静默展开为空
 # → 断言表为空 → total=0 却被判为「全部成立」并 exit 0。
@@ -120,7 +123,7 @@ M07,M,命令注册 API,g:commands\.register\(,packages
 M08,M,UI 插槽 API,g:slots\.(inject|register)\(,packages
 M09,M,服务插件构造函数首参约定,g:super\(ctx[^)]*'"'"',packages
 M10,M,dsh.bundle 声明缺失时的警告,g:declares no dsh\.bundle,packages
-M11,M,补丁行 id 重复的启动期报错,g:duplicate loader entry id,vendor
+M11,M,loader 非事务化（补丁行应用失败只记日志、不回滚）,g:Wait until this tree has no pending import,vendor/loader
 M12,M,子进程凭据清洗正则常量,g:SENSITIVE_ENV_PATTERN,packages
 M13,M,补丁内相对路径锚定函数,g:anchorInsertedPluginNames,packages
 M14,M,保留工具名 run_code,g:run_code,packages
@@ -142,6 +145,11 @@ M29,M,waterfall 放行约定,g:await next\(\),packages
 M30,M,timeoutMs 正值校验文案,g:timeoutMs must be a positive finite number,packages
 M31,M,dsh.bundle 清单字段,g:dsh\.bundle,packages
 M32,M,DSH_HOME 环境变量,g:DSH_HOME,packages
+M33,M,服务 ctx.ptcRuntime（原 codeRuntime 改名，不提供别名）,g:ptcRuntime,packages/ptc-runtime
+M34,M,服务 ctx.mcpResources,g:mcpResources,packages/mcp/mcp-resources
+M35,M,PreToolDecision 新增 cancel 决策,g:kind: '"'"'cancel'"'"',packages/core/tools
+M36,M,base 补丁新增 image-offload 插件行,g:image-offload,packages/bundle/base/cordis.patch.yml
+M37,M,base 补丁的 workflow 行改用 ptc 家族,g:workflow-ptc,packages/bundle/base/cordis.patch.yml
 L01,L,官方插件工程约定入口,f:packages/AGENTS.md,-
 L02,L,loader 配置校验实现,f:vendor/loader/src/config/group.ts,-
 L03,L,CLI 插件安装实现,f:apps/cli/src/plugin.ts,-
@@ -150,8 +158,11 @@ L05,L,顶层目录布局（packages/vendor/apps/docs）,d:vendor,-
 N01,N,仓库没有 CHANGELOG 文件（变更史只在 git 与 .agents/notes）,nf:CHANGELOG*,-
 N02,N,提交不使用 BREAKING CHANGE 页脚（只用 type(scope)!: 标题标记）,nl:BREAKING CHANGE,-
 N03,N,不存在 packages/ui/（TUI 前端已归档）,nd:ui,packages
-N04,N,版本号不连续：不存在 0.1.4 版本,nt:0\.1\.4,-
-N05,N,不采用 changesets 发布流程（无 .changeset/）,nf:.changeset,-'
+N04,N,版本号不连续：不存在 0.1.4,nt:0\.1\.4,-
+N05,N,不采用 changesets 发布流程（无 .changeset/）,nf:.changeset,-
+N06,N,旧服务名 codeRuntime 已无兼容别名,na:ctx\.codeRuntime,packages
+N07,N,事件 agent/session-start 已被 serial 的 agent/created 取代,na:agent/session-start,packages
+N08,N,E2B 执行后端已整体移除,na:deepseek-ai/dsh-e2b,packages'
 
 # ── 1b. 空表哨兵 ────────────────────────────────────────────────────────────
 # 断言表为空 = 探针什么都没核验。绝不能报「全部成立」。
@@ -246,6 +257,21 @@ while IFS= read -r line; do
   $id  [$tier] 否定论断已被推翻：$desc
         断言不存在的目录已出现: $scope/$payload"
         [ "$QUIET" -eq 0 ] && printf '  \033[31mSTALE\033[0m  %-4s [%s] %s（否定论断失效）\n' "$id" "$tier" "$desc"
+      fi ;;
+    # na：内容否定（2026-09-16 新增）。前四个模式只能否定「文件/目录/tag/提交信息」，
+    # 而「旧服务名无别名」「旧事件名被取代」「某后端整体移除」的过时方向是内容里又冒出旧字符串。
+    na)
+      if [ ! -e "$target" ]; then
+        SKIP=$((SKIP + 1)); SKIP_ROWS="$SKIP_ROWS
+  $id  [$tier] 作用域缺失: $scope"
+      elif hit=$(grep -rnE -- "$payload" "$target" 2>/dev/null | head -3) && [ -n "$hit" ]; then
+        STALE=$((STALE + 1)); STALE_ROWS="$STALE_ROWS
+  $id  [$tier] 否定论断已被推翻：$desc
+        断言不应再出现，却命中: $(echo "$hit" | tr '\n' ' ')"
+        [ "$QUIET" -eq 0 ] && printf '  \033[31mSTALE\033[0m  %-4s [%s] %s（否定论断失效）\n' "$id" "$tier" "$desc"
+      else
+        HOLDS=$((HOLDS + 1))
+        [ "$QUIET" -eq 0 ] && printf '  \033[32mHOLDS\033[0m  %-4s [%s] %s\n' "$id" "$tier" "$desc"
       fi ;;
     nt)
       if ! git -C "$REPO" rev-parse --git-dir >/dev/null 2>&1; then

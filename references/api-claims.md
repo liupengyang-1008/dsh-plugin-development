@@ -3,10 +3,12 @@
 # API 声明登记表（本 skill 依赖的易变事实）
 
 > **用途**：本 skill 的每一条「关于 DSH 的断言」都登记在这里，标注易变性等级、基线写法、源码位置、核验方式。
-> **基线**：commit `c291e7961a` / `0.1.5-rc.2`（2026-09-10）。
+> **基线**：commit `0a15e36e7f` / `dsh-v0.1.6-alpha.1`（2026-09-15）。
 > **探针**：`scripts/dsh-api-probe.py`（首选，零 coreutils 依赖）与 `scripts/dsh-api-probe.sh`（备选）。
-> **两份探针的断言表必须逐条一致**；被核验的断言数 = **48 条（43 正向 S/M/L + 5 反向 N）**。
-> **核验结果（2026-09-11 实测，对基线同 commit 的仓库）**：`total=48 holds=48 stale=0`，`exit 0`。
+> **两份探针的断言表必须逐条一致**；被核验的断言数 = **56 条（48 正向 S/M/L + 8 反向 N）**。
+> **核验结果（2026-09-16 实测，对基线 tag 的检出）**：`total=56 holds=56 stale=0`，`exit 0`。
+> **负向证明（同批实测）**：对**旧基线**（`dsh-v0.1.5-rc.2`）检出跑同一张表 → `holds=47 stale=7 skipped=2`、`exit 1`。7 条 STALE 正是本轮新增/改写的断言（`M11`/`M35`/`M36`/`M37`/`N06`/`N07`/`N08`），证明它们**能失败**，不是恒真装饰。
+> **编号提示**：本表的 `M` 编号是**本表自己的**连续编号，**与探针 `dsh-api-probe.py` 的 `M` 编号不是一套**（例：本表 `M20` = 探针 `M11`）。两套编号各自连续、互不引用，对照时请按「结论文字 + 核验方式」匹配，不要按编号。新增条目会在「核验方式」列标注探针 ID。
 > **怎么用**：写代码前按 ID 或等级检索；探针 `scripts/dsh-api-probe.sh` 会逐条核验 S / M / L / N 级。
 > **四个维度**：S/M/V（易变性，越高越易变）+ **N（极性，否定性论断）**。N 级是本表唯一一类「语义反向」的条目，见第五节。
 > **怎么维护**：探针报 STALE → 改本文件对应行 → 同步改探针断言表 → 重跑探针。见 `00-version-gate.md` 第 7 节。
@@ -64,7 +66,8 @@
 |---|---|---|---|
 | M18 | 组合包清单字段：`"dsh": {"bundle": {"patch": "./cordis.patch.yml"}}` | 各包 `package.json` | `grep -rn "dsh\.bundle" packages` |
 | M19 | 缺清单字段时的警告：`declares no dsh.bundle` | `packages/boot/app-boot/src/profile.ts` | `grep -rn "declares no dsh.bundle" packages` |
-| M20 | 补丁行 `id` 重复 → **启动即崩**：`TypeError: duplicate loader entry id: <id>` | `vendor/loader/src/config/group.ts:64` | `grep -rn "duplicate loader entry id" vendor` |
+| M20 | **补丁行 `id` 重复不再报错、也不再拦截** —— `EntryGroup.update()` 已删掉重复 id 的 `TypeError` 校验，两个同 id 的行会在 `oldMap`/`newMap` 里互相覆盖（后者胜）。**这是 0.1.6-alpha.1 的行为变化**，旧写法「启动即崩」已不成立 | `vendor/loader/src/config/group.ts`（`update()` 内已无 `seen` 校验） | `grep -rn "duplicate loader entry id" vendor` **应 0 命中**；人工确认见 §5.2 |
+| M20b | 加载器**非事务化**：`EntryTree.await()` 只等待、**不再因某个 fiber 失败而拒绝**；`Entry.update()` 失败只写日志。**推论：`Loader.create()` 返回 ≠ 插件已激活**，调用方必须自行审计 | `vendor/loader/src/config/tree.ts`、`group.ts`、`entry.ts` | 探针 `M11`：`grep -rn "Wait until this tree has no pending import" vendor/loader`；决策记录 `.agents/notes/implemented/simplification/2026-09-09-nontransactional-loader.md` |
 | M21 | 补丁内相对路径被**锚定到补丁文件所在目录** | `packages/boot/app-boot/src/index.ts`（`anchorInsertedPluginNames()`） | `grep -rn "anchorInsertedPluginNames" packages` |
 | M22 | `dshHomePath()` 路径辅助函数（用于 `!!js` 内） | `packages/boot/app-boot/src/index.ts` | `grep -rn "dshHomePath" packages` |
 | M23 | 环境变量 `DSH_HOME` | 全仓 | `grep -rn "DSH_HOME" packages` |
@@ -81,10 +84,10 @@
 | 事实类型 | 基线时刻的值 | 为什么不断言 / 该怎么用 |
 |---|---|---|
 | 官方斜杠命令清单 | 基线时约 6 个（含 `/compact`、`/permission`、`/plan`、`/goal` 等） | **枚举会增长**。需要用就现场 `grep -rn "commands.register(" packages` 或看 `dsh` 的 `/help` |
-| UI 插槽总数与全清单 | 基线时**只提取到 40 个**（**低估**——`slots.inject/register` 的正则抓不到内建键；2026-09-11 重抽为 75 个声明侧键 / 约 59 个公开可用） | 数量会变。要用就用 M14 的方式现场枚举，或跑 `<skill>/scripts/extract_slots.py` |
+| UI 插槽总数与全清单 | 基线时**只提取到 40 个**（**低估**——`slots.inject/register` 的正则抓不到内建键；2026-09-11 重抽为 75 个声明侧键 / 约 59 个公开可用；**2026-09-16 对 0.1.6-alpha.1 重抽为 77 个声明侧键 / 并集 79 / 约 61 个公开可用**） | 数量会变。要用就用 M14 的方式现场枚举，或跑 `<skill>/scripts/extract_slots.py` |
 | `$DSH_HOME` 默认值 | 基线时为 `~/.dsh` | 默认值可被改。要么读 `DSH_HOME` 环境变量，要么运行时确认 |
 | profile 目录布局 | `$DSH_HOME/profiles/<名字>/`，已装插件在 `profiles/node_modules/` | 布局可能调整。用 `dsh plugin --profile <名字> ls` 现场确认 |
-| 报错文案的细节措辞 | 见 M 级各条 | 只把**关键片段**当断言（如 `duplicate loader entry id`），**不要断言整句** |
+| 报错文案的细节措辞 | 见 M 级各条 | 只把**关键片段**当断言（如 `required must be true when present`），**不要断言整句**。⚠️ 反面教材：`duplicate loader entry id` 这条文案在 0.1.6-alpha.1 上**整条消失**了（校验被删），见 M20 |
 | 源码行号 | 本文件记录的均为基线时刻位置 | **行号必然漂移。** 核验只按符号名 grep |
 | 各字段默认值（`timeoutMs` 等） | — | 不要假设默认值，显式写出你要的值 |
 | 包的内部文件布局 | 如 `src/index.ts`、`src/client/index.ts` | 新建插件时以官方同级包为参照，不要照抄记忆里的路径 |
@@ -116,7 +119,7 @@
 
 本 skill 曾因一条**错误的否定论断**（「DSH 不用 `!` 标记破坏性提交」——实际有 21 条）误导过整份文档，所以专门引入反向断言。**这是本表最容易被忽视的一类。**
 
-### 5.1 已纳入探针自动核验（5 条）
+### 5.1 已纳入探针自动核验（8 条）
 
 > 语义与正向**相反**：**未命中 = HOLDS**（否定成立）；**命中 = STALE**（否定已被推翻）。
 > 下表「若被推翻会看到什么」一列，写的就是探针要搜的证据。
@@ -128,9 +131,17 @@
 | N03 | **不存在 `packages/ui/`**（TUI 前端包已归档） | 该目录重新出现 | `nd:ui`（scope=packages） |
 | N04 | **版本号不连续**：不存在 `0.1.4` | 出现含 `0.1.4` 的 tag | `nt:0\.1\.4` |
 | N05 | **不采用 changesets 发布流程**（无 `.changeset/`） | 出现 `.changeset/` 目录 | `nf:.changeset` |
+| N06 | 旧服务名 **`ctx.codeRuntime` 已无兼容别名**（改名后旧名彻底消失） | `packages/` 下任一文本再出现 `ctx.codeRuntime` | `na:ctx\.codeRuntime`（scope=packages） |
+| N07 | 事件 **`agent/session-start` 已被 `agent/created` 取代** —— 后者由 `emit` 改成 **`serial`**（监听器被 `await`，抛错会让创建失败） | 源码里再出现 `agent/session-start` | `na:agent/session-start`（scope=packages） |
+| N08 | **E2B 执行后端已整体移除**（`dsh-e2b` / `fs-e2b` / `subprocess-e2b` 三包与 SDK 依赖） | 源码里再出现 `@deepseek-ai/dsh-e2b` 包名 | `na:deepseek-ai/dsh-e2b`（scope=packages） |
 
-新增一条 N 级断言的写法：在 `scripts/dsh-api-probe.sh` 的断言表里加一行，格式同其它行，模式用
-`nf:`（文件名）/ `nd:`（目录）/ `nt:`（git tag）/ `nl:`（git log 提交信息），**payload 写「否定被推翻时会出现的证据」**。
+新增一条 N 级断言的写法：在探针断言表里加一行，格式同其它行，模式用
+`nf:`（文件名）/ `nd:`（目录）/ `nt:`（git tag）/ `nl:`（git log 提交信息）/ **`na:`（文本内容，2026-09-16 新增）**，
+**payload 写「否定被推翻时会出现的证据」**。
+
+> **`na:` 为什么必须存在**：前四个模式只能否定「文件 / 目录 / tag / 提交信息」的存在，
+> 而本轮三类最重要的否定结论——「旧服务名无别名」「旧事件名被取代」「某后端整体移除」——
+> 的过时方向都是**内容里又冒出了旧字符串**。缺了 `na:`，这三条只能落到 §5.2 的人工复核里。
 
 ### 5.2 只能人工复核（无法自动核验，附理由）
 
@@ -189,9 +200,9 @@
 
 | 维度 | `dsh-api-probe.py` | `scripts/verify_absorbed_claims.py` |
 |---|---|---|
-| 覆盖面 | 本 skill 核心骨架（48 条，全仓级） | 第二批 27 条（指定文件级） |
+| 覆盖面 | 本 skill 核心骨架（56 条，全仓级） | 第二批 27 条（指定文件级） |
 | 失败信号 | `exit 1` 表示某条 M/S 事实漂移 | 同上 |
-| 分开的理由 | 「48 条」这个数字被 SKILL.md、README、发布清单多处引用；并表会让**一个纯增量的动作**引发全库数字同步，制造无关的改动面与风险 | 保持主探针稳定；新事实独立可复跑 |
+| 分开的理由 | 「56 条」这个数字被 SKILL.md、README、发布清单多处引用；并表会让**一个纯增量的动作**引发全库数字同步，制造无关的改动面与风险 | 保持主探针稳定；新事实独立可复跑 |
 
 **代价（如实声明）**：现在有**两个**核验入口，改 DSH 基线时要跑两个。这是有意识的取舍——用「多跑一条命令」换「主探针数字不被动摇」。
 

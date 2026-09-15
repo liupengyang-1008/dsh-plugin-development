@@ -2,7 +2,7 @@
 
 > **本文件用途**：按症状检索的踩坑百科：23 条编号坑点（P1~P22b）+ 症状速查表 + 报错信息/界面现象对照表 + 官方 4 篇事故复盘全文摘录与八条红线。插件出问题时第一站。
 > **合成来源**：DSH插件开发实战补充-模板与踩坑.md（第三篇，略去与官方复盘重复的红线摘要） + DSH插件开发指导手册.md（附录 E 报错对照表） + F-official-pitfalls.md
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `v0.1.5-rc.2` / commit `c291e7961a`，2026-09-10），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.1.6-alpha.1` / commit `0a15e36e7f`，2026-09-15），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
@@ -93,15 +93,23 @@
   ```
 - **自查命令**：`npx publint`
 
-### 坑 P3 · `duplicate loader entry id` / `duplicate prefix route`（启动即崩）★★
+### 坑 P3 · 补丁行「同 id 互相覆盖」与「应用失败不回滚」（**0.1.6-alpha.1 起语义已变**）★★
 
-- **现象**：启动直接崩，报 `duplicate loader entry id`，或 `duplicate prefix route`，或**界面上出现两个侧边栏**。且**插件无法自愈**。
-- **根因**（两种）：
-  1. 同一个 `cordis.patch.yml` 里两行用了同一个 `id`；
-  2. **聚合包双挂载** —— 同一能力被两个层各挂了一次（例如官方 bundle 已经挂了、你的插件又挂了一遍）。
+> ⚠️ **这一条在 0.1.6-alpha.1 上换了个方向。** 旧版是「重复 id → **启动即崩**，报 `TypeError: duplicate loader entry id`」；
+> 新版把加载器改成**非事务化**（决策记录 `.agents/notes/implemented/simplification/2026-09-09-nontransactional-loader.md`），
+> 那处校验被**整条删掉**了。于是同一个错误从「响亮地崩」变成了「**静默地错**」——这比原来难查得多。
+
+- **现象（新版）**：`--dump-config` 里能看到你的行，进程也正常起来，但实际生效的是**另一行**（或你的插件行根本没激活）。
+- **根因（两条，都要会认）**：
+  1. **补丁里两行用了同一个 `id`** → 不再报错，而是在 `oldMap`/`newMap` 里**互相覆盖，后者胜**。
+     你以为在「覆盖」，其实是在赌 YAML 里的行序 —— 而**行序本身没有加载语义**（见 S04）。
+  2. **该行的 `apply()` 抛错** → 不再回滚，只在日志里写一条 `error`，**失败的行仍留在树上**。
+     `Loader.create()` 返回 **≠** 插件已激活。
 - **怎么修**：
-  - `id` 必须全局唯一。改之前先 `dsh --profile web --dump-config` 看现有 id 有没有撞。
-  - **双挂载的标准处理姿势**（来自 `better-sidebar` 的真实修复）：
+  - `id` 仍然必须全局唯一（这不是宿主强制的规则了，而是你自己的纪律）。改之前先 `dsh --profile web --dump-config` 看现有 id 有没有撞。
+  - **装完插件要两看**：① 看 `--dump-config` 里那行在不在；② **看启动日志有没有 `error`**。只看「进程起来了」会漏掉第 2 类。
+  - 启动逻辑若依赖「某插件必须已激活」，**必须自己显式审计**，不能靠 `await` 的结果推断。
+  - **双挂载的标准处理姿势**仍适用（来自 `better-sidebar` 的真实修复）：
     ```yaml
     - id: my-sidebar
       name: 'my-sidebar-plugin'
@@ -109,7 +117,8 @@
       disabled: !!js <判断条件>
     ```
 - **⛔ 顺序敏感提醒**：`disabled: !!js` 里能看到的**只有同一补丁内它之前的行**（官方 `better-sidebar` 补丁注释原文：`only rows before this one are visible`）。所以"退让判断"必须写在被判断的那些行**之后**。
-- **来源**：素材 D 坑 4.2（better-sidebar）、坑 3.x（anchored-standard），已拆入 `10d-casebook-host-bundle.md`。
+- **还剩下的「真崩」情形**：`duplicate prefix route`、界面上出现两个侧边栏 —— 这类由**注册期**发现，依旧会响亮地失败。
+- **来源**：`vendor/loader/src/config/{group,tree,entry}.ts`；素材 D 坑 4.2（better-sidebar）、坑 3.x（anchored-standard）。
 
 ### 坑 P4 · 补丁顶层写成了两个值 ★
 
@@ -416,7 +425,7 @@
 
 # F. 官方事故复盘（postmortem）—— 官方自己踩过的坑（原始素材）
 
-> 来源：`deepseek-harness/docs/postmortem/`（commit `c291e7961a`）。共 **4 篇**，全部有中文版。
+> 来源：`deepseek-harness/docs/postmortem/`（commit `0a15e36e7f`）。共 **4 篇**，全部有中文版。
 > 这是**一手的一手材料**：官方自己写的「事故 → 根因 → 防护措施 → 教训」。
 > 引用一律逐字，标注来源文件。
 

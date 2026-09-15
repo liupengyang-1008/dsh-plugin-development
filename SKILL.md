@@ -4,7 +4,7 @@ slug: dsh-plugin-development
 displayName: DSH Plugin Development
 summary: Develop DSH (DeepSeek Harness) / Cordis plugins end to end — plugin forms, templates, an API cookbook, catalogued pitfalls, packaging and publishing, plus a mandatory version gate for the pre-stable upstream. Third-party fragments quoted here remain under their own licences (MIT / Apache-2.0 / BSD-3-Clause) — see the bundled LICENSE and NOTICE.
 description: A development-time skill for building plugins on DSH (DeepSeek Harness) / Cordis. It is not itself an installable DSH plugin; it is the tooling that guides a developer or AI agent through creating, debugging, packaging, and publishing one. This skill should be used when the user asks to develop a DSH plugin, write or modify a cordis plugin, add a tool, slash command, config schema, service, UI slot or HTTP route to DSH, run a periodic task inside a plugin, fix a plugin that fails to load or stays in PENDING, or package a plugin bundle for installation or distribution. It covers the plugin forms and official conventions, with 12 templates, 23 catalogued pitfalls, and copy-ready prompts for AI-agent pair development. Because DSH is pre-stable and ships breaking changes on a short cadence, it also ships a mandatory pre-coding version gate, a probe that re-verifies its own claims against a live source checkout, and a per-tag history of upstream breaking changes.
-version: 1.0.13
+version: 1.1.0
 license: MIT-0
 agent_created: true
 metadata:
@@ -33,7 +33,7 @@ metadata:
 
 ## 第 0 步（强制，不可跳过）· 版本闸门
 
-**references 是某一时刻的快照，会腐化。** DSH 处于 rc 阶段（基线 `v0.1.5-rc.2` / commit `c291e7961a`，2026-09-10），tag 间隔中位数约 1.1 天、出现过破坏性变更。**所以不要承诺「不过时」，要保证「过时会响」。**
+**references 是某一时刻的快照，会腐化。** DSH 处于 rc 阶段（基线 `dsh-v0.1.6-alpha.1` / commit `0a15e36e7f`，2026-09-15），tag 间隔中位数约 1.1 天、出现过破坏性变更。**所以不要承诺「不过时」，要保证「过时会响」。**
 
 **① 权威顺序（源码永远压过本技能）**
 
@@ -60,6 +60,21 @@ bash   <skill>/scripts/dsh-api-probe.sh <DSH 仓库路径>    # 备选：仅当 
 > **降级规则**（拿不到源码时）：① 显式声明「以下 API 未对当前版本核验」；② S 级骨架照给，M/V 级符号单列成「需你确认」；③ 禁止把未核验事实写成肯定句。**绝不编造 API 名填补空白。**
 > **目标版本高于基线时**不要猜：`dsh-sync.sh` 拉源码（先经确认）→ 探针核验 → `dsh-version-diff.sh` 出差异。
 > 完整机制（腐化推导、三级全表、五种核验手段、网络不可达时的降级路径）见 `references/00-version-gate.md`。
+
+**基线 `dsh-v0.1.6-alpha.1` 的硬变化（照抄旧资料前先对照这六条）**
+
+DSH 每次发版的破坏性变更集中在少数几类。本轮（`dsh-v0.1.5-rc.2` → `0.1.6-alpha.1`，800 个提交）的**插件作者必读**：
+
+1. **执行能力整族改名**：服务 `ctx.codeRuntime` → **`ctx.ptcRuntime`**；包族 `dsh-code-runtime*` → `dsh-ptc-runtime*`；类型 `CodeRuntime` / `CodeSdkLanguage` / `CodeRun*` → 对应 `Ptc*`。**不留别名**。（`run_code` 工具名与其 `code` 参数**没变**。）
+2. **E2B 执行后端整体移除**，改由新增的 **POSIX SSH 家族**（`dsh-ssh` / `dsh-fs-ssh` / `dsh-subprocess-ssh` / `dsh-sandbox-ssh`，服务 `ctx.ssh`）承担远程执行。
+3. **事件 `agent/session-start` 被删除** —— 改用 `agent/created`，且它已由 `emit` 改成 **`serial`**（监听器被 `await`，抛错会让 agent 创建失败）。
+4. **加载器不再事务化**：应用失败只写日志、不回滚；重复 `id` 不再报错（后者胜）。**`Loader.create()` 返回 ≠ 插件已激活。**
+5. **base 补丁**：`workflow-worker-thread` 拆成 `ptc-runtime` + `workflow-ptc`；新增 `image-offload`、`mcp-resources`；**`tool-ralph` 默认 `disabled: true`。**
+6. **新增能力面**：服务 `ctx.browserUse` / `ctx.computerUse` / `ctx.mcpResources` / `ctx.terminalController`；事件 `compaction/summary-error`；`sessions.registerMessageProjection()`；`workspaceRegistry.unarchiveSession()`。
+
+**判据**：三条来源都要看 —— 探针（`M11`/`M33`~`M37`/`N06`~`N08` 就是这批）、`dsh-version-diff.sh` 的六维度、以及 `.agents/notes/` 的决策记录。
+**⚠️ 别指望 `!:`**：本轮 800 个提交里，非 merge 提交带 `!:` 的是 **0 条**，而上面第 1 条（最狠的改名）正是其中之一。
+
 
 ## 三条基础纪律
 
@@ -268,7 +283,7 @@ DSH 里最常见的「我明明装了啊」有五种成因，全部落在这 5 �
 
 > 编号带字母后缀的（`02b`、`02c`、`10a`~`10d`）是**上游素材分册** —— 由超大引用文件按来源拆出，
 > 内容为原文的逐行搬迁。它们**不是整理稿**：性质不一（既有官方文档逐字摘录，也有调研期粗笔记）。
-> ⚠️ **例外**：`10b-casebook-tools.md` 已于 2026-09-15 与 09-16 因**许可整改**被**定点改写**（清 AGPL 逐字转载、移除一个来源），**不再是逐行搬迁** —— 读它请连带读该册文件头的许可警示与 §1.2 末尾的移除清单。
+> ⚠️ **例外**：`10b-casebook-tools.md` **不是逐行搬迁**（其余各册是）—— 它按**来源政策**定点改写：私有实现类条目不收录，通用教训以「自撰建议」形式保留。读它请连带读该册文件头的**许可警示**。
 
 | 触发条件（满足才读） | 文件 | 读法 | 成本 |
 |---|---|---|---|
@@ -314,7 +329,7 @@ DSH 里最常见的「我明明装了啊」有五种成因，全部落在这 5 �
 
 | 必须跑的时机 | 脚本 | 用法与退出码 |
 |---|---|---|
-| **写任何 DSH 代码之前**（强制，与版本闸门是同一件事） | `dsh-api-probe.py <仓库路径>` | 核验 43 正向 + 5 反向断言。`0`=全成立 / `1`=有 STALE（**不要照抄**）/ `2`=路径错 / `3`=断言表空（结果无效）。纯标准库、零外部命令依赖，**首选** |
+| **写任何 DSH 代码之前**（强制，与版本闸门是同一件事） | `dsh-api-probe.py <仓库路径>` | 核验 48 正向 + 8 反向断言。`0`=全成立 / `1`=有 STALE（**不要照抄**）/ `2`=路径错 / `3`=断言表空（结果无效）。纯标准库、零外部命令依赖，**首选** |
 | 同上，但仅在 shell 有完整 coreutils 时 | `dsh-api-probe.sh <仓库路径>` | 断言表须与 `.py` 版同步；**缺 `grep` 会报几十条假 STALE**，拿不准就用 Python 版 |
 | 用到**入站 HTTP / 定时器 / 客户端产物 / 插槽**任一项 | `verify_absorbed_claims.py <仓库路径>` | 27 条第二批断言。**先跑 `--selftest` 证明它能失败**，再跑正向 |
 | **要写插槽名之前**（不要凭表抄） | `extract_slots.py <仓库路径> <skill目录>` | 从源码抽**权威插槽清单**并双向 diff |

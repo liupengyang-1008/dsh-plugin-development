@@ -9,10 +9,10 @@
 
 | 事实 | 数据 |
 |---|---|
-| DSH 处于 pre-stable / rc 阶段 | 版本号 `0.1.5-rc.2` |
+| DSH 处于 pre-stable / alpha 阶段 | 版本号 `0.1.6-alpha.1` |
 | 发布节奏 | tag 间隔中位数约 1.1 天 |
 | 是否发生过破坏性变更 | 是（仓库用标题里的 `!` 标记破坏性提交） |
-| 本 skill 的事实基线 | 官方 tag `dsh-v0.1.5-rc.2` / commit `c291e7961a` / 2026-09-10；对应**技能版本 `1.0.13`**（完整对照表：`13-version-history.md` §1.5） |
+| 本 skill 的事实基线 | 官方 tag `dsh-v0.1.6-alpha.1` / commit `0a15e36e7f` / 2026-09-15；对应**技能版本 `1.1.0`**（完整对照表：`13-version-history.md` §1.5） |
 | 本 skill 的 references | **冻结在基线那一刻的快照**，随基线一起推进 |
 
 **推导**：只要「把可变事实写进文档」这个动作存在，文档就会腐化。这是结构性的，不是谁疏忽。
@@ -144,7 +144,7 @@ bash <skill>/scripts/dsh-version-diff.sh <DSH 仓库路径>
 4. **标注基线**：交付物里带一行出处注释：
 
    ```ts
-   // DSH 插件 · 依 dsh-api-probe.sh 对 c291e7961a 核验通过
+   // DSH 插件 · 依 dsh-api-probe.sh 对 0a15e36e7f 核验通过
    // 升级 DSH 后请重跑: bash scripts/dsh-api-probe.sh <repo>
    ```
 
@@ -202,7 +202,7 @@ bash <skill>/scripts/dsh-version-diff.sh <DSH 仓库路径>
 
 ## 8. 版本落后于基线时：拉源码 → 出差异 → 刷新快照
 
-**触发条件**：你要开发的 DSH 版本高于本 skill 基线（`v0.1.5-rc.2` / `c291e7961a`），或你不确定目标版本。
+**触发条件**：你要开发的 DSH 版本高于本 skill 基线（`dsh-v0.1.6-alpha.1` / `0a15e36e7f`），或你不确定目标版本。
 
 **不要做的事**：不要凭记忆推断「新版本大概改了什么」；也不要靠版本号推理——DSH 的版本号**不连续**（没有 `0.1.4`，`0.1.3-alpha.2` 之后直接是 `0.1.5-alpha.1`）。
 
@@ -213,7 +213,7 @@ bash <skill>/scripts/dsh-version-diff.sh <DSH 仓库路径>
 #    首次约 200 MB，必须先经开发者确认（--yes 才跳过）
 bash <skill>/scripts/dsh-sync.sh
 
-# 2) 核验本 skill 的 48 条断言（43 正向 + 5 反向）是否仍成立
+# 2) 核验本 skill 的 56 条断言（48 正向 + 8 反向）是否仍成立
 bash <skill>/scripts/dsh-api-probe.sh <skill>/vendor/dsh-src
 
 # 3) 出「基线 → 最新」差异（输出可直接贴进 13-version-history.md 的表格片段）
@@ -298,7 +298,7 @@ bash <skill>/scripts/dsh-version-diff.sh
 
 ## 10. 诚实的边界（不要把这些当结论讲给用户）
 
-- 探针只覆盖它断言过的 **48 条**事实（43 正向 + 5 反向），**不覆盖 V 级细节**。
+- 探针只覆盖它断言过的 **56 条**事实（48 正向 + 8 反向），**不覆盖 V 级细节**。
 - 探针通过 ≠ 插件能跑通，只说明「它依赖的 API 名还在」。
 - 「装上了」永远不等于「生效了」——必须看到实际输出或界面变化。
 - references 里带行号的引用，行号**一定会漂移**，行号只作为「基线时刻的位置记录」，核验时必须按符号名 grep，不能按行号找。

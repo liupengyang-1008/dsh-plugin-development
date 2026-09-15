@@ -2,8 +2,8 @@
 > ⚠️ **例外**：§1.5「本 skill 版本 ↔ DSH 基线对照表」是**手工维护**章节（不来自上游手册）。它是本技能自身的版本台账，每次发布都会在此追加一行；若整文件被重新生成，这一节需要人工补回。
 
 > **本文件用途**：按官方 tag 列出 DSH 的版本变化与破坏性变更；说明当目标版本高于本 skill 基线时，如何拉取最新源码并自行刷新这份表。
-> **来源**：`deepseek-harness` 仓库 git 历史（16 个 tag，16,511 个提交），逐条机器核验。
-> **快照警告**：本文件是**冻结快照**（基线 `v0.1.5-rc.2` / commit `c291e7961a`，2026-09-10）。**下游 tag 一旦发布，本表就落后了**。
+> **来源**：`deepseek-harness` 仓库 git 历史（**17 个 tag**，17,172 个提交），逐条机器核验。
+> **快照警告**：本文件是**冻结快照**（基线 `dsh-v0.1.6-alpha.1` / commit `0a15e36e7f`，2026-09-15）。**下游 tag 一旦发布，本表就落后了**。
 > **本 skill 版本 ↔ DSH 基线**：见 **§1.5**。本技能自己的三段版本号与官方基线是**两条独立的轴**，唯一绑定处就是那张表。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`；版本落后时按本文第 5 节刷新。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
@@ -17,8 +17,8 @@
 ## 0. 先说结论（三句话）
 
 1. **DSH 没有 CHANGELOG，也不用 `BREAKING CHANGE:` 页脚**（提交标题与正文里都搜不到 `BREAKING` 字样：各 0 条）。但它**会用 Conventional Commits 的 `type(scope)!:` 标题标记**自报破坏性提交。**两条路必须并用**：`git log --grep='!:'` 抓自报的（便宜但覆盖不全，见第 2.5 节），源码级机器化对比抓「影响插件作者却没标 `!`」的（见第 3 节）。
-2. **API 名字层面意外地稳定**：43 条正向 API 断言（S 级 6 + M 级 32 + L 级 5）在全部 16 个 tag 上均为绿。真正的破坏性变更发生在**配置键、官方包名、模型 ID、数据格式版本、宿主方法废弃**这五类——其中前四类 `dsh-version-diff.sh` 能直接检出，第五类只能从决策记录（`.agents/notes/`）读。
-3. 因此，「防过时」的正确姿势不是背 API 名，而是**盯住这几类 + 每次开工前跑一次探针 + `git log --grep='!:'` 补一路自报变更**。
+2. **API 名字长期稳定，但会「整族改名」**：探针的 48 条正向断言里，**基础 43 条**（S 级 6 + M 级 32 + L 级 5）在 0.1.5-rc.2 之前的 16 个 tag 上均为绿；**吸收 0.1.6-alpha.1 时新增的 5 条**（`M33`~`M37`）断言的是该版才出现的事实，**按设计**在更早的 tag 上必然 STALE（对旧 tag 检出跑一次即可自证：`holds=47 stale=7`）。真正的破坏性变更集中在**配置键、官方包名、模型 ID、数据格式版本、宿主方法废弃、加载语义**六类——前四类 `dsh-version-diff.sh` 能直接检出，后两类只能从决策记录（`.agents/notes/`）读。
+3. 因此，「防过时」的正确姿势不是背 API 名，而是**盯住这几类 + 每次开工前跑一次探针 + `git log --grep='!:'` 补一路自报变更**。⚠️ 但**不要指望 `!:` 会替你报信**：本轮区间（800 个提交、含整族改名）的 `!:` 命中数是 **0**，见 §2.5。
 
 ---
 
@@ -47,11 +47,14 @@
 | 14 | `dsh-v0.1.5-alpha.2` | 0.1.5-alpha.2 | 2026-09-09 | `b2e3b2a012` | 274 | 262 |
 | 15 | `dsh-v0.1.5-rc.1` | 0.1.5-rc.1 | 2026-09-10 | `183f08e9c6` | 274 | 17 |
 | 16 | `dsh-v0.1.5-rc.2` | **0.1.5-rc.2**（本 skill 基线） | 2026-09-10 | `fb2c4b9e69` | 274 | 4 |
-| — | `master` HEAD | — | 2026-09-10 | `c291e7961a` | 275 | 139 |
+| 17 | `dsh-v0.1.6-alpha.1` | **0.1.6-alpha.1**（本 skill 基线） | 2026-09-15 | `0a15e36e7f` | 290 | 800 |
+| — | `master` HEAD（**1.0.x 期间**检出的树） | — | 2026-09-10 | `c291e7961a` | 275 | 139 |
+
+> **为什么还留着下面那行 `master` HEAD**：技能 `1.0.0`~`1.0.13` 期间的核验对象是**当时检出的 master HEAD**（`c291e7961a`），而不是 tag 对象（`fb2c4b9e69`）；从 `1.1.0` 起核验对象改为**tag commit**（`0a15e36e7f`），两者一致。这是历史事实的保留，不是待办。
 
 **从这张表该读出的三件事**：
 
-- **节奏**：16 个 tag 跨 25 天，**平均 1.56 天一个 tag**；rc.2 与 rc.1 在同一天（间隔 4 个提交）。→ 任何写死的版本号都会很快过期。
+- **节奏**：17 个 tag 跨 29 天，**平均 1.81 天一个 tag**；rc.2 与 rc.1 在同一天（间隔 4 个提交），而 `rc.2 → 0.1.6-alpha.1` 隔了 5 天、**800 个提交**（本周期第二大区间）。→ 任何写死的版本号都会很快过期。
 - **版本号跳跃**：没有 `0.1.4`。`0.1.3-alpha.2` 之后直接是 `0.1.5-alpha.1`。→ **不要假设版本号连续**，也不要用「下一个应该是 0.1.4」这类推理。
 - **规模**：`0.1.1-rc.2 → 0.1.2-alpha.1` 一个区间就有 1079 个提交，是本周期最大的变更潮（Code Mode 改名 PTC 就发生在其中）。→ 「一个大版本没有破坏性变更」是错误直觉。
 
@@ -83,9 +86,11 @@
 
 | `1.0.13` | `dsh-v0.1.5-rc.2` | `c291e7961a` | 2026-09-16 | tag `v1.0.13` → commit `c6af9d5` | 🔴 **引用集合收敛为 {MIT, Apache-2.0, BSD-3-Clause} + Apache-2.0 §4 义务补漏**（用户定调：「保留 Apache-2.0 和 MIT 的引用，重整，保持合规前提下的最优实现」）。① **AGPL 来源整体移出**：`10b §1.2` 的社区记忆服务插件（**AGPL-3.0**）整节移出引用集合 —— 8 条私有实现类坑删除、其**通用教训提炼为 8 条自撰建议**保留（知识不丢、来源不再引用）；坑 **O1 / O5 保留**且权威出处换为**官方 MIT 源码行号**（`packages/llm/llm/src/types.ts:105`、`packages/acp/acp/src/updates.ts:82`、`packages/extensions/tool-cordis/src/api-catalog.ts:6111`）；模板二改以**官方 `persona`（MIT）**为载体；`10b` 目录树 / 坑位统计 / 来源索引同步（**2074 → 1931 行**）。② **Apache-2.0 §4 义务补漏（本轮最重要的实质修复）**：新增 **§0 变更声明**（**§4(b)**，原先完全没有）；补转载 **`loopx` 的包级 NOTICE**（**§4(d)** —— 原先只转载仓库根 NOTICE，而技能引用的恰是 `packages/dsh-loopx-plugin/` 内的源码）；**撤回一处无上游来源的版权行**（原写 MemOS「Copyright 2025 - Present MemTensor Research」，实测其 LICENSE 为标准 Apache 样板无版权行、仓库无根 `package.json`、README 亦无版权声明）；新增 `dsh-web` **逐包许可对照**（根 Apache-2.0，但 `packages/dsh-{community-plugins,doctor,plugin-manager}` 为 BSD-3-Clause、资源目录含 **CC BY-NC-SA 4.0**，且技能只引用前者）。③ **审计器收紧**：`check_oss_license.sh` 的 copyleft 豁免由「按文件」改为「**按显式移除标记**」，堵住「该册一向没问题就整册豁免」的静默漏检。④ 同步 `LICENSE` 来源表、`README` 双语、`12` §9 与风险条、`02` / `05` / `11`；⑤ **BSD-3-Clause 纳入引用集合**（用户确认「可以接受，按社区规范采用」）—— 新增 `licenses/BSD-3-Clause.txt`（**逐字取自上游** `zhu1090093659/dsh-web` → `packages/dsh-doctor/LICENSE`，1,521 B）、`NOTICE` 新增 **§2 BSD 3-Clause 节**（版权声明 + 无背书条款 clause 3）并把原 §2/§3/§4 顺延为 §3/§4/§5、`LICENSE` 增 BSD 义务段与「混合许可来源的逐包范围」说明、`check_oss_license.sh` 声明文件清单 4 → **5**、`.gitattributes` 的 `licenses/*.txt` 通配自动覆盖新文件。**零删除、零 API 断言变更** |
 
+| `1.1.0` | `dsh-v0.1.6-alpha.1` | `0a15e36e7f` | 2026-09-16 | tag `v1.1.0` | 🔴 **基线推进到 0.1.6-alpha.1**（首次吸收官方新 tag；该版含破坏性变更 → **第二段进位**）。① 基线四通道同步并修掉一处既有不一致（巡检状态记 tag commit `fb2c4b9e69`、文档记当时检出的 master HEAD `c291e7961a` —— 自本轮起统一为 tag commit）；② 探针断言表 **48 → 56 条**（新增 5 正向 `M33`~`M37` + 3 反向 `N06`~`N08`，改写已失效的 `M11`），**双向实证**：旧 tag 检出 `holds=47 stale=7 skipped=2`、新 tag `holds=56 stale=0`；③ 新增 `na:`（内容否定）模式并同步 `.sh` 版，另加断言表一致性校验器；④ 本文件吸收该版全部破坏性变更（§1 新增 tag 行、§2 新增区间行、**新增 §3.6「加载语义」**、§2.5 补「本轮 `!:` 命中 0 条」实测）；⑤ `08-cheatsheet` 服务/事件表按新版重取；⑥ `02` / `02b` 插槽计数改为 77/79/61；⑦ 按用户定调**剔除失效内容与「已失效/已移除」登记簿**；⑧ 同步引用仓库并在本地删除已移出引用集合的 AGPL 仓库克隆 |
+
 > `1.0.1` / `1.0.2` 无独立提交，不单列。**不要为了凑连续性补造条目** —— 本表只登记能举证的版本。
 
-**怎么读「基线一栏各行全是 `dsh-v0.1.5-rc.2`」**：这不是漏更新。技能版本从 `1.0.0` 走到 `1.0.13` 而 DSH 基线不动，本身就是「语义同步」这一裁定的直接结果 —— 三段号进位有两类触发（官方发新 tag，**或**我们修了技能自身缺陷），`1.0.4` 之后每次都属于后者。**不要用「技能版本变了，所以基线一定也变了」去推理。**
+**怎么读「`1.0.0`~`1.0.13` 的基线一栏全是 `dsh-v0.1.5-rc.2`」**：这不是漏更新。那 13 次版本进位全都属于「修技能自身缺陷」那一档（三段号进位的两类触发之一），基线本就不动。**到 `1.1.0` 才第一次两者同时前进**（官方发新 tag + 该版含破坏性变更 → 第二段进位）。**不要用「技能版本变了，所以基线一定也变了」去推理。**
 
 **新增一行时的动作**（与 `15-skill-scope-and-maintenance.md` §18.2 台账、`git tag -n99` 三处保持一致）：
 
@@ -123,7 +128,8 @@ git tag -n99 v1.0.4        # 复核注解确实带上了基线
 | 0.1.5-alpha.1 → alpha.2 | ① 包改名：`dsh-client-ui-sidebar-textpreview` → `dsh-client-ui-sidebar-documentpreview`<br>② 新增 `dsh-chunked-list`、`dsh-tool-present` | 包名集合 diff |
 | **0.1.5-alpha.2 → rc.1** | ① **模型 ID 改名：`deepseek-v4-flash` → `deepseek-flash`** —— 写死旧 ID 的配置会失效<br>② base 补丁 `cordis.patch.yml` 改动 | `git grep "^\s*model:" <tag> -- packages/bundle/base/cordis.patch.yml` |
 | 0.1.5-rc.1 → rc.2 | 无包级变更 | 文件 hash 矩阵 |
-| rc.2 → HEAD | 新增 `dsh-remote-mock`；**交付 `Session.eventAt()` / `snapshotEvents()` / `ownEvents()` 正式废弃**（新调用被 lint 拒绝） | `.agents/notes/implemented/architecture/2026-09-09-deprecate-synchronous-session-event-reads.md` |
+| rc.2 → HEAD（`c291e7961a`，1.0.x 期间的检出树） | 新增 `dsh-remote-mock`；**交付 `Session.eventAt()` / `snapshotEvents()` / `ownEvents()` 正式废弃**（新调用被 lint 拒绝） | `.agents/notes/implemented/architecture/2026-09-09-deprecate-synchronous-session-event-reads.md` |
+| **0.1.5-rc.2 → 0.1.6-alpha.1** | ① **执行能力整族改名（不留别名）**：服务 `ctx.codeRuntime` → `ctx.ptcRuntime`；包族 `dsh-code-runtime` / `-worker-thread` / `dsh-experimental-code-runtime-python` → `dsh-ptc-runtime` / `-node` / `dsh-experimental-ptc-runtime-python`；类型 `CodeRuntime` / `CodeSdkLanguage` / `CodeRun*` / `CodeBinding*` / `CodeJsonValue` → 对应的 `Ptc*`。**`run_code` 工具名与其 `code` 参数保留不变**<br>② **E2B 执行后端整体移除**：`dsh-e2b` / `dsh-fs-e2b` / `dsh-subprocess-e2b` 三包与 SDK 依赖被删；新增 **POSIX SSH 家族** `dsh-ssh` / `dsh-fs-ssh` / `dsh-subprocess-ssh` / `dsh-sandbox-ssh`（服务 `ctx.ssh`）<br>③ **事件 `agent/session-start` 被删除**；`agent/created` 由 `emit` 改为 **`serial`**（监听器被 `await`，抛错会让 agent 创建失败）；`agents` 服务新增 `announce(agent, source, signal)`，`register(agent)` 的返回值语义变化<br>④ **加载器不再事务化**：`EntryGroup.update()` 删掉重复 `id` 的校验、`EntryTree.await()` 不再拒绝失败的 fiber、应用失败**只写日志不回滚** —— 由此 `Loader.create()` 返回 **≠** 插件已激活<br>⑤ base 补丁：`workflow-worker-thread` 行拆成 `ptc-runtime` + `workflow-ptc`；新增 `image-offload`、`mcp-resources` 两行；**`tool-ralph` 改为 `disabled: true`**（默认不再发该工具；`ptc` preset 同时禁用 `workflow-ptc`）<br>⑥ 类型改名：`AssistantProvenance` → `AssistantProviderMetadata`、`SessionTitleModelProvenance` → `SessionTitleModelIdentity`、`ImageRequestPolicy` → `ImageRequestTarget`<br>⑦ `permissionPresets` 的 `selectFor()` 与类型 `KnobState` / `PermissionSelect` 移除，改为 `catalog()` / `registerAuto()`，并新增事件 `permission-presets/catalog-changed`；`sandbox.confine()` 与 `shell.start()` 改为异步<br>⑧ 新增能力面：服务 `ctx.browserUse` / `ctx.computerUse` / `ctx.mcpResources` / `ctx.terminalController` / `ctx.ssh`；事件 `compaction/summary-error`（waterfall）；`sessions.registerMessageProjection()` 与 `workspaceRegistry.unarchiveSession()` | `bash scripts/dsh-version-diff.sh <repo> --baseline dsh-v0.1.5-rc.2`；决策记录 `.agents/notes/implemented/{{simplification/2026-09-09-nontransactional-loader.md,architecture/2026-09-12-ptc-runtime-vocabulary.md,simplification/2026-09-11-remove-e2b-providers.md,architecture/2026-09-11-posix-ssh-runtime.md,simplification/2026-09-12-ralph-off-in-shipped-defaults.md}}` |
 
 ---
 
@@ -135,7 +141,7 @@ DSH 用 Conventional Commits，**作者自己认为破坏性的提交会在标�
 git -C <repo> log --oneline --grep='!:' <旧tag>..<新tag>
 ```
 
-**基线前的 tag 链上，只有这 7 条：**
+**基线前的 tag 链上只有这 7 条；本轮新增区间（`dsh-v0.1.5-rc.2 → dsh-v0.1.6-alpha.1`）再多 0 条：**
 
 | 区间 | commit | 提交标题 |
 |---|---|---|
@@ -148,6 +154,24 @@ git -C <repo> log --oneline --grep='!:' <旧tag>..<新tag>
 | 0.1.2-rc.1 → 0.1.3-alpha.1 | `bec6805d6a` | `refactor(session-persistence)!: handle-based seam with a lifecycle-owned write path` |
 
 用 `--all` 会多出 14 条（分布在 tag 祖先链之外的 master 与其他分支上），例如 `d4ccfbd80f refactor(cli)!: complete app-owned profile startup`、`f32aa54aeb feat(cli)!: make dsh run the headless entrypoint`。**评估某个区间的影响时用 `<旧tag>..<新tag>`；`--all` 只适合看仓库全貌。**
+
+**本轮（0.1.5-rc.2 → 0.1.6-alpha.1，800 个提交）的实测结果：非 merge 提交里带 `!:` 的 —— 0 条。**
+
+```bash
+git -C <repo> log --oneline --no-merges --grep='!:' dsh-v0.1.5-rc.2..dsh-v0.1.6-alpha.1   # 输出为空
+```
+
+（唯一被 `--grep` 命中的是一条 merge 提交 —— 命中的是它的**正文**，不是标题。）而这一版恰恰包含
+本周期最狠的一次改名：把整个执行能力族从 `code-runtime` 换成 `ptc-runtime`，**服务名、包名、类型名一起换、不留别名**。
+承载它的提交标题是：
+
+```
+7c9bb5914c refactor(ptc): align runtime packages and services with PTC naming
+```
+
+它用的是 `refactor(ptc):` —— **没有 `!`**。这条实测把 §2.5 的论点从「推断」变成了「证据」：
+**`!` 标记与「会不会打坏插件」之间没有可靠相关性，只靠它必然漏。**
+
 
 ### 为什么不能只依赖这条路
 
@@ -202,7 +226,9 @@ git -C <repo> log --oneline --grep='!:' <旧tag>..<新tag>
 
 **已发生的实例**（部分）：`dsh-client-runtime`、`dsh-host-apiproxy`、`dsh-tool-subagent-report`、`dsh-session-persistence-sqlite`、`dsh-agent-spine-demo`、`dsh-code-runtime-python`。
 
-**规律**：官方倾向把还在试验中的包加上 `experimental-` 前缀（`dsh-experimental-code-runtime-python`），把 demo 类包直接删除。**别依赖名字里带 `demo` 或没有 `experimental-` 的试验性包。**
+**规律**：官方倾向把还在试验中的包加上 `experimental-` 前缀（如 `dsh-experimental-ptc-runtime-python`），把 demo 类包直接删除。**别依赖名字里带 `demo` 或没有 `experimental-` 的试验性包。**
+
+> ⚠️ 这条规律本轮再次应验，且**换名比加前缀更狠**：整个执行能力族从 `code-runtime` 改成 `ptc-runtime`（服务名 / 包名 / 类型名一起换、不留别名）。**所以「包名」和「服务名」都要当易变事实对待。**
 
 ### 3.3 模型 / 供应商 ID
 
@@ -225,6 +251,26 @@ git -C <repo> log --oneline --grep='!:' <旧tag>..<新tag>
 > 现有逻辑可以暂不迁移，但**禁止新调用**；也**禁止**新增暴露同样同步历史访问的别名或包装。
 
 **怎么防**：跑 `pnpm exec tsc --noEmit` 或宿主的 lint；官方自带 `typescript/no-deprecated` 规则，废弃调用会带行级 waiver，你的新代码不该有 waiver。
+
+### 3.6 加载语义（0.1.6-alpha.1 新出现的一类）
+
+**症状**：插件「装上了」但没生效；日志里只有一条 `error`，进程不退出，`--dump-config` 里那行也还在。
+
+**已发生的实例**：0.1.6-alpha.1 把 vendored loader 从**事务化**改回**非事务化**（决策记录
+`.agents/notes/implemented/simplification/2026-09-09-nontransactional-loader.md`）：
+
+- `EntryGroup.update()` 删掉了重复 `id` 的 `TypeError` 校验 —— 同 id 两行互相覆盖（后者胜），**不再报错**；
+- `EntryTree.await()` 只等待、**不再拒绝**失败的 fiber；
+- `Entry.update()` 失败**只写日志**：不恢复上一份配置、不删除失败的那一行。
+
+**为什么难查**：它把「启动即崩」换成了「启动成功但你什么都没得到」——**错误从抛异常降级成一行日志**。
+`Loader.create()` 返回也**不再**代表插件已激活。
+
+**怎么防**：① 装完插件先 `--dump-config` 确认那行在树里，**再翻启动日志有没有 `error`**（别只看进程起没起来）；
+② 自己的启动路径若依赖「某插件必须已激活」，**必须显式审计**，不能靠 `await` 的结果推断；
+③ **不要再用重复 `id` 表达「覆盖」** —— 那已不是受支持的语义（要做覆盖请改 patch 行，不要写两行同 id）。
+
+
 
 ---
 
@@ -296,7 +342,7 @@ git -C <repo> log --oneline --grep='!:' <旧tag>..<新tag>
 # 第 1 步：把源码拉进 skill 目录（首次会问你要不要继续）
 bash ~/.workbuddy/skills/dsh-plugin-development/scripts/dsh-sync.sh
 
-# 第 2 步：对拉下来的源码核验本 skill 的 48 条断言（43 正向 + 5 反向）
+# 第 2 步：对拉下来的源码核验本 skill 的 56 条断言（48 正向 + 8 反向）
 bash ~/.workbuddy/skills/dsh-plugin-development/scripts/dsh-api-probe.sh \
      ~/.workbuddy/skills/dsh-plugin-development/vendor/dsh-src
 
@@ -313,7 +359,7 @@ bash ~/.workbuddy/skills/dsh-plugin-development/scripts/dsh-version-diff.sh
 1. 显式声明「以下 API 名未对当前版本核验」。
 2. S 级骨架照给；M/V 级符号单独列成「**需你确认**」清单，不要混在正文里。
 3. **禁止**把未核验事实写成肯定句。
-4. 交付物带一行基线注释：`// DSH 插件 · 依 dsh-api-probe.sh 对 c291e7961a 核验通过`。
+4. 交付物带一行基线注释：`// DSH 插件 · 依 dsh-api-probe.sh 对 0a15e36e7f 核验通过`。
 5. **绝不允许编造 API 名填补空白**——查不到就说查不到。
 
 ### 5.5 目录约定
@@ -323,7 +369,7 @@ bash ~/.workbuddy/skills/dsh-plugin-development/scripts/dsh-version-diff.sh
 ├── SKILL.md
 ├── references/          ← 知识快照
 ├── scripts/
-│   ├── dsh-api-probe.sh      ← 核验 48 条断言（43 正向 + 5 反向）
+│   ├── dsh-api-probe.sh      ← 核验 56 条断言（48 正向 + 8 反向）
 │   ├── dsh-sync.sh           ← 从 GitHub 拉/更新源码
 │   └── dsh-version-diff.sh   ← 出「基线 → 最新」差异
 ├── assets/              ← 可直接复制的骨架

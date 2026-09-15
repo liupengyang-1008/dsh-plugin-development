@@ -26,7 +26,9 @@
     * 断言只用「符号/字符串存在性」，绝不依赖行号 —— 行号必然漂移。
     * 只断言「一旦消失就会让本 skill 的指引失效」的事实；枚举类事实故意不断言。
     * 正向（S/M/L 级，模式 g/f/d）：命中 = HOLDS。
-      反向（N 级，模式 nf/nd/nt/nl）：未命中 = HOLDS；命中 = 该否定论断被推翻（STALE）。
+      反向（N 级，模式 nf/nd/nt/nl/na）：未命中 = HOLDS；命中 = 该否定论断被推翻（STALE）。
+      `na:` 是 2026-09-16 新增的**内容**否定模式（前四个只能否定文件/目录/tag/提交信息），
+      用于「旧名已被改名取代、且不提供兼容别名」这类结论。
 """
 
 import argparse
@@ -36,8 +38,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-BASELINE_COMMIT = "c291e7961a"
-BASELINE_VER = "0.1.5-rc.2"
+BASELINE_COMMIT = "0a15e36e7f"
+BASELINE_VER = "0.1.6-alpha.1"
 
 # ── 断言表 ──────────────────────────────────────────────────────────────────
 # 格式：ID,等级,说明,模式,作用域
@@ -63,7 +65,7 @@ M07,M,命令注册 API,g:commands\.register\(,packages
 M08,M,UI 插槽 API,g:slots\.(inject|register)\(,packages
 M09,M,服务插件构造函数首参约定,g:super\(ctx[^)]*',packages
 M10,M,dsh.bundle 声明缺失时的警告,g:declares no dsh\.bundle,packages
-M11,M,补丁行 id 重复的启动期报错,g:duplicate loader entry id,vendor
+M11,M,loader 非事务化（补丁行应用失败只记日志、不回滚）,g:Wait until this tree has no pending import,vendor/loader
 M12,M,子进程凭据清洗正则常量,g:SENSITIVE_ENV_PATTERN,packages
 M13,M,补丁内相对路径锚定函数,g:anchorInsertedPluginNames,packages
 M14,M,保留工具名 run_code,g:run_code,packages
@@ -85,6 +87,11 @@ M29,M,waterfall 放行约定,g:await next\(\),packages
 M30,M,timeoutMs 正值校验文案,g:timeoutMs must be a positive finite number,packages
 M31,M,dsh.bundle 清单字段,g:dsh\.bundle,packages
 M32,M,DSH_HOME 环境变量,g:DSH_HOME,packages
+M33,M,服务 ctx.ptcRuntime（原 codeRuntime 改名，不提供别名）,g:ptcRuntime,packages/ptc-runtime
+M34,M,服务 ctx.mcpResources,g:mcpResources,packages/mcp/mcp-resources
+M35,M,PreToolDecision 新增 cancel 决策,g:kind: 'cancel',packages/core/tools
+M36,M,base 补丁新增 image-offload 插件行,g:image-offload,packages/bundle/base/cordis.patch.yml
+M37,M,base 补丁的 workflow 行改用 ptc 家族,g:workflow-ptc,packages/bundle/base/cordis.patch.yml
 L01,L,官方插件工程约定入口,f:packages/AGENTS.md,-
 L02,L,loader 配置校验实现,f:vendor/loader/src/config/group.ts,-
 L03,L,CLI 插件安装实现,f:apps/cli/src/plugin.ts,-
@@ -95,6 +102,9 @@ N02,N,提交不使用 BREAKING CHANGE 页脚（只用 type(scope)!: 标题标记
 N03,N,不存在 packages/ui/（TUI 前端已归档）,nd:ui,packages
 N04,N,版本号不连续：不存在 0.1.4,nt:0\.1\.4,-
 N05,N,不采用 changesets 发布流程（无 .changeset/）,nf:.changeset,-
+N06,N,旧服务名 codeRuntime 已无兼容别名,na:ctx\.codeRuntime,packages
+N07,N,事件 agent/session-start 已被 serial 的 agent/created 取代,na:agent/session-start,packages
+N08,N,E2B 执行后端已整体移除,na:deepseek-ai/dsh-e2b,packages
 """
 
 # 扫描文本时应跳过的目录（体积大且无关）
@@ -351,6 +361,32 @@ def main():
                         f"  {cid}  [{tier}] 否定论断已被推翻：{desc}\n"
                         f"        提交信息中匹配到: {payload}\n"
                         f"        复核: git -C <repo> log --all --grep='{payload}'")
+                    if not args.quiet:
+                        log(f"  STALE  {cid:<4} [{tier}] {desc}（否定论断失效）")
+                else:
+                    holds += 1
+                    if not args.quiet:
+                        log(f"  HOLDS  {cid:<4} [{tier}] {desc}")
+
+        elif kind == "na":
+            # 断言「该字符串不应再出现」（改名 / 移除类否定论断）；命中即否定被推翻。
+            # 为什么需要这个模式：`nf:`/`nd:` 只能否定「文件 / 目录的存在」，而
+            # 「旧服务名已无兼容别名」「旧事件名已被取代」这类结论的过时方向是
+            # **内容里又冒出了旧字符串**，既有的五个模式在语义上抓不到。
+            if not target.exists():
+                skipped += 1
+                skip_rows.append(f"  {cid}  [{tier}] 作用域缺失: {scope}")
+            else:
+                hit, err = grep_first(target, payload)
+                if err:
+                    parse_err += 1
+                    stale_rows.append(f"  {cid}  正则错误: {err}")
+                elif hit:
+                    p, i, line = hit
+                    stale += 1
+                    stale_rows.append(
+                        f"  {cid}  [{tier}] 否定论断已被推翻：{desc}\n"
+                        f"        断言不应再出现，却在 {p}:{i} 命中：{line}")
                     if not args.quiet:
                         log(f"  STALE  {cid:<4} [{tier}] {desc}（否定论断失效）")
                 else:

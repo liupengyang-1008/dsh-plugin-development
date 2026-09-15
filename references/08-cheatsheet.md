@@ -2,7 +2,7 @@
 
 > **本文件用途**：速查卡，三部分：① 三种插件形态对照表（最容易搞混，放最前）② 完整 API 速查——服务名（inject 字符串）、事件名（含 waterfall 全套）、UI 插槽名、官方斜杠命令、CLI 命令、目录与路径、工具参数 DSL 类型（全部由源码 grep 提取，带实证来源列）③ 主手册的插件骨架、四类注册、真实范本清单、判断口诀，以及带 core/seam/bundle 角色的 ctx 键速查表。写代码时随手查这一份就够。
 > **合成来源**：DSH插件开发实战补充-模板与踩坑.md（仅第六篇 6.5） + I-quickref.md + DSH插件开发指导手册.md（附录 A/B/C）
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `v0.1.5-rc.2` / commit `c291e7961a`，2026-09-10），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.1.6-alpha.1` / commit `0a15e36e7f`，2026-09-15），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
@@ -35,7 +35,7 @@
 
 # I. 速查表 —— 服务 / 事件 / 插槽 / 命令 / 扩展点（全部实测）
 
-> 来源：`deepseek-harness`（commit `c291e7961a`）。全部由源码 grep 提取，**不是文档复述**。
+> 来源：`deepseek-harness`（commit `0a15e36e7f`）。全部由源码 grep 提取，**不是文档复述**。
 > 使用方法：写插件时先在这张表里找"我要挂到哪"。
 
 ---
@@ -59,6 +59,12 @@
 | `tokenMeter` | token 计量 | `docs/subsystems/compaction.zh.md` |
 | `toolResultPruner` | 工具结果裁剪 | `docs/subsystems/compaction.zh.md` |
 | `sessionQuery` | 会话全文检索 | `docs/subsystems/core.zh.md` |
+| `ptcRuntime` | PTC 执行后端注册表（**0.1.6-alpha.1 起，原名 `codeRuntime`，无兼容别名**） | `packages/ptc-runtime/ptc-runtime/src/index.ts` |
+| `ssh` | POSIX SSH 执行后端（0.1.6-alpha.1 新增，替代被移除的 `e2b`） | `packages/ssh/ssh/src/index.ts` |
+| `browserUse` | 浏览器自动化后端注册（**只登记名字与 disposer**，不含浏览器对象/操作方法；同名二次注册必失败） | `packages/browser-use/browser-use/src/index.ts` |
+| `computerUse` | 桌面自动化后端注册（同上，独立于 `browserUse`） | `packages/computer-use/computer-use/src/index.ts` |
+| `mcpResources` | MCP 资源面：`register(server, provider)`，暴露「列资源 / 列模板 / 读 URI」三个共享工具 | `packages/mcp/mcp-resources/src/index.ts` |
+| `terminalController` | 会话级终端进程的远程控制面（含 `webTerminals` 客户端侧） | `packages/api/terminal-controller/src/index.ts` |
 
 > ⚠️ **服务名大小写敏感**（`sessionProjections` 不是 `session-projection`）。
 > 💡 探测可选服务：`ctx.get('settings')`；**只有 `inject` 里声明过的**才能写 `ctx.settings`。
@@ -71,9 +77,8 @@
 
 | 事件名 | 时机 |
 |---|---|
-| `agent/created` | agent 创建 |
+| `agent/created` | agent 创建。**⚠️ 0.1.6-alpha.1 起由 `emit` 改为 `serial`** —— 监听器按序被 `await`，**抛错会让 agent 创建失败**；浏览器/桌面类后端就靠它做「会话创建前的启动等待」 |
 | `agent/disposed` | agent 销毁 |
-| `agent/session-start` | 会话开始 |
 | `agent/status` | agent 状态变化 |
 | `agent/turn-stopping` | 轮次即将结束（在最后一次 steering 排空之前） |
 | `agent/error` | agent 出错 |
@@ -93,6 +98,8 @@
 | `compaction/start` / `compaction/end` / `compaction/summary` / `compaction/prune` | 上下文压缩 |
 | `llm/retry` / `llm/retry-started` | LLM 重试 |
 | `llm/adapters-updated` | LLM 适配器变化 |
+| `compaction/summary-error` | 摘要请求失败后的恢复（**waterfall**，0.1.6-alpha.1 新增） |
+| `permission-presets/catalog-changed` | 可选权限预设目录变化（0.1.6-alpha.1 新增） |
 | `session-telemetry/record` | 遥测（**脱敏 waterfall**） |
 | `webserver/index-inject` | **往页面 HTML 注入**（UI 首屏，避免闪烁） |
 
@@ -141,13 +148,15 @@
 
 ---
 
-## 3. UI 插槽名（**最常用的几个**；权威全量约 59 个公开键，用 `scripts/extract_slots.py` 复现）
+## 3. UI 插槽名（**最常用的几个**；权威全量约 **61** 个公开键 —— 对基线 `dsh-v0.1.6-alpha.1` 抽取：声明侧 77、并集 79、剔除 18 个测试专用键后约 61 个公开可用。用 `scripts/extract_slots.py` 复现）
 
 **最常用的三个**：
 
 | 插槽名 | 用途 |
 |---|---|
 | `settings.section` | **加一整段设置页** |
+| `sidebar.right.tab.guide.entry` | 右侧栏「指引」页里的入口条目（0.1.6-alpha.1 新增） |
+| `conversation.input.permission` | 输入区权限选择位（0.1.6-alpha.1 新增） |
 | `settings.general.item` | **通用设置里加一行/一项** |
 | `conversation.view` | 替换对话主视图（最激进） |
 | `sidebar.brand.mark` / `sidebar.brand.name` | 侧栏品牌位（最小 UI 插件范例用的） |

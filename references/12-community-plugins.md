@@ -2,7 +2,7 @@
 
 > **本文件用途**：社区中被广泛使用的高星 DSH 插件清单，用于选型参考与'抄作业'对象筛选。
 > **合成来源**：DSH社区高星插件清单.md
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `v0.1.5-rc.2` / commit `c291e7961a`，2026-09-10），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.1.6-alpha.1` / commit `0a15e36e7f`，2026-09-15），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
@@ -24,10 +24,10 @@
 | # | 结论 | 置信度 |
 |---|---|---|
 | 1 | DSH 生态**确实繁荣**：官方精选清单收录 **3,408 个**插件（`awesome-dsh-plugin.com/count.json` 实时计数），分 23 个类目 | **A 级**（官方 badge 接口）<br>⚠️ **该计数只是 2026-09-11 的时点值**：2026-09-15 复查时，社区市场侧已显示 **13,682** 条条目（且含大量非插件）。**两个数字都不能当「DSH 插件总数」用** |
-| 2 | 但 **star ≥ 5000 的真插件只有 11 个**（其中 1 个为 **AGPL-3.0**，本技能不引用）。高星区间被两类"非插件"占据：**harness 本体**、**蹭 topic 的大型无关项目** | **A 级**（逐个拉 `package.json` 验证 `dsh.bundle` 清单） |
+| 2 | 但 **star ≥ 5000 的真插件只有 11 个**。高星区间被两类"非插件"占据：**harness 本体**、**蹭 topic 的大型无关项目** | **A 级**（逐个拉 `package.json` 验证 `dsh.bundle` 清单） |
 | 3 | **真正"原生 DSH 插件"的主力在 1,000–4,000 ⭐ 区间**（约 46 个）。若目标是学插件写法，这一档比 ≥5000 档更有参考价值 | **B 级**（同上，抽样验证） |
 
-**一句话**：你问"star 超过 5000 的插件"——答案是**有，但只有 11 个**（其中 1 个为 AGPL-3.0，**本技能自 2026-09-16 起不引用**，见 §2），**且其中大部分是"把已有大产品接进 DSH"的重量级集成**，不是典型的插件写法范本。原生插件写法的最佳范本在 3000–4000 星档。
+**一句话**：你问"star 超过 5000 的插件"——答案是**有，但只有 11 个**，**且其中大部分是"把已有大产品接进 DSH"的重量级集成**，不是典型的插件写法范本。原生插件写法的最佳范本在 3000–4000 星档。
 
 ---
 
@@ -50,9 +50,9 @@
 
 ---
 
-## 2. 清单 A：≥5000 ⭐ 且**已实证 `dsh.bundle`** 的真插件（**原 11 个 → 现有效 10 个**）
+## 2. 清单 A：≥5000 ⭐ 且**已实证 `dsh.bundle`** 的真插件（**列出 10 个**）
 
-> ⚠️ 第 4 行 `volcengine/OpenViking` 已于 2026-09-16 被**移出本技能的引用集合**（AGPL-3.0）。保留删除线仅为**留痕** —— **它不再计入有效来源，本表的「授权为 MIT / Apache-2.0 / BSD-3-Clause」这一口径也不包含它**。
+> **口径**：上一步实测到 **11 个**真插件；本表只列**许可落在本技能保留的来源集合（MIT / Apache-2.0 / BSD-3-Clause，见 §9）内**的 **10 个**。
 
 按 star 降序，全部经 `package.json → dsh.bundle` 字段实测确认：
 
@@ -61,7 +61,6 @@
 | 1 | [nexu-io/open-design](https://github.com/nexu-io/open-design) | **95,472** | TS | `@open-design/dsh-runtime` | `packages/dsh-runtime` | Web/设计集成 | Apache-2.0 |
 | 2 | [tt-a1i/archify](https://github.com/tt-a1i/archify) | **57,636** | JS | `@tt-a1i/archify-dsh` | `integrations/deepseek-harness` | 工具+图表渲染 | MIT |
 | 3 | [reactive-resume/app](https://github.com/reactive-resume/app) | **42,448** | TS | `dsh-plugin-reactive-resume` | `packages/dsh-plugin` | Web UI | MIT |
-| 4 | ~~volcengine/OpenViking~~ | — | — | — | — | 记忆服务 | 🔴 **AGPL-3.0 —— 2026-09-16 起本技能不再引用该来源**（见下方 ⚠️ 3 与 §9 说明） |
 | 5 | [anywhere-labs/dsh-desktop](https://github.com/anywhere-labs/dsh-desktop) | **25,403** | TS | `dsh-plugin-desktop` | `dsh-plugin-desktop` | 桌面宿主 | MIT |
 | 6 | [Tencent/WeKnora](https://github.com/Tencent/WeKnora) | **22,166** | Go | `@wxg-prc-cpg/dsh-weknora` | `packages/dsh-weknora` | 工具插件 | MIT（正文为准） |
 | 7 | [MemTensor/MemOS](https://github.com/MemTensor/MemOS) | **11,277** | TS | `@memtensor/memos-local-plugin` | `apps/memos-local-plugin` | 记忆 | Apache-2.0 |
@@ -74,7 +73,6 @@
 
 - **open-design** — 本地优先的桌面设计应用，把编码 Agent 变成设计引擎（原型 / landing page / dashboard / 幻灯片）
 - **archify** — 从代码库或系统描述生成经验证的、自包含交互式架构图 / 时序图 / 数据流图
-- ~~**OpenViking**~~ — 🔴 **AGPL-3.0 来源，2026-09-16 起本技能不再引用**（原描述：`pre-step` 自动召回 + profile 注入、会话捕获、URI 守卫、recall/write 记忆工具）
 - **dsh-desktop** — "万物皆插件，桌面本身也是插件"，轻量桌面端
 - **WeKnora** — ⭐ **4 个只读工具**挂在 WeKnora 知识库上：列知识库 / 混合检索 / 按序重组文档分块 / 带引用的 RAG 或 ReAct 回答
 - **dsh-web** — 任务看板、Git 图谱、侧栏、远程移动 UI、宠物、实时 token 统计、皮肤中心（**同一 monorepo 内 10+ 个独立插件**）
@@ -139,7 +137,7 @@
 | **第三方扩展点设计** | ⭐ **omdsh-dev/DSH-better-sidebar** | 第 9 章 slots | 侧边栏底座，演示"如何给别人留插槽" |
 | **设置页里的市场** | **dsh-market/dsh-market** | 第 10 章设置卡片 | 官方清单推荐，含客户端半侧 + 服务端半侧完整样例 |
 | **把已有产品接成插件** | **nexu-io/open-design**（95k） | 第 11 章打包 | 重量级集成，看大项目如何切出插件边界 |
-| **本地服务接入（Memory）** | **`zilliztech/memsearch`**（MIT） | 第 4、7 章 | 记忆类插件的服务型写法：MCP 客户端接入 + 工具注册 + 生命周期回收。**原列此处的一个 AGPL-3.0 来源已于 2026-09-16 排除** |
+| **本地服务接入（Memory）** | **`zilliztech/memsearch`**（MIT） | 第 4、7 章 | 记忆类插件的服务型写法：MCP 客户端接入 + 工具注册 + 生命周期回收 |
 | **多插件 monorepo 组织** | **zhu1090093659/dsh-web** | 第 14 章工程规范 | 同仓管理 10+ 插件，看 workspace / 命名 / 发布流水线 |
 
 ---
@@ -193,9 +191,9 @@ dsh plugin --profile web add dsh-find-plugin
 |---|---|
 | ⚠️ 1 | **star 数不等于插件质量**。≥5000 档里 16/27 是蹭 topic 的无关仓库；反过来说，生态里被广泛使用的插件（如 `dsh-find-plugin`、各类主题包）star 只有几百 |
 | ⚠️ 2 | **生态极年轻**。清单里创建的插件绝大多数是 2026-08 之后建的（不到一个月）。star 数还在快速变动，本清单会很快过时 |
-| ⚠️ 3 | **授权务必看正文 + 看子包**。本技能踩过三类误判：① 自动分类在超长复合文本上误报（`WeKnora` 的 158 KB 文本被判成 Apache-2.0，实为 **MIT** 主体 —— 正文第 8 行明写 "licensed under the MIT License except for the third-party components"）；② GitHub API 报 `NOASSERTION` 只是**解析不了**自定义文本，**不等于无授权**；③ **根 LICENSE 与子包声明可以不一致** —— `dsh-web` 根为 Apache-2.0，但 `packages/dsh-{community-plugins,doctor,plugin-manager}` 是 **BSD-3-Clause**，资源目录还含 **CC BY-NC-SA 4.0**。想抄代码进自己项目前**两处都要核**，不要只信 API 字段。**另：一个 AGPL-3.0 来源已于 2026-09-16 从本技能的引用集合中排除。** |
+| ⚠️ 3 | **授权务必看正文 + 看子包**。本技能踩过三类误判：① 自动分类在超长复合文本上误报（`WeKnora` 的 158 KB 文本被判成 Apache-2.0，实为 **MIT** 主体 —— 正文第 8 行明写 "licensed under the MIT License except for the third-party components"）；② GitHub API 报 `NOASSERTION` 只是**解析不了**自定义文本，**不等于无授权**；③ **根 LICENSE 与子包声明可以不一致** —— `dsh-web` 根为 Apache-2.0，但 `packages/dsh-{community-plugins,doctor,plugin-manager}` 是 **BSD-3-Clause**，资源目录还含 **CC BY-NC-SA 4.0**。想抄代码进自己项目前**两处都要核**，不要只信 API 字段 |
 | ⚠️ 4 | **topic 会被滥用**。任何仓库都能自己加 `dsh-plugin` topic。判据永远是**看它有没有 `dsh.bundle`**，不是看 topic |
-| ⚠️ 5 | 本清单基线为 **2026-09-11**，DSH 版本 `0.1.5-rc.2`（commit `c291e7961a`）。项目处于 pre-stable，插件 API 可能破坏性变更 |
+| ⚠️ 5 | 本清单的**调研时点**为 2026-09-11（当时 DSH 为 `0.1.5-rc.2`，commit `c291e7961a`）；**本技能当前基线**另见 `00-version-gate.md` §1。项目处于 pre-stable，插件 API 可能破坏性变更 |
 
 ---
 
