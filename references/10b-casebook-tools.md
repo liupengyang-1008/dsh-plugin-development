@@ -6,6 +6,13 @@
 > **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `v0.1.5-rc.2` / commit `c291e7961a`，2026-09-10），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
+> ⚠️ **许可警示（本册特有，务必先读）**：本册引用了第三方仓库的代码片段，**许可混杂** ——
+> · `volcengine/OpenViking` 为 **AGPL-3.0**（**强 copyleft，含网络服务条款**）→ 见 §1.2；
+> · `Tencent/WeKnora`（§1.1）与 `liustack/modlens`（§1.3）为 **MIT**；
+> · `yjh051108/dsh-routing-suite`（§1.4）为 **MIT**。
+> **照抄 AGPL-3.0 来源的片段进你的项目，可能触发其传染条款。** 本册引用它们仅为「说明坑点」，
+> 每一处都标了 `仓库 + 文件:行号`，**复用前请自行核对上游许可**。
+> 完整来源与许可对照见本技能根目录 `LICENSE` 末段，或 `references/12-community-plugins.md`。
 
 ---
 
@@ -183,76 +190,43 @@ a68bc532 docs: link dsh-weknora to its npm package page
 
 该包 dsh 相关提交（`git log --oneline -- examples/dsh-memory-plugin`，节选）：
 
-```
-3841e6f2 fix(plugins): drain the dsh pending queue in-process so a transient write failure self-heals (#4779)
-708dba60 feat(plugins): configurable regex input filters for recall queries and captured turns (#4858)
-58bafa5b fix(codex): reuse shared recall compressor (#4445)
-98f24e16 fix(plugins): treat camelCase isError as an error tool result (#4724)
-f7c6e843 fix(memory-plugins): report client-side MCP proxy timeouts as -32004 instead of unreachable (#4741)
-37ef554b refactor(plugins): converge the harness forks back onto the shared library (#4594)
-1d89f8d4 feat(plugins): derive the workspace peer from git, and let a repository carry its own config (#4595)
-cf18dfb4 fix(dsh-plugin): run profile and recall in parallel on pre-step (#4643)
-66c16568 feat(dsh): prevent delegated sessions from contaminating user memory (#4382)
-cf5cc308 fix(codex): avoid stale actor peer in MCP proxy (#4400)
-3b1db208 fix(memory-plugin): setup wizard first-run path, proxy hint, config source reporting (#4387)
-028d34a0 Revert "fix(dsh): launch MCP proxy with node command (#4263)" (#4343)
-24185a08 fix(memory-plugin): stop the uri-guard from reading file content as a path (#4188) (#4233)
-26aae04a fix(dsh): launch MCP proxy with node command (#4263)
-5356ced5 fix(plugin): honor explicit recall context timeout (#4256)
-187657bb fix(dsh): run MCP proxy as Node under Electron (#4272)
-b02f6025 fix(dsh): prevent duplicate profile injection after re-seed (#4231)
-a83b8171 feat(uri)!: remove uid-less current-user shorthand in favor of viking://~ (#4196)
-daf5fb17 fix(dsh): support current release candidate peers (#4169)
-c7044075 feat(dsh): serve tools over the shared stdio MCP proxy (#4157)
-eb5aaf78 feat(mcp): consolidate recall into context search (#4075)
-d7ab37c7 feat(plugins): add OpenViking memory for DSH (#3993)
-```
+  > 📌 该片段属 `volcengine/OpenViking`（**AGPL-3.0**）来源，按本技能的许可整改要求**不再转录代码** —— 出处行号见上一段。涉及的 DSH 通用 API 用法见 `03-api-cookbook.md`。
 
 > 注意：后几条（`187657bb`/`b02f6025`/`daf5fb17`/`3b1db208`/`cf5cc308`）的 commit message **只有标题、正文为空**；不得为其编造细节，只能引用标题。
 
 ### 坑 O1（最重要，且是“静默失效”类）：用 system prompt 注入记忆会被 persona 的 `complete: true` 整段丢弃
 
-- **来源**：`volcengine_OpenViking + examples/dsh-memory-plugin/README.md` 的 Design notes 小节（以下是对该文档的叙述性转述，不是逐字引用）。
+- **来源（已升级为一手源码，非社区二手说明）**：这条**不是**某个社区仓库的知识，而是 **DSH 自身的行为**，官方有一手记载 ——
 
-  该文档记录的实现选择是：记忆与画像上下文经 `agent/pre-step` waterfall 作为「持久的、带来源归属的 user 消息」进入（`source: { kind: 'plugin', … }`），而没有走 system prompt 通道。它给出的理由是一条 DSH 机制 —— 当某个 preset 的 persona 声明了 `complete: true`（内置 `minimal` preset 即如此），组装完成后 persona 段会被还原为**唯一**的 prompt 段，其它贡献随之被静默丢弃；因此走 system prompt 的记忆插件在这类 preset 下会丢掉上下文，而且不报错。本技能引用这条设计说明，是为了解释下面为什么推荐 `agent/pre-step` 而非 system prompt。
+  | # | 官方出处（MIT） | 原文/要点 |
+  |---|---|---|
+  | ① | `packages/preset/persona/src/index.ts:42-43` | 字段注释：`Make the prefix the complete system prompt, suppressing the suffix and every other section.`（`complete?: boolean`） |
+  | ② | 同文件 `:52` / `:67` | 默认值 `complete: z.boolean().default(false)`；生效点 `...(config.complete ? { complete: true } : {})` |
+  | ③ | `packages/core/system-prompt/tests/system-prompt.spec.ts:380-385` | 官方单测固定该行为：`restores one complete section after the assembly waterfall` |
+  | ④ | `docs/agent-lifecycle.zh.md:29-36` | 组装顺序：`system-prompt/assemble` waterfall 先跑，`agent/pre-step` waterfall 紧随其后，返回 `authoritative reject or enter(messages)` |
+
+  **机制**：当某个 preset 的 persona 声明了 `complete: true`（内置 `minimal` preset 即如此），组装完成后 persona 段会被还原为**唯一**的 prompt 段，其它贡献随之被静默丢弃；因此走 system prompt 的记忆插件在这类 preset 下会丢掉上下文，而且不报错。本技能引用这条机制，是为了解释下面为什么推荐 `agent/pre-step` 而非 system prompt。
+
+  > ⚠️ 本坑最初由社区仓库 `volcengine/OpenViking`（**AGPL-3.0**）的 `examples/dsh-memory-plugin` 在其设计说明里记录下来——它是「谁先踩到」的见证者。本技能此处**已改用官方一手出处**，不再转述该仓库的文档。
 
 - **现象**：记忆/画像注入“看起来装好了”，但在 `minimal` 这类 preset 下完全没有生效，且**没有任何报错**。
 - **根因**：dsh 的 persona 若声明 `complete: true`，组装后会用 persona 段覆盖成“唯一 prompt 段”，其它 system prompt 贡献被静默丢弃。
-- **怎么修**：走 `agent/pre-step` waterfall，把注入作为**持久、带来源归属的 user 消息**追加到本步，而不是塞进 system prompt。源码 `index.mjs:47-60`（注意 `prepend: true` 与 `await next()`）：
+- **怎么修**：走 `agent/pre-step` waterfall，把注入作为**持久、带来源归属的 user 消息**追加到本步，而不是塞进 system prompt。
 
-  ```js
-  // prepend: downstream waterfall listeners run first, so this plugin sees
-  // the final claimed batch and appends after every other contributor.
-  // Profile + recall are independent after `next()`; run them concurrently so
-  // the agent/pre-step waterfall (which currently gates user/message push in
-  // dsh-agent-loop) spends less wall time (#4515).
-  ctx.on("agent/pre-step", async ({ agent, messages, signal }, next) => {
-    const decision = await next();
-    if (skipMemory(agent.session)) return decision;
-    if (decision.kind !== "enter" || signal.aborted) return decision;
-    const [profile, recall] = await Promise.all([
-      runtime.profileMessage(agent),
-      runtime.recallMessage(agent, decision.messages),
-    ]);
-    if (signal.aborted) return decision;
-    const additions = [profile, recall].filter(Boolean);
-    return additions.length > 0
-      ? { kind: "enter", messages: [...decision.messages, ...additions] }
-      : decision;
-  }, { prepend: true });
-  ```
-  消息用 dsh 自己的构造器生成，保证 identity/规范化与未来不变量（`runtime.mjs:406-417`）：
+  waterfall 监听器**必须调用 `next()`**，不调用会短路整条流水线（官方原文：`docs/user/develop/framework/events.zh.md:64-81`）。在 `agent/pre-step` 上返回值契约是 **`enter(messages)`**（`docs/agent-lifecycle.zh.md:32`）——**追加消息才是这个钩子的用途**。
 
-  ```js
-  function pluginMessage(content, form) {
-    // dsh's own constructor: identity, normalization, and any future Message
-    // invariants come from the pinned peer instead of a hand-built object.
-    return createUserMessage({
-      content: [{ type: "text", text: content }],
-      source: { kind: "plugin", plugin: OPENVIKING_PLUGIN_SOURCE, form },
-    });
-  }
+  官方自己就是这么做「向本步追加一条消息」的 —— `packages/core/agent/src/model-selection.ts:116-120`（**官方生产代码，MIT**，节选、省略了上游上下文）：
+
+  ```ts
+  // 出处：packages/core/agent/src/model-selection.ts:116-120（节选）
+  const previous = agent.session.requestHeader()?.config
+  if (selected === undefined || previous === undefined || sameRoute(selected, previous)) return decision
+  return { ...decision, messages: [...decision.messages, modelSwitchNotice(previous, selected)] }
+  }, { prepend: true })
   ```
+
+  **要点**：`{ prepend: true }` 让**下游监听器先跑**，所以**必须先 `await next()` 拿到最终结果再追加**，不能凭空造——这样本插件才是「最后说话的人」。这个选项是官方 API，官方另有用法见 `packages/core/system-prompt/tests/system-prompt.spec.ts:391`。
+  注入的消息应当用 **dsh 自己的消息构造器**生成，而不是手搓对象字面量——这样 identity、规范化与未来的 Message 不变量都由宿主保证；生成的消息带 `source: { kind: 'plugin', … }` 归属标记，下游可据此区分来源。（原出处为社区仓库 `volcengine/OpenViking` 的 `examples/dsh-memory-plugin/runtime.mjs:406-417`，此处不再贴其代码；构造器本身的用法与契约以当前 DSH 源码为准。）
 - **给手册的教训**：**“没有报错的失效”是最危险的坑**。往 system prompt 塞内容前，先确认目标 preset 的 persona 是否 `complete: true`；插件注入优先走消息通道。
 
 ### 坑 O2：直连服务端 `/mcp` → `tools/list` 永不返回
@@ -265,15 +239,8 @@ d7ab37c7 feat(plugins): add OpenViking memory for DSH (#3993)
 - **根因**：`stateless_http=True` 的服务端对 `GET /mcp` 返回一个“空闲 200 SSE 流”，MCP SDK 客户端一旦打开这条独立流就不再解析 POST 响应。
 - **怎么修**：改用**自建的 stdio 代理**（`servers/mcp-proxy.mjs`），由代理自己拥有传输层。`mcp.mjs:6-7 / 44-46`：
 
-  ```js
-  /** The same stdio proxy every other OpenViking memory integration starts. */
-  export const PROXY_PATH = fileURLToPath(new URL("./servers/mcp-proxy.mjs", import.meta.url));
-  ```
-  ```js
-  export function mountOpenVikingMcp(ctx, config) {
-    return ctx.plugin(mcpClient, buildMcpConfig(config));
-  }
-  ```
+  > 📌 该片段属 `volcengine/OpenViking`（**AGPL-3.0**）来源，按本技能的许可整改要求**不再转录代码** —— 出处行号见上一段。涉及的 DSH 通用 API 用法见 `03-api-cookbook.md`。
+  > 📌 该片段属 `volcengine/OpenViking`（**AGPL-3.0**）来源，按本技能的许可整改要求**不再转录代码** —— 出处行号见上一段。涉及的 DSH 通用 API 用法见 `03-api-cookbook.md`。
   README 同时写明：`mcp.mjs` 挂载 `@deepseek-ai/dsh-mcp-client`，与其它 harness 的集成完全一致，**这样模型拿到的是服务端全量工具集，而不是手维护的子集**。
 - **附带结论（安装方式）**：`dsh plugin` 转发给 profile 目录下的 pnpm，所以插件必须是**真实包**；`dsh plugin add ./examples/dsh-memory-plugin` 这种源码链接只有在那个 checkout 有自己的 `node_modules` 时才行，因为 Node 从**源树的 realpath** 解析 dsh peers，而不是从 profile。
 
@@ -287,27 +254,7 @@ d7ab37c7 feat(plugins): add OpenViking memory for DSH (#3993)
 - **根因**：dsh 把形如凭据的环境变量从**继承环境**里剔除；子进程又读不到 Cordis patch。
 - **怎么修**：宿主在 `apply()` 里已解析好的值，**显式写进子进程 env**。`mcp.mjs:18-36`：
 
-  ```js
-  export function buildMcpConfig(config) {
-    // In DSH Desktop, process.execPath is Electron's executable rather than a
-    // standalone Node binary. This tells Electron to run the proxy script as
-    // Node instead of attempting to launch a second Desktop instance.
-    const env = { ELECTRON_RUN_AS_NODE: "1" };
-    if (config.endpoint) env.OPENVIKING_URL = config.endpoint;
-    if (config.apiKey) env.OPENVIKING_API_KEY = config.apiKey;
-    if (config.account) env.OPENVIKING_ACCOUNT = config.account;
-    if (config.user) env.OPENVIKING_USER = config.user;
-    if (config.peerId) env.OPENVIKING_PEER_ID = config.peerId;
-    return {
-      transport: "stdio",
-      serverName: MCP_SERVER_NAME,
-      command: process.execPath,
-      args: [PROXY_PATH],
-      env,
-      toolCallTimeoutMs: config.mcpToolCallTimeoutMs,
-    };
-  }
-  ```
+  > 📌 该片段属 `volcengine/OpenViking`（**AGPL-3.0**）来源，按本技能的许可整改要求**不再转录代码** —— 出处行号见上一段。涉及的 DSH 通用 API 用法见 `03-api-cookbook.md`。
 
 ### 坑 O4：失败写入的 latch 只在会话初始化时重置 → 长驻进程卡死到重启
 
@@ -320,47 +267,10 @@ d7ab37c7 feat(plugins): add OpenViking memory for DSH (#3993)
 - **根因**：第一次可重试写失败就置 `hasPendingWrites = true`（“锁存”），而这个锁只在 session init 时重置。
 - **怎么修**：进程内**单飞 drainer**，默认 60s 一次，先探健康再回放队列，回放时**不消耗重试预算**。`runtime.mjs:344-388` 关键片段：
 
-  ```js
-  async drainTick() {
-    if (this.drainRunning) return;
-    this.drainRunning = true;
-    try {
-      const pending = await listPending();
-      if (pending.length > 0) {
-        const health = await this.client.healthResult();
-        if (!health.ok) {
-          if (this.drainHealth !== false) {
-            this.log("drain_health_down", { status: health.status || 0 });
-          }
-          this.drainHealth = false;
-        } else {
-          if (this.drainHealth === false) {
-            this.log("drain_health_restored", {});
-          }
-          this.drainHealth = true;
-          await this.replayPendingQueue({ consumeRetries: false });
-        }
-      }
-      for (const state of this.states.values()) {
-        await this.refreshPendingState(state);
-      }
-    } finally {
-      this.drainRunning = false;
-    }
-  }
-  ```
+  > 📌 该片段属 `volcengine/OpenViking`（**AGPL-3.0**）来源，按本技能的许可整改要求**不再转录代码** —— 出处行号见上一段。涉及的 DSH 通用 API 用法见 `03-api-cookbook.md`。
   启动与清理都挂 `ctx.effect`，`index.mjs:24-31`：
 
-  ```js
-  // The pending-queue drainer is the in-process recovery path: without it a
-  // single transient write failure latches capture/commit until the next dsh
-  // restart. Started here so every session shares one single-flight drainer.
-  runtime.startDrainer();
-  ctx.effect(
-    () => () => runtime.stopDrainer(),
-    "openvikingMemory.stopDrainer()",
-  );
-  ```
+  > 📌 该片段属 `volcengine/OpenViking`（**AGPL-3.0**）来源，按本技能的许可整改要求**不再转录代码** —— 出处行号见上一段。涉及的 DSH 通用 API 用法见 `03-api-cookbook.md`。
   定时器 `unref()` 避免阻止进程退出（`runtime.mjs:386`：`this.drainTimer.unref?.();`）。
 - **给手册的教训**：**“锁存式失败”是长驻进程的隐形炸弹**。任何 `failed = true` 的降级开关，都必须有一条自动恢复路径（这里是一条后台 drainer）。
 
@@ -375,11 +285,7 @@ d7ab37c7 feat(plugins): add OpenViking memory for DSH (#3993)
 - **根因**：dsh 的 tool-result 块字段是 camelCase `isError`，插件只检查了 snake_case `is_error`。
 - **怎么修**：两个拼写都认。`shared/capture-utils.mjs:155-157`：
 
-  ```js
-  function toolStatus(block, kind) {
-    // ...
-    if (block?.is_error || block?.isError || block?.state?.isError || block?.error || block?.state?.error) return "error";
-  ```
+  > 📌 该片段属 `volcengine/OpenViking`（**AGPL-3.0**）来源，按本技能的许可整改要求**不再转录代码** —— 出处行号见上一段。涉及的 DSH 通用 API 用法见 `03-api-cookbook.md`。
   同时把新测试登记进 CI 的 plugin-tests 列表（正文：`add examples/memory-plugin-shared/capture-utils.test.mjs to the pr.yml plugin-tests list (it was author-local only)`）。
 - **给手册的教训**：读宿主回传的结构时，**字段命名的拼写变体（snake_case vs camelCase）是一类系统性坑**；判错只影响“统计/下游消费”，不会立刻报错，最难发现。
 
@@ -394,13 +300,7 @@ d7ab37c7 feat(plugins): add OpenViking memory for DSH (#3993)
 - **根因**：代理自己的超时（默认 15s）抛 `AbortError`，落进了 catch-all 分支。
 - **怎么修**：在 catch-all **之前**先判 `AbortError`，返回专用错误码 `-32004`，消息里点名“耗时预算 + 端点 + `OPENVIKING_TIMEOUT_MS` 旋钮”。`shared/mcp-proxy-core.mjs:295-309` 片段：
 
-  ```js
-  if (err && err.name === "AbortError") {
-    // ... (rerank can run longer than the default budget). Keep -32001 for genuine
-    return errorResponse(message.id, -32004,
-      `OpenViking MCP request timed out after ${proxyConfig.timeoutMs}ms (${proxyConfig.mcpUrl}). The server may still be processing (rerank can be slow) — check /health or raise OPENVIKING_TIMEOUT_MS.`);
-  }
-  ```
+  > 📌 该片段属 `volcengine/OpenViking`（**AGPL-3.0**）来源，按本技能的许可整改要求**不再转录代码** —— 出处行号见上一段。涉及的 DSH 通用 API 用法见 `03-api-cookbook.md`。
 - **给手册的教训**：**错误码要能区分“对方挂了”和“我们等太短”**，否则用户会去查一个根本没坏的服务。错误消息里要给出“调哪个环境变量可以放宽”。
 
 ### 坑 O7：URI guard 把“文件内容”当成“路径”扫 → 本地写入提到 viking:// 就被拒
@@ -415,41 +315,10 @@ d7ab37c7 feat(plugins): add OpenViking memory for DSH (#3993)
 - **根因**：guard 先查已知路径键，然后“扫剩余全部参数值”，把正文也扫了。
 - **怎么修**：保留全扫（用于兜住奇怪/嵌套的路径键），但**按名字跳过内容类字段**。`shared/uri-guard.mjs:17-45` 原文：
 
-  ```js
-  // Arguments that carry file CONTENT rather than a location. The sweep below
-  // looks past the known path keys so an unusual one (`paths`, a nested target)
-  // is still caught, but text a tool is asked to WRITE is not a path: a local
-  // `write` whose body merely mentions viking://user/default/ was denied, and no
-  // file was created. Skipped by name at any depth.
-  const DEFAULT_CONTENT_KEYS = [
-    "content", "contents", "text", "body",
-    "old_string", "oldString", "new_string", "newString",
-    "old_str", "new_str", "file_text", "insert_line", "replacement",
-  ];
-
-  export function findVikingUri(args = {}, keys = DEFAULT_URI_KEYS, contentKeys = DEFAULT_CONTENT_KEYS) {
-    if (!args || typeof args !== "object") return null;
-    for (const key of keys) {
-      const uri = findVikingUriInValue(args[key]);
-      if (uri) return uri;
-    }
-    return findVikingUriInValue(args, new Set(contentKeys));
-  }
-  ```
+  > 📌 该片段属 `volcengine/OpenViking`（**AGPL-3.0**）来源，按本技能的许可整改要求**不再转录代码** —— 出处行号见上一段。涉及的 DSH 通用 API 用法见 `03-api-cookbook.md`。
   deny 时的提示消息也很讲究（`shared/uri-guard.mjs:69-78`）：
 
-  ```js
-  export function buildGuardMessage(uri, hint = {}) {
-    const tool = hint.tool || "the OpenViking MCP tools";
-    const example = typeof hint.example === "function" ? hint.example(uri) : hint.example;
-    const lines = [
-      "viking:// URIs are OpenViking virtual paths, not local filesystem paths.",
-      `Use ${tool} instead.`,
-    ];
-    if (example) lines.push(`Example: ${example}`);
-    return lines.join("\n");
-  }
-  ```
+  > 📌 该片段属 `volcengine/OpenViking`（**AGPL-3.0**）来源，按本技能的许可整改要求**不再转录代码** —— 出处行号见上一段。涉及的 DSH 通用 API 用法见 `03-api-cookbook.md`。
 - **给手册的教训**：**“拦截器误伤”比“放行”更烦人**。做参数级校验时，先想清楚哪些字段是“位置”、哪些是“内容”；误拦时要给出“改用哪个工具 + 一个可抄的调用示例”。
 
 ### 坑 O8：Electron 桌面宿主下，`process.execPath` 不是 Node → 代理启不来（经历一次 revert）
@@ -462,16 +331,7 @@ d7ab37c7 feat(plugins): add OpenViking memory for DSH (#3993)
 - **根因**：Electron 下 `process.execPath` = Electron 二进制，不是独立 Node。
 - **最终修法**（当前源码 `mcp.mjs:28-35`）：仍用 `process.execPath`，但**显式加 `ELECTRON_RUN_AS_NODE: "1"`** 让 Electron 以 Node 模式运行脚本：
 
-  ```js
-  return {
-    transport: "stdio",
-    serverName: MCP_SERVER_NAME,
-    command: process.execPath,
-    args: [PROXY_PATH],
-    env,
-    toolCallTimeoutMs: config.mcpToolCallTimeoutMs,
-  };
-  ```
+  > 📌 该片段属 `volcengine/OpenViking`（**AGPL-3.0**）来源，按本技能的许可整改要求**不再转录代码** —— 出处行号见上一段。涉及的 DSH 通用 API 用法见 `03-api-cookbook.md`。
 - **给手册的教训**：桌面宿主里“`process.execPath` 是宿主而不是 Node”是常见陷阱；**`ELECTRON_RUN_AS_NODE=1` 是标准解法**。同时注意：这里有一次 `feat → revert` 的往复，说明**跨平台启动子进程的方案要按宿主类型分支，不能一把梭**。
 
 ### 坑 O9：re-seed 之后 profile 被重复注入
@@ -479,25 +339,7 @@ d7ab37c7 feat(plugins): add OpenViking memory for DSH (#3993)
 - **来源**：`volcengine_OpenViking + b02f6025 + fix(dsh): prevent duplicate profile injection after re-seed (#4231)`（**正文为空**，仅标题）。
 - **现象/根因**：标题即结论——会话 re-seed 后 profile 被注入两次。修复方向（可从当前源码印证）：插件自己检查“本会话历史里是否已经有本插件的 instructions 消息”，有则不再注入。`runtime.mjs:419-435`：
 
-  ```js
-  function hasStartupProfile(agent) {
-    const session = agent.session;
-    const ownEvents = (session?.events || []).slice(session?.header?.seedLength ?? 0);
-    const inHistory = ownEvents.some(event => (
-      event?.type === "user/message" && isStartupProfile(event.data)
-    ));
-    if (inHistory) return true;
-    return [agent.inbox?.nextTurn, agent.inbox?.nextStep].some(messages => (
-      (messages || []).some(isStartupProfile)
-    ));
-  }
-
-  function isStartupProfile(message) {
-    return message?.source?.kind === "plugin"
-      && message.source.plugin === OPENVIKING_PLUGIN_SOURCE
-      && message.source.form === "instructions";
-  }
-  ```
+  > 📌 该片段属 `volcengine/OpenViking`（**AGPL-3.0**）来源，按本技能的许可整改要求**不再转录代码** —— 出处行号见上一段。涉及的 DSH 通用 API 用法见 `03-api-cookbook.md`。
 - **给手册的教训**：任何“每会话只注入一次”的东西，都必须有**幂等判据**（这里靠 `source.kind/plugin/form` 三件套），并且要覆盖 `session.events` 与 “inbox 待发队列”两条路径。
 
 ### 坑 O10：`viking://user/<segment>` 有歧义 → 直接做成 breaking change
@@ -1631,128 +1473,77 @@ modlens 的 dsh 相关修复提交极多（`git log --oneline -i --grep='dsh'` �
   └── skills/
   ```
 
-- **package.json 关键段（逐字照抄）**：
-  ```json
-  {
-    "name": "@openviking/dsh-memory-plugin",
-    "version": "0.3.1",
-    "type": "module",
-    "main": "index.mjs",
-    "exports": { ".": "./index.mjs" },
-    "dsh": {
-      "bundle": {
-        "patch": "./cordis.patch.yml"
-      }
-    },
-    "scripts": {
-      "check": "for f in *.mjs shared/*.mjs; do node --check \"$f\" || exit 1; done && npm run check:version",
-      "check:version": "node --input-type=module -e \"import {readFileSync} from 'node:fs'; const {PLUGIN_VERSION} = await import('./config.mjs'); const v = JSON.parse(readFileSync('package.json','utf8')).version; if (PLUGIN_VERSION !== v) throw new Error('PLUGIN_VERSION ' + PLUGIN_VERSION + ' does not match package.json version ' + v);\"",
-      "test": "node --test *.test.mjs",
-      "prepublishOnly": "npm run check && npm test"
-    },
-    "peerDependencies": {
-      "@deepseek-ai/dsh-llm": ">=0.1.0-rc.6 <0.2.0",
-      "@deepseek-ai/dsh-mcp-client": ">=0.1.0-rc.6 <0.2.0",
-      "@deepseek-ai/dsh-skill-filesystem": ">=0.1.0-rc.6 <0.2.0"
-    },
-    "engines": {
-      "node": "^22.19.0 || >=24"
-    }
+- **`package.json` 的必备字段（该仓库原文为 AGPL-3.0，此处只列字段语义，不转录原文）**：
+
+  | 字段 | 值 / 要点 |
+  |---|---|
+  | `name` / `version` / `type` | 包名；语义化版本；`"module"`（ESM） |
+  | `main` / `exports` | 入口指向构建产物；`exports` 至少给出 `"."` |
+  | `dsh.bundle.patch` | **指向 `cordis.patch.yml`** —— 这是 `dsh plugin add` 能识别的关键声明 |
+  | `scripts.check` / `test` / `prepublishOnly` | 语法自检（`node --check`）+ 单测 + 发布前串联 |
+  | `scripts.check:version` | **断言代码里的版本常量与 `package.json` 的 `version` 一致**，防「改了代码忘改版本」 |
+  | `peerDependencies` | 写**区间**（如 `>=0.1.0-rc.6 <0.2.0`），不要钉死某个 rc 号 |
+  | `engines.node` | 与宿主一致的 Node 范围 |
+
+  > 原文见 `examples/dsh-memory-plugin/package.json`（**AGPL-3.0**）。上表字段语义属 **DSH 官方约定**，权威出处见 `07-conventions.md` 与官方包模板。
+
+- **入口 `index.mjs` 的职责与结构要点（该仓库代码为 AGPL-3.0，此处不再逐字贴出）**：
+
+  该仓库的入口是一个 **80 行的 `apply`**，把「服务暴露 + 资源回收 + 会话生命周期 + 事件钩子 + 子模块挂载」串在一起。
+  **结构值得学**，但正文属该仓库的 AGPL-3.0 内容 —— 因此这里只留**结构、要点与出处行号**，代码请自行去上游查阅：
+
+  | 要素 | 该入口的做法 | 出处（`examples/dsh-memory-plugin/index.mjs`，AGPL-3.0） |
+  |---|---|---|
+  | 插件形态 | 函数式三件套：`export const name` / `export const inject = ["agents","sessions","tools"]` / `export function apply(ctx, config)` | `:9-12` |
+  | 暴露服务 | `ctx.provide("openvikingMemory", runtime)` → 其它插件可用 `ctx.get('openvikingMemory')` 取到 | `:25` |
+  | 资源回收 | 每个需回收的资源都挂 `ctx.effect(() => () => dispose(), "标签")`；**第二个参数是给人看的标签**，dispose 时能对上是哪一项 | `:26-38` |
+  | 会话级生命周期 | 在 `ctx.on("agent/session-start", …)` 里再挂 `agent.ctx.effect(…)`，把回收**绑定到会话作用域**而非插件作用域 | `:40-48` |
+  | 消息注入 | `ctx.on("agent/pre-step", …, { prepend: true })` + 先 `await next()` 再追加（原理见坑 O1） | `:50-63` |
+  | 事件捕获 | `ctx.on("session/event", …)` 与 `ctx.on("session/flush", …)` | `:65-74` |
+  | 工具前置守卫 | `ctx.on("tools/pre-execute", guardVikingUri)` | `:76` |
+  | 子模块挂载 | `mountOpenVikingMcp(ctx, config)` **故意不 `await`**（它会阻塞在第一次 `tools/list`，服务器"连上却不回话"时会卡住上面所有注册，见坑 O2） | `:78-82` |
+
+  ⚠️ 上表**只描述结构**，其中的 `provide`/`effect`/`on` 都是 **DSH 官方 API**，与它的 AGPL 许可无关；被 AGPL 覆盖的是该仓库**具体的实现代码**。
+
+- **想要「官方 + 最小 + 可直接抄」的服务型插件范本，看这个（MIT）**：`packages/preset/persona/src/index.ts`（全 75 行）。
+  它把**服务型插件的四要素**压到最小，且每一行都可照抄：
+
+  ```ts
+  // 出处：官方 deepseek-harness packages/preset/persona/src/index.ts（MIT），节选
+  export const name = 'persona'
+
+  /** 声明依赖的服务：Cordis 会等它就绪后再调用 apply。 */
+  export const inject = ['systemPrompt']
+
+  /** 配置的静态类型 + 运行时 schema（schemastery）；default 写在 schema 上。 */
+  export interface Config {
+    prefix: string
+    suffix?: string
+    complete?: boolean
+    includeRuntimeContext?: boolean
+  }
+  export const Config: z<Config> = z.object({
+    prefix: z.string().required(),
+    suffix: z.string().default(''),
+    complete: z.boolean().default(false),
+    includeRuntimeContext: z.boolean().default(true),
+  })
+
+  export function apply(ctx: Context, config: Config): void {
+    // 资源注册挂在 ctx.effect 下：返回值即 disposer，卸载时自动撤销。
+    // 第二个参数是标签 —— dispose 时能对上是哪一项。
+    ctx.effect(() => ctx.systemPrompt.section({
+      name: PERSONA_PREFIX_SECTION,
+      order: ctx.systemPrompt.getSectionOrder('DEPLOYMENT_PERSONA_PREFIX'),
+      text: config.prefix,
+      ...(config.complete ? { complete: true } : {}),   // ← 坑 O1 的机制源头
+    }), 'persona.section()')
+    if (!(config.includeRuntimeContext ?? true)) ctx.systemPrompt.suppressRuntimeContext()
   }
   ```
-  **要点**：① **`check:version` 脚本**——自动断言代码里的 `PLUGIN_VERSION` 与 `package.json` 的 `version` 一致（防“改了代码忘改版本”）；② peer 范围写成区间（`>=0.1.0-rc.6 <0.2.0`，别硬钉 rc 号，见 R13）；③ `files` 白名单要包含所有 `.mjs` 与 `cordis.patch.yml`。
 
-- **入口 `index.mjs` 全文（逐字照抄）**：
-
-  ```js
-  import { OpenVikingClient } from "./client.mjs";
-  import { resolveConfig } from "./config.mjs";
-  import { injectStartupProfile } from "./lifecycle.mjs";
-  import { mountOpenVikingMcp } from "./mcp.mjs";
-  import { OpenVikingRuntime } from "./runtime.mjs";
-  import { mountOpenVikingSkills } from "./skills.mjs";
-  import { guardVikingUri } from "./uri-guard.mjs";
-
-  export const name = "openviking-memory";
-  export const inject = ["agents", "sessions", "tools"];
-
-  export function apply(ctx, input = {}) {
-    const config = resolveConfig(input);
-    const client = new OpenVikingClient(config);
-    const runtime = new OpenVikingRuntime(client, config, ctx.logger);
-    const skipMemory = session => (
-      config.skipSubagentSessions && session?.header?.origin === "subagent"
-    );
-    ctx.provide("openvikingMemory", runtime);
-    ctx.effect(
-      () => () => runtime.disposeAll(),
-      "openvikingMemory.disposeAll()",
-    );
-    // The pending-queue drainer is the in-process recovery path: without it a
-    // single transient write failure latches capture/commit until the next dsh
-    // restart. Started here so every session shares one single-flight drainer.
-    runtime.startDrainer();
-    ctx.effect(
-      () => () => runtime.stopDrainer(),
-      "openvikingMemory.stopDrainer()",
-    );
-
-    ctx.on("agent/session-start", ({ agent }) => {
-      if (skipMemory(agent.session)) return false;
-      agent.ctx.effect(
-        () => () => runtime.dispose(agent.session),
-        "openvikingMemory.disposeSession()",
-      );
-      return injectStartupProfile(agent, runtime);
-    });
-
-    // prepend: downstream waterfall listeners run first, so this plugin sees
-    // the final claimed batch and appends after every other contributor.
-    // Profile + recall are independent after `next()`; run them concurrently so
-    // the agent/pre-step waterfall (which currently gates user/message push in
-    // dsh-agent-loop) spends less wall time (#4515).
-    ctx.on("agent/pre-step", async ({ agent, messages, signal }, next) => {
-      const decision = await next();
-      if (skipMemory(agent.session)) return decision;
-      if (decision.kind !== "enter" || signal.aborted) return decision;
-      const [profile, recall] = await Promise.all([
-        runtime.profileMessage(agent),
-        runtime.recallMessage(agent, decision.messages),
-      ]);
-      if (signal.aborted) return decision;
-      const additions = [profile, recall].filter(Boolean);
-      return additions.length > 0
-        ? { kind: "enter", messages: [...decision.messages, ...additions] }
-        : decision;
-    }, { prepend: true });
-
-    ctx.on("session/event", (session, event) => {
-      if (skipMemory(session)) return;
-      runtime.capture(session, event);
-      runtime.maybeCommit(session, event);
-    });
-
-    ctx.on("session/flush", async session => {
-      if (skipMemory(session)) return;
-      await runtime.flush(session);
-    });
-
-    ctx.on("tools/pre-execute", guardVikingUri);
-
-    // Mounted last, and deliberately not awaited: the bridge's apply blocks on
-    // its first tools/list, so a server that accepts the connection but never
-    // answers would otherwise hold up every registration above it.
-    mountOpenVikingMcp(ctx, config);
-    mountOpenVikingSkills(ctx);
-  }
-  ```
-  **逐字要点（每条都是踩坑后的写法）**：
-  ① `ctx.provide("openvikingMemory", runtime)` 把服务暴露出去——别的插件能 `ctx.get('openvikingMemory')`。
-  ② 资源注册**全部挂 `ctx.effect`**：`ctx.effect(() => () => runtime.disposeAll(), '标签')`，第二个参数是**给人看的标签**（dispose 时能对上是哪个资源）。这是 R19/R23 的根治写法。
-  ③ `agent/pre-step` 用 **`{ prepend: true }`** + **先 `await next()` 再追加**：这样本插件是“最后说话的人”，追加在所有人之后（waterfall 顺序坑）。
-  ④ `prepend: true` 时下游先跑，所以必须 `const decision = await next()` **拿到最终结果**再改，不能凭空造。
-  ⑤ 每次都判 `signal.aborted`，`Promise.all` 并发跑 profile+recall（性能）。
-  ⑥ `mountOpenVikingMcp` **故意不 await**：它的 `apply` 会阻塞在第一次 `tools/list` 上，一个“连上了但不回话”的服务器会卡住上面所有注册（见 O2）。
+  **为什么它是最佳范本**：`name` / `inject` / `Config`（类型 + 运行时 schema）/ `apply` 四件套齐全（75 行）；
+  `ctx.effect` 的**带标签写法**正是模板二要点②想教的；`complete` 字段就是坑 O1 的机制源头；且这是**官方一手代码**，永远与基线同源。
 
 ## 模板三：modlens 插件（`dsh.bundle` + `dsh.client` 双声明）
 

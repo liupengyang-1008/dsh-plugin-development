@@ -17,8 +17,37 @@ OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ---
 
-Note on third-party content: this repository is released under MIT-0. The files
-`references/10-community-casebook.md` and `references/12-community-plugins.md` quote
-code and descriptions from community repositories that carry their own licenses
-(including AGPL-3.0 and NOASSERTION). Reuse material from those files under the
-terms of the originating project.
+Note on third-party content
+
+This skill is released under MIT-0. That covers its own original content — the
+prose, tooling scripts and templates authored here.
+
+It also documents and quotes material from upstream projects, which carry their
+own licenses. Quoted fragments remain under the terms of their originating
+project; MIT-0 does not extend to them.
+
+| Source | License | Quoted in |
+|---|---|---|
+| deepseek-ai/deepseek-harness — Copyright (c) 2026 DeepSeek | MIT | 01, 02b, 03, 04, 06, 07, 08, 13, 14, assets/ |
+| volcengine/OpenViking | AGPL-3.0 | 10b |
+| zhu1090093659/dsh-web | Apache-2.0 | 02, 02b, 10a, 10d |
+| MemTensor/MemOS | Apache-2.0 | 10c |
+| huangruiteng/loopx | Apache-2.0 | 10c |
+| Tencent/WeKnora | MIT | 02, 10b |
+| anywhere-labs/dsh-desktop | MIT | 02, 02b, 10d |
+| yjh051108/dsh-routing-suite | MIT | 10b |
+| Q00/ouroboros | MIT | 02c, 10d |
+| omdsh-dev/DSH-better-sidebar | MIT | 10d |
+| liustack/modlens | MIT | 10b |
+| xiaobright/dsh-anchored-standard | MIT | 10d |
+| tt-a1i/archify | MIT | 10c |
+
+Apache-2.0 sources additionally ask that their NOTICE files be preserved on
+redistribution — see each project's repository.
+
+A note on the AGPL-3.0 source: it is quoted only to document how a specific
+pitfall was encountered. Wherever practical its code has been reduced to a
+structural description with `file:line` references, and the mechanism behind
+each pitfall has been re-sourced to the MIT-licensed DSH sources that define it.
+Reuse any remaining fragment under the terms of its originating project.
+

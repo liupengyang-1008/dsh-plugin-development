@@ -452,7 +452,7 @@ Because those numbers are **reproducible**. The project rule is that any stateme
 - The probe only covers the 48 facts it asserts. **It does not cover `V`-level implementation details.** A green probe does not mean your plugin runs.
 - Line numbers cited in `references/` **will drift**. Verify by symbol name, not by line.
 - The version history lists only changes that break existing code or configuration. **It is not a changelog.**
-- `references/10a-casebook-ui.md` through `10d-casebook-host-bundle.md`, plus `12-community-plugins.md`, quote community repositories under **mixed licenses** (including AGPL-3.0 and NOASSERTION). Review before reusing any code from them.
+- `references/10a-casebook-ui.md` through `10d-casebook-host-bundle.md`, plus `12-community-plugins.md`, quote code and documentation from community repositories under **mixed licenses** (including **AGPL-3.0**). Review the upstream license before reusing anything. For the full source × license × location table see the end of the root `LICENSE` and `references/12-community-plugins.md`. The mechanism-level content that came from the AGPL-3.0 source has been re-sourced to the MIT-licensed official DSH sources.
 - The skill deliberately does **not** cover "hosting static files" or "publishing a DSH skill". Rationale in `references/15-skill-scope-and-maintenance.md`.
 
 ### License

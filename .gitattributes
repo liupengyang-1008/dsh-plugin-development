@@ -15,6 +15,10 @@
 *.js text eol=lf
 *.json text eol=lf
 
+# Extensionless text files: `* text=auto` alone would check them out as CRLF on
+# Windows (LICENSE has no extension), which then leaks into the packaged zip.
+LICENSE text eol=lf
+
 # Binary assets
 *.png binary
 *.jpg binary
