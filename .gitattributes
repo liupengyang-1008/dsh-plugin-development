@@ -21,6 +21,13 @@ LICENSE text eol=lf
 .gitattributes text eol=lf
 .gitignore text eol=lf
 
+# NOTICE has no extension either. It carries verbatim upstream attribution text,
+# so a CRLF rewrite would alter bytes we are required to reproduce unchanged.
+NOTICE text eol=lf
+
+# Bundled license texts — same reason as NOTICE.
+licenses/*.txt text eol=lf
+
 # Binary assets
 *.png binary
 *.jpg binary

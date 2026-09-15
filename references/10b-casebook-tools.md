@@ -6,13 +6,14 @@
 > **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `v0.1.5-rc.2` / commit `c291e7961a`，2026-09-10），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
-> ⚠️ **许可警示（本册特有，务必先读）**：本册引用了第三方仓库的代码片段，**许可混杂** ——
-> · `volcengine/OpenViking` 为 **AGPL-3.0**（**强 copyleft，含网络服务条款**）→ 见 §1.2；
-> · `Tencent/WeKnora`（§1.1）与 `liustack/modlens`（§1.3）为 **MIT**；
-> · `yjh051108/dsh-routing-suite`（§1.4）为 **MIT**。
-> **照抄 AGPL-3.0 来源的片段进你的项目，可能触发其传染条款。** 本册引用它们仅为「说明坑点」，
-> 每一处都标了 `仓库 + 文件:行号`，**复用前请自行核对上游许可**。
-> 完整来源与许可对照见本技能根目录 `LICENSE` 末段，或 `references/12-community-plugins.md`。
+> ⚠️ **许可警示（本册特有，务必先读）**：本册涉及的第三方仓库**许可混杂** ——
+> · `volcengine/OpenViking`（§1.2）为 **AGPL-3.0**（**强 copyleft，含网络服务条款**）；
+> · `Tencent/WeKnora`（§1.1）、`liustack/modlens`（§1.3）、`yjh051108/dsh-routing-suite`（§1.4）为 **MIT**。
+> **关于 AGPL-3.0 来源：本册不收录其代码，也不转载其文档原文。** §1.2 中来自该仓库的内容
+> **一律是自撰的结构性描述**（每条都标注了对应的 `仓库 文件:行号` 定位），措辞已按确定性表述重写，
+> 不再使用「在可行范围内」这类留有余地的说法。需要字段级原文时请自行查阅上游仓库。
+> **照抄任何第三方片段进你的项目前，都要先核对它的上游许可** —— 尤其是 AGPL-3.0 的传染条款。
+> 完整来源、许可与版权声明对照见本技能根目录 `LICENSE` 末段与随包分发的 `NOTICE`。
 
 ---
 
@@ -231,24 +232,23 @@ a68bc532 docs: link dsh-weknora to its npm package page
 
 ### 坑 O2：直连服务端 `/mcp` → `tools/list` 永不返回
 
-- **来源**：`volcengine_OpenViking + examples/dsh-memory-plugin/README.md`，原文：
+- **来源**：`volcengine/OpenViking`（**AGPL-3.0**）— `examples/dsh-memory-plugin/README.md`（**仅作出处标注，不转载原文**）。
 
-  > `Pointing the bridge straight at the server's `/mcp` endpoint does not work: with `stateless_http=True` the server still answers `GET /mcp` with an idle 200 SSE stream, and once the MCP SDK client opens that standalone stream it stops resolving POST responses, so `tools/list` never returns. The proxy owns the transport itself and is unaffected.`
+  **机制（自撰归纳，非上游文本）**：服务端以 `stateless_http=True` 运行时，`GET /mcp` 会回一条**一直挂着不结束**的 200 流式响应。MCP SDK 客户端把这条流当成会话通道接管过去之后，后续 POST 的响应就没有人去解析了 —— 外在表现就是 `tools/list` 永远等不到结果。自建 stdio 代理不碰这条流，所以只有「直连服务端」这一路会中招。
 
 - **现象**：MCP 桥接后模型看不到任何工具，`tools/list` 一直挂起。
 - **根因**：`stateless_http=True` 的服务端对 `GET /mcp` 返回一个“空闲 200 SSE 流”，MCP SDK 客户端一旦打开这条独立流就不再解析 POST 响应。
 - **怎么修**：改用**自建的 stdio 代理**（`servers/mcp-proxy.mjs`），由代理自己拥有传输层。`mcp.mjs:6-7 / 44-46`：
 
-  > 📌 该片段属 `volcengine/OpenViking`（**AGPL-3.0**）来源，按本技能的许可整改要求**不再转录代码** —— 出处行号见上一段。涉及的 DSH 通用 API 用法见 `03-api-cookbook.md`。
-  > 📌 该片段属 `volcengine/OpenViking`（**AGPL-3.0**）来源，按本技能的许可整改要求**不再转录代码** —— 出处行号见上一段。涉及的 DSH 通用 API 用法见 `03-api-cookbook.md`。
+  > 📌 该片段属 `volcengine/OpenViking`（**AGPL-3.0**）来源，按本技能的许可整改要求**不转录代码**，只作出处标注（`mcp.mjs:6-7 / 44-46`）。涉及的 DSH 通用 API 用法见 `03-api-cookbook.md`。
   README 同时写明：`mcp.mjs` 挂载 `@deepseek-ai/dsh-mcp-client`，与其它 harness 的集成完全一致，**这样模型拿到的是服务端全量工具集，而不是手维护的子集**。
 - **附带结论（安装方式）**：`dsh plugin` 转发给 profile 目录下的 pnpm，所以插件必须是**真实包**；`dsh plugin add ./examples/dsh-memory-plugin` 这种源码链接只有在那个 checkout 有自己的 `node_modules` 时才行，因为 Node 从**源树的 realpath** 解析 dsh peers，而不是从 profile。
 
 ### 坑 O3：dsh 会 scrub 掉继承环境里的“凭据形状”变量，子进程看不到 Cordis patch
 
-- **来源**：`volcengine_OpenViking + examples/dsh-memory-plugin/mcp.mjs:9-17` 注释原文：
+- **来源**：`volcengine/OpenViking`（**AGPL-3.0**）— `examples/dsh-memory-plugin/mcp.mjs:9-17`（**仅出处标注，不转载原文**）。
 
-  > `The bundle's own credential resolution (`OPENVIKING_*` → `ovcli.conf` → `ov.conf`, plus anything set in the Cordis patch) is forwarded through the child environment: DSH scrubs credential-shaped names out of the inherited env, and the patch is invisible to a subprocess, so values the runtime already resolved have to be passed explicitly.`
+  **机制（自撰归纳）**：这个 bundle 解析凭据的顺序是「以 `OPENVIKING_` 为前缀的环境变量 → 凭据文件 → 另一份配置」，**再加上 Cordis patch 里写的内容**；解析出来的结果要靠**子进程环境**带下去。问题出在两处：DSH 会把名字长得像凭据的变量从**继承来的环境**里剔掉，而 Cordis patch 对子进程**不可见**。两边一夹，运行时明明已经解析好的值，到子进程那里就没了 —— 所以必须显式传。
 
 - **现象**：MCP 代理子进程连不上服务端（凭据为空）。
 - **根因**：dsh 把形如凭据的环境变量从**继承环境**里剔除；子进程又读不到 Cordis patch。
@@ -258,10 +258,9 @@ a68bc532 docs: link dsh-weknora to its npm package page
 
 ### 坑 O4：失败写入的 latch 只在会话初始化时重置 → 长驻进程卡死到重启
 
-- **来源**：`volcengine_OpenViking + 3841e6f2 + fix(plugins): drain the dsh pending queue in-process so a transient write failure self-heals (#4779)`，正文原文：
+- **来源**：`volcengine/OpenViking`（**AGPL-3.0**）— commit `3841e6f2`（`fix(plugins): drain the dsh pending queue in-process so a transient write failure self-heals`，#4779）。**仅引标题作出处，不转载正文。**
 
-  > `The dsh memory plugin latches capture and commit on the first retryable write failure (hasPendingWrites) and only reset the latch at session init, so the long-lived dsh process stayed stuck until restart.`
-  > `Add a per-process single-flight drainer (default 60s, env OPENVIKING_PENDING_DRAIN_INTERVAL_MS) that follows the session-start flow: probe health, replay the queue without consuming retry budgets, then re-derive every session's latch from the queue. replayPending gains an optional consumeRetries flag (default true, byte-compatible): drainers release a failed claim back to its original filename instead of incrementing the retry count…`
+  **机制（自撰归纳）**：插件在**第一次可重试的写入失败**时就把 capture/commit 置成「锁存」状态（`hasPendingWrites`），而这个锁**只在会话初始化时**才复位 —— 于是长驻的 dsh 进程一旦中招，就再也写不进去，直到重启。修法是在进程内加一个**单飞 drainer**（默认 60s 一次，间隔可用 `OPENVIKING_PENDING_DRAIN_INTERVAL_MS` 调）：它按会话启动的流程走一遍 —— 先探健康、再回放队列、**回放时不消耗重试预算** —— 最后从队列**重新推导**每个会话的锁存状态。回放这一步还加了个可选开关，让 drainer 把失败认领**退回原文件名**而不是累加重试计数。
 
 - **现象**：网络抖一下之后，capture/commit **永久不工作**，直到重启 dsh。
 - **根因**：第一次可重试写失败就置 `hasPendingWrites = true`（“锁存”），而这个锁只在 session init 时重置。
@@ -276,25 +275,23 @@ a68bc532 docs: link dsh-weknora to its npm package page
 
 ### 坑 O5：DSH 工具结果用 camelCase 的 `isError`，插件只认 `is_error` → 失败的调用被记成“成功”
 
-- **来源**：`volcengine_OpenViking + 98f24e16 + fix(plugins): treat camelCase isError as an error tool result (#4724)`，正文原文：
+- **来源**：`volcengine/OpenViking`（**AGPL-3.0**）— commit `98f24e16`（`fix(plugins): treat camelCase isError as an error tool result`，#4724）。**仅引标题作出处，不转载正文。**
 
-  > `DSH emits tool-result blocks with a camelCase isError field ({type:"tool-result", toolCallId, content, isError}), but the shared capture-utils toolStatus() only checks is_error / error / state.error. Failed results were therefore labeled tool_status=completed, while their error text still landed in tool_output. The mislabel does not mislead LLM memory extraction (verified end-to-end), but it does corrupt status-driven consumers: experience read lineage (experience_lineage.py), usage reporting, working-memory formatting, and rollout training artifacts.`
-  > `Recognize block.isError alongside is_error.`
+  **机制（自撰归纳）**：DSH 吐出的 tool-result 块里，错误标志用的是 camelCase 的 `isError`；而共享的捕获工具只检查了 `is_error` / `error` / `state.error` 这几种写法。两边对不上，**失败的调用就被记成 `completed`** —— 错误文本其实还在 `tool_output` 里，但状态字段是错的。这个错标**不会**影响 LLM 的记忆抽取（上游端到端验证过），但会污染所有**看状态行事**的消费方：经验血缘、用量统计、工作记忆格式化、训练产物。修法是让判定同时认这两种拼写。
 
 - **现象**：工具调用**失败了**，但捕获下来的 `tool_status` 是 `completed`（错误文本仍在 `tool_output`）。
 - **根因**：dsh 的 tool-result 块字段是 camelCase `isError`，插件只检查了 snake_case `is_error`。
 - **怎么修**：两个拼写都认。`shared/capture-utils.mjs:155-157`：
 
   > 📌 该片段属 `volcengine/OpenViking`（**AGPL-3.0**）来源，按本技能的许可整改要求**不再转录代码** —— 出处行号见上一段。涉及的 DSH 通用 API 用法见 `03-api-cookbook.md`。
-  同时把新测试登记进 CI 的 plugin-tests 列表（正文：`add examples/memory-plugin-shared/capture-utils.test.mjs to the pr.yml plugin-tests list (it was author-local only)`）。
+  同时补了一个针对该共享受阻工具的测试用例，并把它登记进 CI 的 plugin-tests 列表（此前只有作者本地会跑，CI 不会覆盖）。
 - **给手册的教训**：读宿主回传的结构时，**字段命名的拼写变体（snake_case vs camelCase）是一类系统性坑**；判错只影响“统计/下游消费”，不会立刻报错，最难发现。
 
 ### 坑 O6：MCP 代理**自身超时**被当成“服务器不可达”上报
 
-- **来源**：`volcengine_OpenViking + f7c6e843 + fix(memory-plugins): report client-side MCP proxy timeouts as -32004 instead of unreachable (#4741)`，正文原文：
+- **来源**：`volcengine/OpenViking`（**AGPL-3.0**）— commit `f7c6e843`（`fix(memory-plugins): report client-side MCP proxy timeouts as -32004 instead of unreachable`，#4741）。**仅引标题作出处，不转载正文。**
 
-  > `A request aborted by the proxy's own timeout budget fell into mapError()'s catch-all and surfaced as -32001 'check the URL / server reachable' even while the server was healthy and still computing — rerank-inclusive find/search legitimately runs tens of seconds past the default 15s budget, so every such call was mislabeled as an outage (#4739).`
-  > `Branch on AbortError before the catch-all and return a dedicated -32004 naming the elapsed budget, the endpoint, and the OPENVIKING_TIMEOUT_MS knob; -32001 keeps its meaning of genuine connection failure. -32003 is already taken by the empty-response error, so timeouts use -32004.`
+  **机制（自撰归纳）**：被**代理自己的超时预算**掐断的请求，会掉进 `mapError()` 的兜底分支，于是被报成「连不上，去查 URL / 服务端可达性」—— 可服务端明明是健康的、还在算。带 rerank 的检索**动辄几十秒**，本来就超过默认的 15s 预算，这类调用**全被误报成故障**。修法是在兜底之前**先判 `AbortError`**，单独返回一个专用错误码，并在消息里点名：耗时预算、端点、以及调哪个旋钮（`OPENVIKING_TIMEOUT_MS`）。原有「连不上」的错误码保持原含义不变；空响应已经占了另一个码，所以超时用新码。
 
 - **现象**：服务端健康、任务还在算，调用却报 `-32001 check the URL / server reachable`（误判为断连）。
 - **根因**：代理自己的超时（默认 15s）抛 `AbortError`，落进了 catch-all 分支。
@@ -305,15 +302,13 @@ a68bc532 docs: link dsh-weknora to its npm package page
 
 ### 坑 O7：URI guard 把“文件内容”当成“路径”扫 → 本地写入提到 viking:// 就被拒
 
-- **来源**：`volcengine_OpenViking + 24185a08 + fix(memory-plugin): stop the uri-guard from reading file content as a path (#4188) (#4233)`，正文原文：
+- **来源**：`volcengine/OpenViking`（**AGPL-3.0**）— commit `24185a08`（`fix(memory-plugin): stop the uri-guard from reading file content as a path`，#4188 / #4233）。**仅引标题作出处，不转载正文。**
 
-  > `findVikingUri() checked the path-like keys and then swept every remaining argument value, so a local write or edit whose CONTENT merely mentioned a viking URI was denied and no file was created:`
-  > `  write { file_path: "/home/me/notes.md", content: "docs say viking://user/default/ is virtual" } -> deny`
-  > `The sweep still runs — it is what catches an unusual or nested path key — but it now skips arguments that carry content rather than a location (content, new_string, old_string, file_text, ...). A URI in file_path, path, uri, an unknown nested path key, or a bash command still denies.`
+  **机制（自撰归纳）**：URI 守卫先检查一组「路径形状」的键，然后把**剩下的全部参数值**再扫一遍。问题在于「剩下的」里混着**内容字段** —— 一次本地写入如果**正文里**只是提到了一句 `viking://…`，整次写入就被拒，文件根本没建出来。修法是保留全扫（正是它兜住了奇怪或嵌套的路径键），但**按字段名跳过那些携带内容而非位置的参数**（内容、新串、旧串、文件文本等）。而出现在路径类字段、未知的嵌套路径键、或 bash 命令里的 URI，**仍然照拒**。
 
 - **现象**：本地 `write`/`edit` 的文件**正文里**只是提到了一句 `viking://…`，整次写入被 deny，文件没建出来。
 - **根因**：guard 先查已知路径键，然后“扫剩余全部参数值”，把正文也扫了。
-- **怎么修**：保留全扫（用于兜住奇怪/嵌套的路径键），但**按名字跳过内容类字段**。`shared/uri-guard.mjs:17-45` 原文：
+- **怎么修**：保留全扫（用于兜住奇怪/嵌套的路径键），但**按名字跳过内容类字段**。`shared/uri-guard.mjs:17-45`（**仅出处，不转录代码**）：
 
   > 📌 该片段属 `volcengine/OpenViking`（**AGPL-3.0**）来源，按本技能的许可整改要求**不再转录代码** —— 出处行号见上一段。涉及的 DSH 通用 API 用法见 `03-api-cookbook.md`。
   deny 时的提示消息也很讲究（`shared/uri-guard.mjs:69-78`）：
@@ -325,7 +320,7 @@ a68bc532 docs: link dsh-weknora to its npm package page
 
 - **来源（三条，按时间）**：
   - `volcengine_OpenViking + 187657bb + fix(dsh): run MCP proxy as Node under Electron (#4272)`（**正文为空**，仅标题）
-  - `volcengine_OpenViking + 26aae04a + fix(dsh): launch MCP proxy with node command (#4263)`，正文 `Use a stable Node command for the DSH stdio MCP proxy so Electron desktop hosts do not try to spawn their own app binary as the proxy runtime.`
+  - `volcengine_OpenViking + 26aae04a + fix(dsh): launch MCP proxy with node command (#4263)`（**仅引标题**；大意是改用一条稳定的 Node 命令来拉起 stdio MCP 代理，免得 Electron 桌面宿主把自己的应用二进制当成代理运行时去启动）
   - `volcengine_OpenViking + 028d34a0 + Revert "fix(dsh): launch MCP proxy with node command (#4263)" (#4343)`（**正文为空**，这是一次回滚——说明“换成固定 node 命令”的方案后来被撤了）
 - **现象**：dsh 桌面版（Electron）里 MCP 代理起不来，Electron 把 `process.execPath` 当成自己的可执行文件，于是试图“再开一个桌面实例”。
 - **根因**：Electron 下 `process.execPath` = Electron 二进制，不是独立 Node。
@@ -344,39 +339,38 @@ a68bc532 docs: link dsh-weknora to its npm package page
 
 ### 坑 O10：`viking://user/<segment>` 有歧义 → 直接做成 breaking change
 
-- **来源**：`volcengine_OpenViking + a83b8171 + feat(uri)!: remove uid-less current-user shorthand in favor of viking://~ (#4196)`（**正文很长、含大量迁移细节**），关键原文：
+- **来源**：`volcengine/OpenViking`（**AGPL-3.0**）— commit `a83b8171`（`feat(uri)!: remove uid-less current-user shorthand in favor of viking://~`，#4196）。**仅引标题作出处，不转载正文。**
 
-  > `viking://user/<segment> (memories/resources/skills/peers/privacy/sessions without a user id) was ambiguous with a user literally named after the segment, and a user actually named e.g. "memories" was unreachable for USER/ADMIN callers. Now that the viking://~ home alias (#4167) covers the same need unambiguously, the shorthand fails closed at the request boundary instead of expanding`
-  > `BREAKING CHANGE: requests using the uid-less viking://user/<segment> spelling now fail with 400; use viking://~/<segment> or an explicit viking://user/{user_id}/<segment> URI.`
+  **机制（自撰归纳）**：旧写法 `viking://user/<segment>`（省略 user id，后接 memories / resources / skills / peers / privacy / sessions 之一）与「真的就叫这个名字的用户」**有歧义** —— 一个恰好叫 `memories` 的真实用户，对 USER / ADMIN 调用方来说**永远够不到**。新的 `viking://~` home 别名（#4167）能无歧义地覆盖同一需求，于是这种省略写法改为**在请求边界直接失败**，不再尝试展开。
 
-- **现象**：所有用旧写法的调用开始 400。
+- **现象**：所有用旧写法的调用开始 400（`viking://user/<segment>` 这种省略 user id 的形式）。改用 `viking://~/<segment>` 或显式的 `viking://user/{user_id}/<segment>` 即可。
 - **根因**：`viking://user/memories` 里 `memories` 既可能是“保留段”也可能是“一个真叫 memories 的用户”。
-- **怎么修**：**fail closed**（拒绝并给出纠正提示），并**迁移仓库内所有第一方 emitter**；对存储里的历史写法做兼容归一化。README 顶部也加了醒目提示：
-
-  > `**Requires an OpenViking server with `viking://~` home-alias support.** Recall targets the caller's own context space through `viking://~/memories` and `viking://~/skills`; the uid-less `viking://user/memories` shorthand is rejected by newer servers.`
+- **怎么修**：**fail closed**（拒绝并给出纠正提示），并**迁移仓库内所有第一方 emitter**；对存储里的历史写法做兼容归一化。README 顶部也加了醒目提示（**自撰转述，非上游原文**）：该包需要服务端支持 `viking://~` home 别名；召回走的是调用方自己的上下文空间（`viking://~/memories`、`viking://~/skills`），而省略 user id 的旧写法会被较新版本的服务端拒绝。
 - **给手册的教训**：URI / 路径里有“保留字 vs 真实名”的歧义时，**宁可在边界直接拒绝并给出正确写法**，也不要猜。
 
 ### 其它相关提交（只有标题，不展开）
 
 - `cf5cc308 fix(codex): avoid stale actor peer in MCP proxy (#4400)`（标题；正文空）——代理里 actor peer 会变陈旧。
 - `3b1db208 fix(memory-plugin): setup wizard first-run path, proxy hint, config source reporting (#4387)`（标题；正文空）。
-- `5356ced5 fix(plugin): honor explicit recall context timeout (#4256)`，正文 `Let operator-configured recallContextTimeoutMs apply even when context recall skips rewrite and query expansion, so low-latency configs can still extend the request deadline explicitly.`（并且要求“把修复同步进共享源码，生成的插件副本才能保持一致”）。
+- `5356ced5 fix(plugin): honor explicit recall context timeout (#4256)`（**仅引标题**；大意是让运维显式配置的 recall 超时**照样生效** —— 即便这次 context recall 跳过了重写与查询扩展，低延迟配置也仍然能主动放宽请求截止时间。该提交还要求把修复**同步进共享源码**，否则生成的插件副本会与共享实现不一致）。
 - `708dba60 feat(plugins): configurable regex input filters for recall queries and captured turns (#4858)`（标题；正文在 `shared/input-filters.mjs` 可印证功能）。
 
-### 文档线索（OpenViking，最关键的一份“逐条报错 → 排查”表）
+### 文档线索（OpenViking）
 
-`docs/zh/agent-integrations/17-dsh.md` 的「常见问题」表（原文照抄）：
+> **自撰描述，未复制上游文本。** 下表归纳的是「这个插件在宿主里怎么算装对了、怎么探活、怎么排错」的**机制**，
+> 不是上游文档的转载；如需字段级权威清单，请直接查阅上游仓库。
 
-| 现象 | 排查方向 |
-|------|----------|
-| 没有注入，也没有 OpenViking 工具 | `dsh --profile web --dump-config` 里应能看到 `openviking-memory`；重新运行安装器或 `dsh plugin --profile web add …` |
-| 装到了错误的 profile | 安装器默认 `web`；用 `--dsh-profile <name>` 重新运行 |
-| 安装时报 `ERESOLVE` | `@deepseek-ai/dsh-*` 各包预发布 tag 不同步；请精确安装 `@deepseek-ai/dsh@0.1.0-rc.6` |
-| 安装时报包「不在 npm registry 中」 | pnpm 默认拒绝发布不满 24 小时的版本（`minimumReleaseAge`）。等一等，或把该精确版本加进 profile 的 `pnpm-workspace.yaml` 的 `minimumReleaseAgeExclude` |
-| 召不回任何内容 | `curl http://localhost:1933/health`；检查端点配置，以及 prompt 是否长于最小查询长度（3 个字符） |
-| OpenViking 返回 401 / 403 | 检查 `OPENVIKING_API_KEY`；可信模式部署还要检查 `OPENVIKING_ACCOUNT` 与 `OPENVIKING_USER` |
-| 串入了其他项目的记忆 | 设置 `OPENVIKING_RECALL_PEER_SCOPE=actor` |
-| 崩溃后没有 commit | commit 由 token 阈值和 teardown 触发；排队的写入会在下次会话开始时重放 |
+| 机制 | 作用（自撰归纳） | 上游定位 |
+|---|---|---|
+| 插件安装名 `openviking-memory` | 「装没装上」最快的判据：`dsh --profile <name> --dump-config` 的输出里应当能看到这个名字。看不到就没有注入、也没有它的工具 | `volcengine/OpenViking` — `docs/zh/agent-integrations/17-dsh.md` |
+| profile 选择 | 安装器默认往 `web` profile 装；要装到别的 profile 得显式指定 profile 名 | 同上 |
+| 本机健康检查端点 | 插件暴露一个本机 HTTP 健康检查口供宿主探测可用性；召回不出东西时先打它，再查端点配置与查询长度下限 | 同上 |
+| 凭据族（`OPENVIKING_` 前缀） | 一组以 `OPENVIKING_` 为前缀的环境变量承载配置与身份：API key 是最常被漏的一项；可信模式部署还额外要求 account 与 user 两类 | 同上 |
+| 召回范围隔离 | 有一个开关可把召回限定在「本人」范围，用于避免把别的项目的记忆串进来 | 同上 |
+| 待写队列与重放 | 排队中的写入会在**下一次会话开始**时重放；commit 由 token 阈值与 teardown 触发 —— 所以进程崩溃后「看不到 commit」是预期行为，不等于丢数据 | 同上 |
+| 依赖安装的冷静期（通用 pnpm 行为） | pnpm 默认拒绝解析**发布不满 24 小时**的版本，且 `pnpm config get` **不展示**这个内置默认值（查它什么都不显示）。后果：带 `@latest` 的安装会被**静默回退到更旧的版本**。写死精确版本号即可绕过 —— 那会被当作明确指定而非版本解析 | 非上游特有；pnpm ≥ 11 的 `minimumReleaseAge` 行为 |
+
+> 出处：`volcengine/OpenViking`（**AGPL-3.0**）。**本文件不复制其代码与文档原文**，仅保留上述机制的自撰归纳与出处定位。
 
 README 另一处重要提示：`The bundle has no runtime npm dependencies.`（peerDependencies 由 DSH 自己安装；本包不额外加依赖）。以及 `PLUGIN_VERSION` 必须与 `package.json` 版本一致（`package.json` 的 `check:version` 脚本会校验）。
 

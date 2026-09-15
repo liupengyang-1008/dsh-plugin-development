@@ -199,12 +199,12 @@ dsh plugin --profile web add dsh-find-plugin
 
 ## 9. 本技能引用的第三方来源 × 许可 × 落点
 
-> 本技能的**原创内容**（散文、工具脚本、模板）按 **MIT-0** 发布；下表来源的片段**仍适用其各自许可**。完整声明见技能根目录 `LICENSE` 末段。
+> 本技能的**原创内容**（散文、工具脚本、模板）按 **MIT-0** 发布；下表来源的片段**仍适用其各自许可**。完整声明见技能根目录 `LICENSE` 末段，版权与归属声明见随包分发的 `NOTICE`。**三处（本表 / `LICENSE` / `NOTICE`）互为同一事实源，改动须同步。**
 
 | 来源 | 许可 | 本技能内的落点 |
 |---|---|---|
 | `deepseek-ai/deepseek-harness`（Copyright (c) 2026 DeepSeek） | MIT | `01`、`02b`、`03`、`04`、`06`、`07`、`08`、`13`、`14`、`assets/` |
-| `volcengine/OpenViking` | **AGPL-3.0** | `10b`（**仅 §1.2**；机制类内容已改用官方 DSH 源码重新溯源） |
+| `volcengine/OpenViking` | **AGPL-3.0** | `10b`（**仅 §1.2**；**不收录其代码，也不转载其文档原文** —— 只保留自撰的机制描述与 `文件:行号` 出处） |
 | `zhu1090093659/dsh-web` | Apache-2.0 | `02`、`02b`、`10a`、`10d` |
 | `MemTensor/MemOS` | Apache-2.0 | `10c` |
 | `huangruiteng/loopx` | Apache-2.0 | `10c` |
@@ -220,7 +220,7 @@ dsh plugin --profile web add dsh-find-plugin
 **两条判读纪律（都踩过）**：
 
 1. **许可证类别只以 LICENSE 正文为准**，不要用 GitHub API 的 `license` 字段。它对自定义文本会返回 `NOASSERTION` —— 那是「**解析不了**」，不是「**没有许可**」。WeKnora 即此例：API 报 `NOASSERTION`，正文第 8 行实为 MIT。
-2. **Apache-2.0 的来源在再分发时需保留其 NOTICE 文件**（Apache-2.0 §4(d)）。
+2. **Apache-2.0 的来源在再分发时需保留其归属声明**（Apache-2.0 §4(c)），**并在上游自带 NOTICE 时逐字转载其 NOTICE**（§4(d)）。本技能已把这两件事落在随包分发的 `NOTICE` 里（`huangruiteng/loopx` 的 NOTICE 原文逐字转载于一节），并按 §4(a) 随包附上 `licenses/Apache-2.0.txt`。
 
 ---
 

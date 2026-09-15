@@ -42,12 +42,21 @@ project; MIT-0 does not extend to them.
 | xiaobright/dsh-anchored-standard | MIT | 10d |
 | tt-a1i/archify | MIT | 10c |
 
-Apache-2.0 sources additionally ask that their NOTICE files be preserved on
-redistribution — see each project's repository.
+Apache-2.0 sources: as required by Apache-2.0 sections 4(a) and 4(c), a copy
+of the Apache License 2.0 is included at licenses/Apache-2.0.txt, and the
+copyright and attribution notices retained from those sources are reproduced
+in the NOTICE file distributed with this package. Where an upstream project
+ships its own NOTICE file, the attribution notices it contains are reproduced
+in full in that NOTICE file, as required by Apache-2.0 section 4(d).
 
-A note on the AGPL-3.0 source: it is quoted only to document how a specific
-pitfall was encountered. Wherever practical its code has been reduced to a
-structural description with `file:line` references, and the mechanism behind
-each pitfall has been re-sourced to the MIT-licensed DSH sources that define it.
-Reuse any remaining fragment under the terms of its originating project.
+MIT-licensed sources: the copyright notices retained from those sources, and
+the common MIT permission notice, are reproduced in NOTICE and at
+licenses/MIT.txt.
+
+A note on the AGPL-3.0 source: OpenViking (AGPL-3.0) is cited for provenance
+only. No source code from it is reproduced anywhere in this package, and no
+documentation of it is reproduced verbatim — such passages have been rewritten
+as original structural descriptions carrying repository file:line locators,
+and the mechanism behind each pitfall has been re-sourced to the MIT-licensed
+DSH sources that define it. What remains is attribution and locators.
 

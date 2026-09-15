@@ -2,9 +2,9 @@
 name: dsh-plugin-development
 slug: dsh-plugin-development
 displayName: DSH Plugin Development
-summary: Develop DSH (DeepSeek Harness) / Cordis plugins end to end — plugin forms, templates, an API cookbook, catalogued pitfalls, packaging and publishing, plus a mandatory version gate for the pre-stable upstream.
+summary: Develop DSH (DeepSeek Harness) / Cordis plugins end to end — plugin forms, templates, an API cookbook, catalogued pitfalls, packaging and publishing, plus a mandatory version gate for the pre-stable upstream. Third-party fragments quoted here remain under their own licences (MIT / Apache-2.0) — see the bundled LICENSE and NOTICE.
 description: A development-time skill for building plugins on DSH (DeepSeek Harness) / Cordis. It is not itself an installable DSH plugin; it is the tooling that guides a developer or AI agent through creating, debugging, packaging, and publishing one. This skill should be used when the user asks to develop a DSH plugin, write or modify a cordis plugin, add a tool, slash command, config schema, service, UI slot or HTTP route to DSH, run a periodic task inside a plugin, fix a plugin that fails to load or stays in PENDING, or package a plugin bundle for installation or distribution. It covers the plugin forms and official conventions, with 12 templates, 23 catalogued pitfalls, and copy-ready prompts for AI-agent pair development. Because DSH is pre-stable and ships breaking changes on a short cadence, it also ships a mandatory pre-coding version gate, a probe that re-verifies its own claims against a live source checkout, and a per-tag history of upstream breaking changes.
-version: 1.0.11
+version: 1.0.12
 license: MIT-0
 agent_created: true
 metadata:
@@ -318,6 +318,7 @@ DSH 里最常见的「我明明装了啊」有五种成因，全部落在这 5 �
 | 用到**入站 HTTP / 定时器 / 客户端产物 / 插槽**任一项 | `verify_absorbed_claims.py <仓库路径>` | 27 条第二批断言。**先跑 `--selftest` 证明它能失败**，再跑正向 |
 | **要写插槽名之前**（不要凭表抄） | `extract_slots.py <仓库路径> <skill目录>` | 从源码抽**权威插槽清单**并双向 diff |
 | **改过本技能的任何文档或资源之后** | `check_refs.py <skill目录>` | 悬空引用 / 生成期素材路径 / 本机绝对路径；`0`=全部可在技能内解析 |
+| **改动任何来源标注 / 许可声明 / `NOTICE` / `licenses/` 之后**（发版前必跑） | `check_oss_license.sh`（在技能根目录跑） | 5 项：copyleft 关键词扫描（只对**未声明**的文件判失败）、四个声明文件齐备、`LICENSE` 来源表与 `NOTICE` 条目数一致、无「待逐字核取」占位符、`NOTICE` 行尾为 LF。`0`=PASS 可对外分发。**它是「已逐文件核实」这句话的可复现证据** |
 | 目标版本高于基线，且需要本地源码 | `dsh-sync.sh` | 把 DSH 源码拉进技能目录（`vendor/dsh-src/`）。首次约 200 MB，**必须先经开发者确认**；**绝不执行 pnpm install** |
 | 目标版本高于基线，要看上游到底改了什么 | `dsh-version-diff.sh <仓库路径>` | 六维度差异 + 作者自报的 `!:` 破坏性提交；输出可追加到 `13-version-history.md` |
 | 质疑「API 名是否稳定」这类**历史结论**时 | `dsh-tag-matrix.sh <仓库路径> [out.tsv]` | 对全部 tag 逐条核验 API 面 |

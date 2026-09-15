@@ -1,0 +1,133 @@
+DeepSeek Harness Plugin Development Skill
+Third-party notices
+
+This NOTICE file is distributed together with the skill package
+"dsh-plugin-development" (skill version 1.0.12) in order to satisfy the
+notice and attribution requirements of the upstream projects listed below,
+in particular section 4(d) of the Apache License 2.0, which requires that
+the attribution notices contained in an upstream NOTICE file be reproduced
+in a readable form alongside any distribution of a derivative work.
+
+The original content of this skill (prose, tooling scripts and templates
+authored here) is released under MIT-0. Fragments that come from upstream
+projects remain under the terms of those projects, as set out below.
+
+================================================================
+1. Apache License 2.0 components
+================================================================
+
+A copy of the Apache License 2.0 is included with this package at
+licenses/Apache-2.0.txt, as required by Apache-2.0 section 4(a).
+
+The following copyright and attribution notices are retained as required
+by Apache-2.0 section 4(c).
+
+------------------------------------------------------------------------
+huangruiteng/loopx
+License: Apache-2.0
+Referenced in: references/10c-casebook-services.md
+
+This project ships a NOTICE file. Its contents are reproduced verbatim
+below, as required by Apache-2.0 section 4(d):
+
+    LoopX
+    Copyright 2026 LoopX contributors
+
+    LoopX releases through v0.4.7 were distributed under the MIT License.
+    The historical MIT license text and copyright notice are retained in
+    LICENSE-MIT.
+------------------------------------------------------------------------
+MemTensor/MemOS
+License: Apache-2.0
+Copyright 2025 - Present MemTensor Research
+Referenced in: references/10c-casebook-services.md
+------------------------------------------------------------------------
+zhu1090093659/dsh-web
+License: Apache-2.0
+Referenced in: references/02-templates.md, references/02b-official-templates.md,
+               references/10a-casebook-ui.md, references/10d-casebook-host-bundle.md
+
+The upstream LICENSE file contains the standard Apache License 2.0
+boilerplate without a filled-in copyright owner line, so there is no
+upstream copyright notice to reproduce from that file.
+
+================================================================
+2. MIT-licensed components
+================================================================
+
+The MIT License requires that the copyright notice and the permission
+notice be included in all copies or substantial portions of the software.
+The common permission notice text is included with this package at
+licenses/MIT.txt. The following copyright notices are retained:
+
+------------------------------------------------------------------------
+deepseek-ai/deepseek-harness
+Copyright (c) 2026 DeepSeek
+Referenced in: references/01, 02b, 03, 04, 06, 07, 08, 13, 14, assets/
+------------------------------------------------------------------------
+Tencent/WeKnora
+Copyright (C) 2025 Tencent. All rights reserved.
+Referenced in: references/02-templates.md, references/10b-casebook-tools.md
+Note: upstream uses a custom LICENSE file that begins by granting the MIT
+License for the project itself while listing separate terms for bundled
+third-party components.
+------------------------------------------------------------------------
+anywhere-labs/dsh-desktop
+Copyright (c) 2026 Anywhere Labs
+Referenced in: references/02-templates.md, references/02b-official-templates.md,
+               references/10d-casebook-host-bundle.md
+------------------------------------------------------------------------
+yjh051108/dsh-routing-suite
+Copyright (c) 2026 yjh051108
+Referenced in: references/10b-casebook-tools.md
+------------------------------------------------------------------------
+Q00/ouroboros
+Copyright (c) 2025 Q00
+Referenced in: references/02c-community-bundle.md, references/10d-casebook-host-bundle.md
+------------------------------------------------------------------------
+omdsh-dev/DSH-better-sidebar
+Copyright (c) 2026 dsh-external
+Referenced in: references/10d-casebook-host-bundle.md
+------------------------------------------------------------------------
+liustack/modlens
+Copyright (c) 2026 Leon Liu (liustack)
+Referenced in: references/10b-casebook-tools.md
+------------------------------------------------------------------------
+xiaobright/dsh-anchored-standard
+Copyright (c) 2026 xiaobright
+Portions Copyright (c) 2026 DeepSeek
+Referenced in: references/10d-casebook-host-bundle.md
+------------------------------------------------------------------------
+tt-a1i/archify
+Copyright (c) 2026 tt-a1i (Archify)
+Copyright (c) 2025 Cocoon AI
+Referenced in: references/10c-casebook-services.md
+------------------------------------------------------------------------
+
+================================================================
+3. Copyleft-licensed components
+================================================================
+
+volcengine/OpenViking
+License: AGPL-3.0
+Presence: references/10b-casebook-tools.md, section 1.2 only.
+
+This package cites this project for provenance only. No source code from it
+is reproduced anywhere in this package, and no documentation of it is
+reproduced verbatim: such passages have been rewritten as original
+structural descriptions carrying repository file:line locators. What
+remains is attribution and locators.
+
+Anyone redistributing this package must keep that distinction in mind in
+respect of any material they re-derive from it. See
+<https://github.com/volcengine/OpenViking>.
+------------------------------------------------------------------------
+
+================================================================
+4. How to obtain the upstream sources
+================================================================
+
+Each component above can be obtained from its repository on GitHub under
+the path <https://github.com/{owner}/{repo}>. The specific files and line
+ranges that this skill refers to are recorded in references/11 and in the
+source tables at the end of LICENSE and references/12-community-plugins.md.

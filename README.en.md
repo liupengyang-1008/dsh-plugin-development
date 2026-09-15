@@ -457,6 +457,11 @@ Because those numbers are **reproducible**. The project rule is that any stateme
 
 ### License
 
-**MIT-0** — see [LICENSE](LICENSE).
+This skill's **original content** (prose, tooling scripts, templates) is released under **MIT-0** — see [LICENSE](LICENSE).
 
-Third-party attribution notes are at the end of the LICENSE file.
+### Third-party licensing
+
+**Quoted or reproduced third-party fragments remain under their own licenses** (including MIT and Apache-2.0; AGPL-3.0 appears as a provenance note only, with no text reproduced). The full source × license × location list is in the source table at the end of [`LICENSE`](LICENSE); the copyright and attribution notices are in the [`NOTICE`](NOTICE) file distributed with this package.
+
+This skill is **not** an official product of any upstream project, and does **not** represent the position of any upstream project.
+
