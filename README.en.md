@@ -355,11 +355,12 @@ The templates are **copy-ready skeletons**. The examples that mount an external 
 | Location | Contents | When to read |
 |---|---|---|
 | `SKILL.md` | Entry layer (≤500 lines): version gate, form selection, router table, 10-step workflow, smoke criteria, 5 contract invariants, 8 red lines, pre-delivery checklist | Every session — **loaded whole** |
-| `references/` | **17** topic documents: `00` version gate · `api-claims` fact grading · `01` mental model · `02` 12 templates · `03` API cookbook · `04` UI & slots · `05` 23 pitfalls · `06` workflow · `07` conventions · `08` cheatsheet · `09` agent pairing · `10` community casebook · `11` glossary & provenance · `12` community plugins · `13` version history · `14` HTTP & timers · `15` scope & maintenance | **On demand** — do not read them all at once |
-| `scripts/` | **8** deterministic tools: anti-staleness probe (python + bash) · second assertion set · authoritative slot extraction · reference-integrity guard · upstream sync · version diff · historical matrix | See [section 5](#5-why-it-does-not-promise-to-stay-current) |
-| `assets/` | **8** copy-ready files: zero-code bundle skeleton · minimal tool plugin skeleton · decision-log template | Copy them directly when you start building |
+| `references/` | **23** topic documents: numbered `00`–`15` plus `api-claims`, with **6 upstream-source volumes** (`02b` · `02c` · `10a`–`10d`). Mainline: `00` version gate · `api-claims` fact grading · `01` mental model · `02` 12 templates · `03` API cookbook · `04` UI & slots · `05` 23 pitfalls · `06` workflow · `07` conventions · `08` cheatsheet · `09` agent pairing · `10` community casebook (index) · `11` glossary & provenance · `12` community plugins · `13` version history · `14` HTTP & timers · `15` scope & maintenance | **On demand** — do not read them all at once |
+| `scripts/` | **9** deterministic tools: anti-staleness probe (python + bash) · second assertion set · authoritative slot extraction · reference-integrity guard · **licence-notice self-check** · upstream sync · version diff · historical matrix | See [section 5](#5-why-it-does-not-promise-to-stay-current) |
+| `assets/` | **8 files in 3 groups**, copy-ready: zero-code bundle skeleton · minimal tool plugin skeleton · decision-log template | Copy them directly when you start building |
+| `LICENSE` · `NOTICE` · `licenses/` | Licence and third-party notices: this skill's own content is **MIT-0**; quoted third-party fragments remain under **MIT / Apache-2.0 / BSD-3-Clause** (**no copyleft**), with all three licence texts bundled | Before reusing or redistributing any fragment of this skill |
 
-**Search large files, do not read them whole** (the largest is 6.6k lines):
+**Search large files, do not read them whole** (the largest is 1.9k lines):
 
 ```bash
 grep -rn "ctx.slots.inject" references/ | head -30      # where does an API name appear

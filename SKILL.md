@@ -2,7 +2,7 @@
 name: dsh-plugin-development
 slug: dsh-plugin-development
 displayName: DSH Plugin Development
-summary: Develop DSH (DeepSeek Harness) / Cordis plugins end to end — plugin forms, templates, an API cookbook, catalogued pitfalls, packaging and publishing, plus a mandatory version gate for the pre-stable upstream. Third-party fragments quoted here remain under their own licences (MIT / Apache-2.0) — see the bundled LICENSE and NOTICE.
+summary: Develop DSH (DeepSeek Harness) / Cordis plugins end to end — plugin forms, templates, an API cookbook, catalogued pitfalls, packaging and publishing, plus a mandatory version gate for the pre-stable upstream. Third-party fragments quoted here remain under their own licences (MIT / Apache-2.0 / BSD-3-Clause) — see the bundled LICENSE and NOTICE.
 description: A development-time skill for building plugins on DSH (DeepSeek Harness) / Cordis. It is not itself an installable DSH plugin; it is the tooling that guides a developer or AI agent through creating, debugging, packaging, and publishing one. This skill should be used when the user asks to develop a DSH plugin, write or modify a cordis plugin, add a tool, slash command, config schema, service, UI slot or HTTP route to DSH, run a periodic task inside a plugin, fix a plugin that fails to load or stays in PENDING, or package a plugin bundle for installation or distribution. It covers the plugin forms and official conventions, with 12 templates, 23 catalogued pitfalls, and copy-ready prompts for AI-agent pair development. Because DSH is pre-stable and ships breaking changes on a short cadence, it also ships a mandatory pre-coding version gate, a probe that re-verifies its own claims against a live source checkout, and a per-tag history of upstream breaking changes.
 version: 1.0.13
 license: MIT-0
@@ -255,7 +255,7 @@ DSH 里最常见的「我明明装了啊」有五种成因，全部落在这 5 �
 
 ### 加载纪律（三条，先读再看表）
 
-1. **不要为「保险」通读 `references/`。** 全量约 18 万词，通读既装不下也不必要——这是本技能最贵的误用方式。
+1. **不要为「保险」通读 `references/`。** 全量约 **18.7 万词**，通读既装不下也不必要——这是本技能最贵的误用方式。
 2. **按「读法」列执行，只有三种**：
    - **整读** —— 文件不大，直接整份读；
    - **定点读** —— 先 `grep -n '<锚点>' <文件>` 拿行号，再只读那一节（`Read` 带 `offset` / `limit`）；
@@ -268,6 +268,7 @@ DSH 里最常见的「我明明装了啊」有五种成因，全部落在这 5 �
 
 > 编号带字母后缀的（`02b`、`02c`、`10a`~`10d`）是**上游素材分册** —— 由超大引用文件按来源拆出，
 > 内容为原文的逐行搬迁。它们**不是整理稿**：性质不一（既有官方文档逐字摘录，也有调研期粗笔记）。
+> ⚠️ **例外**：`10b-casebook-tools.md` 已于 2026-09-15 与 09-16 因**许可整改**被**定点改写**（清 AGPL 逐字转载、移除一个来源），**不再是逐行搬迁** —— 读它请连带读该册文件头的许可警示与 §1.2 末尾的移除清单。
 
 | 触发条件（满足才读） | 文件 | 读法 | 成本 |
 |---|---|---|---|
@@ -276,7 +277,7 @@ DSH 里最常见的「我明明装了啊」有五种成因，全部落在这 5 �
 | 开始任何插件前；搞不清形态 / profile / 组合包加载机制 / 该选哪个模板 | `references/01-mental-model.md` | 整读 | 中 |
 | **要抄代码时** | `references/02-templates.md` | **定点**：`grep -n '^## T[0-9]'` 取 T1~T12（纯整理稿，1.2k 行） | 中 |
 | 要**逐字照抄官方 7 类模板**的完整源码 | `references/02b-official-templates.md` | 定点：册内 `grep -n '^## '` | 高 |
-| 要一个社区零代码组合包全文范本 | `references/02c-community-bundle.md` | 整读（仅 254 行） | 低 |
+| 要一个社区零代码组合包全文范本 | `references/02c-community-bundle.md` | 整读（仅 255 行） | 低 |
 | 写工具 / 配置 / 命令 / 事件 / 服务 / 终端功能 | `references/03-api-cookbook.md` | 定点：`grep -n '^## '` | 高 |
 | 做 UI 插件或设置卡片 | `references/04-ui-and-slots.md` | 定点：`grep -n '^## '` | 中 |
 | **写代码前通读整理稿**；出问题按症状检索 | `references/05-pitfalls.md` | 整读整理稿段；`grep -n '^### 坑 P'` 定位单条 | 中 |
@@ -318,7 +319,7 @@ DSH 里最常见的「我明明装了啊」有五种成因，全部落在这 5 �
 | 用到**入站 HTTP / 定时器 / 客户端产物 / 插槽**任一项 | `verify_absorbed_claims.py <仓库路径>` | 27 条第二批断言。**先跑 `--selftest` 证明它能失败**，再跑正向 |
 | **要写插槽名之前**（不要凭表抄） | `extract_slots.py <仓库路径> <skill目录>` | 从源码抽**权威插槽清单**并双向 diff |
 | **改过本技能的任何文档或资源之后** | `check_refs.py <skill目录>` | 悬空引用 / 生成期素材路径 / 本机绝对路径；`0`=全部可在技能内解析 |
-| **改动任何来源标注 / 许可声明 / `NOTICE` / `licenses/` 之后**（发版前必跑） | `check_oss_license.sh`（在技能根目录跑） | 5 项：copyleft 关键词扫描（只对**未声明**的文件判失败）、四个声明文件齐备、`LICENSE` 来源表与 `NOTICE` 条目数一致、无「待逐字核取」占位符、`NOTICE` 行尾为 LF。`0`=PASS 可对外分发。**它是「已逐文件核实」这句话的可复现证据** |
+| **改动任何来源标注 / 许可声明 / `NOTICE` / `licenses/` 之后**（发版前必跑） | `check_oss_license.sh`（在技能根目录跑） | 5 项：copyleft 关键词扫描（只对**未声明**的文件判失败）、**五个声明文件齐备**（`LICENSE` · `NOTICE` · `licenses/` 下 Apache-2.0 / MIT / BSD-3-Clause 三份正文）、`LICENSE` 来源表与 `NOTICE` 条目数一致、无「待逐字核取」占位符、`NOTICE` 行尾为 LF。`0`=PASS 可对外分发。**它是「已逐文件核实」这句话的可复现证据** |
 | 目标版本高于基线，且需要本地源码 | `dsh-sync.sh` | 把 DSH 源码拉进技能目录（`vendor/dsh-src/`）。首次约 200 MB，**必须先经开发者确认**；**绝不执行 pnpm install** |
 | 目标版本高于基线，要看上游到底改了什么 | `dsh-version-diff.sh <仓库路径>` | 六维度差异 + 作者自报的 `!:` 破坏性提交；输出可追加到 `13-version-history.md` |
 | 质疑「API 名是否稳定」这类**历史结论**时 | `dsh-tag-matrix.sh <仓库路径> [out.tsv]` | 对全部 tag 逐条核验 API 面 |
