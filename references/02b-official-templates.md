@@ -3,7 +3,7 @@
 > **文件来源**：本文件由 `02-templates.md` 拆分而来，正文为原文的**逐行搬迁**，未做改写。
 > **本册性质**：**全部是上游一手素材原文** —— 性质不一：既有官方文档的**逐字摘录（属权威原文）**，也有调研期写下的**粗笔记（仅备查）**。**读某一段前，务必连带读该段开头的取材说明**，那是判断这段能信多少的依据。
 > **不要整读**：先 `grep -n '^#{1,2} '` 拿小节清单，再只读需要的那一节。本技能面向任务的整理稿见 `02-templates.md`。
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.1.6-alpha.1` / commit `0a15e36e7f`，2026-09-15），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.1.6-alpha.2` / commit `ddefc45fbc`，2026-09-17），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 
@@ -13,7 +13,7 @@
 
 # E. 官方自带插件 —— 七类可复用模板（原始素材）
 
-> 来源：**DSH 上游检出**（完整克隆，commit `0a15e36e7f`，`0.1.6-alpha.1`；本 skill 不附带该检出，核验方式见 `00-version-gate.md`）。
+> 来源：**DSH 上游检出**（完整克隆，commit `ddefc45fbc`，`0.1.6-alpha.2`；本 skill 不附带该检出，核验方式见 `00-version-gate.md`）。
 > 所有代码**逐字照抄**仓库原文，未改写。每个模板标注来源文件路径。
 > 面向《DSH 插件开发实战手册》补充篇，读者为零软件工程经验新手。
 
@@ -41,7 +41,7 @@
 **官方顶层分组（51 个域）**：
 `acp api attachment boot browser-use bundle client compaction computer-use context core credentials experimental extensions feedback fs goal guard hooks host identity interaction jobs llm lsp mcp plan preset ptc-runtime runtime-diagnostics sandbox schedule sdk session session-query settings shell skill spill ssh storage subagent subprocess terminal test-support todo typert util web webhook workflow workspace`
 
-> ⚠️ 上述目录名随官方增删而变；本行已于基线 `dsh-v0.1.6-alpha.1` 复核（`code-runtime` → `ptc-runtime`、`e2b` 整体移除、新增 `browser-use` / `computer-use` / `ssh`）。**要用请现场 `ls` 一遍，不要照抄本行。**
+> ⚠️ 上述目录名随官方增删而变；本行已于基线 `dsh-v0.1.6-alpha.2` 复核（`code-runtime` → `ptc-runtime`、`e2b` 整体移除、新增 `browser-use` / `computer-use` / `ssh`）。**要用请现场 `ls` 一遍，不要照抄本行。**
 
 ---
 
@@ -56,7 +56,7 @@
 ```json
 {
   "name": "@deepseek-ai/dsh-base",
-  "version": "0.1.6-alpha.1",
+  "version": "0.1.6-alpha.2",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/types/index.d.ts",
@@ -109,10 +109,10 @@ export {}
       name: '@deepseek-ai/cordis-plugin-timer'
 
     - id: hmr
-      name: '@deepseek-ai/cordis-plugin-hmr'
-      disabled: true
+      name: '@deepseek-ai/dsh-hmr'
+      disabled: !!js "!ctx.get('profileContext')"
       config:
-        root: ['.']
+        root: []
 
     - id: agent-default-model
       name: '@deepseek-ai/dsh-agent-default-model'
@@ -181,7 +181,7 @@ export {}
 ```json
 {
   "name": "@deepseek-ai/dsh-client-ui-brand-official",
-  "version": "0.1.6-alpha.1",
+  "version": "0.1.6-alpha.2",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/types/index.d.ts",
@@ -371,7 +371,7 @@ export default clientBundle('@deepseek-ai/dsh-client-ui-brand-official', ['lib/t
 ```json
 {
   "name": "@deepseek-ai/dsh-tool-ask-user",
-  "version": "0.1.6-alpha.1",
+  "version": "0.1.6-alpha.2",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/types/index.d.ts",
@@ -920,7 +920,7 @@ export function AppearanceRow({ t, setTheme, useStore }: AppearanceRowComponentP
 ## 附：官方 UI 插槽名（**节选 40 余个**，实测提取）
 
 > ⚠️ **这不是全清单。** 本表由 `grep -rhoE "slots\.(inject|register)\(\s*'[^']+'" packages/*/*/src` 提取，因此**天然抓不到内建键**（如 `root` 是用 `renderSlot('root')` 渲染的）。
-> 对 `dsh-v0.1.6-alpha.1` 的声明侧复核结果：**77 个键**（并集 79 个；剔除 18 个测试专用键后**约 61 个公开可用**）。完整清单与可复现的抽取命令见 `14-inbound-http-and-timers.md` 与 `scripts/extract_slots.py`；注册签名（组件是第二个参数）与「未声明 slot 报什么错」也记在那里。
+> 对 `dsh-v0.1.6-alpha.2` 的声明侧复核结果：**81 个键**（并集 84 个；剔除 18 个测试专用键后**约 66 个公开可用**）。完整清单与可复现的抽取命令见 `14-inbound-http-and-timers.md` 与 `scripts/extract_slots.py`；注册签名（组件是第二个参数）与「未声明 slot 报什么错」也记在那里。
 > 用法：`ctx.slots.inject('<插槽名>', () => ctx.slots.register({ name: '<插槽名>' }, 组件))`
 
 ### 会话 / 对话区（conversation.*）
@@ -972,7 +972,9 @@ export function AppearanceRow({ t, setTheme, useStore }: AppearanceRowComponentP
 | `settings.trigger` | 设置页触发入口 |
 | `settings.onboarding` | 首次引导 |
 | `settings.plugins.tab` | 插件标签页 |
-| `settings.plugin.item` | 单个插件条目（插件管理器用） |
+| `plugins.item` | 单个插件的配置条目（**插件页**用，list 语义：`id` + `order` + `label`） |
+| `plugins.bundle.config` | 某个 bundle 的配置（keyed：key = bundle 包名） |
+| `plugins.row.config` | bundle 里某一行的配置（keyed：key = `<包名>#<行 id>`） |
 
 ### 其他
 

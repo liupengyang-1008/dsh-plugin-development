@@ -2,12 +2,12 @@
 
 > **本文件用途**：按症状检索的踩坑百科：23 条编号坑点（P1~P22b）+ 症状速查表 + 报错信息/界面现象对照表 + 官方 4 篇事故复盘全文摘录与八条红线。插件出问题时第一站。
 > **合成来源**：DSH插件开发实战补充-模板与踩坑.md（第三篇，略去与官方复盘重复的红线摘要） + DSH插件开发指导手册.md（附录 E 报错对照表） + F-official-pitfalls.md
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.1.6-alpha.1` / commit `0a15e36e7f`，2026-09-15），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.1.6-alpha.2` / commit `ddefc45fbc`，2026-09-17），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
 
-> **本文件导航 —— 共 623 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
+> **本文件导航 —— 共 633 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
 > - **上游素材原文**：约 200 行（32%），起点：`F-official-pitfalls.md`（文件末尾）。**不是本技能重写的整理稿**；性质不一——**有的是官方文档逐字摘录（属权威原文），有的是调研期粗笔记（仅备查）**。读某一段前，务必连带读**该段开头的取材说明**。
 > - **其余部分 = 面向任务的整理稿**，可直接照做；但它同样是基线快照，写代码前先过版本闸门。
 > - 常用检索：`grep -n '^### 坑 P'`（按编号定位单条坑）、`grep -n '^# F\.'`（档案起点）
@@ -55,30 +55,40 @@
 ### 坑 P1 · 装完毫无反应，但 `pnpm add` 成功了 ★★★
 
 - **现象**：`dsh plugin --profile web add <你的包>` 返回成功，`node_modules` 里也有你的包，但插件完全不起作用。
-- **你会看到这条警告**（逐字，来自源码）：
+- **你会看到这条警告**（逐字，来自源码 `packages/boot/plugin-manager/src/operations.ts:86`）：
   ```
-  dsh: warning: <你的包名> declares no dsh.bundle — installed as a plain dependency, not a profile layer (a later update that gains one activates it automatically)
+  dsh: warning: <你的包名> declares no dsh.bundle — installed as a plain dependency, not a profile layer
   ```
-- **根因**：`dsh plugin` 是 pnpm 转发器，装完会把 `dsh.profile.bundles` 与**实际安装状态**对账。判定逻辑（逐字，`apps/cli/src/plugin.ts`）：
+  > ⚠️ **`dsh-v0.1.6-alpha.2` 起这句话变短了**：旧版结尾还有 `(a later update that gains one activates it automatically)` 一句，新版**已删掉**。你按旧文案去 grep 会一无所获。
+- **根因**：`dsh plugin` 是 pnpm 转发器（`apps/cli/src/plugin.ts` 现在只做转发），装完会把 `dsh.profile.bundles` 与**实际安装状态**对账，实现已移到 `packages/boot/plugin-manager/src/operations.ts`。判定逻辑（逐字，`operations.ts:58-62`）：
   ```ts
-  function exportsPatch(packageName: string, profileDir: string): boolean {
-    let dir: string
-    try {
-      dir = resolveBundleDir(NAME, packageName, INSTALL_ANCHOR, profileDir)
-    } catch {
-      return false // pnpm reported success yet the package is unresolvable — treat as plain
-    }
-    const manifest = readProfileManifest(NAME, dir)
-    return manifest.dsh?.bundle?.patch !== undefined
+  export function bundleManifest(name: string, dir: string, anchor: string): ProfileManifest | undefined {
+    const packageDir = resolveBundleDir('dsh', name, anchor, dir)
+    const manifest = readProfileManifest('dsh', packageDir)
+    return manifest.dsh?.bundle?.patch === undefined ? undefined : manifest
   }
   ```
-  **只有 `dsh.bundle.patch !== undefined` 的包才会成为 profile 层。**
+  对账循环（逐字，`operations.ts:82-92`）——**只有 `dsh.bundle.patch` 非 undefined 的包才会成为 profile 层**，其余打上面那条警告后跳过：
+  ```ts
+  for (const name of dependencies) {
+    if (beforeDeps.has(name)) continue
+    const metadata = bundleManifest(name, dir, anchor)
+    if (metadata?.dsh?.bundle === undefined) {
+      options.onOutput?.(`dsh: warning: ${name} declares no dsh.bundle — installed as a plain dependency, not a profile layer\n`, 'stderr')
+      continue
+    }
+    loadOverlayPatches('dsh', join(resolveBundleDir('dsh', name, anchor, dir), metadata.dsh.bundle.patch))
+    if (!bundles.includes(name)) {
+      bundles.push(name)
+    }
+  }
+  ```
 - **怎么修**：`package.json` 加：
   ```json
   "dsh": { "bundle": { "patch": "./cordis.patch.yml" } }
   ```
   且包里**必须真的带**那个文件。
-- **来源**：`apps/cli/src/plugin.ts`；社区侧印证见素材 B 坑 M1（已拆入 `10b-casebook-tools.md`）。
+- **来源**：`packages/boot/plugin-manager/src/operations.ts`（`reconcile()` 起于 `:73`）；CLI 入口 `apps/cli/src/plugin.ts`；社区侧印证见素材 B 坑 M1（已拆入 `10b-casebook-tools.md`）。
 
 ### 坑 P2 · `files` 漏了补丁文件 ★★
 
@@ -425,7 +435,7 @@
 
 # F. 官方事故复盘（postmortem）—— 官方自己踩过的坑（原始素材）
 
-> 来源：`deepseek-harness/docs/postmortem/`（commit `0a15e36e7f`）。共 **4 篇**，全部有中文版。
+> 来源：`deepseek-harness/docs/postmortem/`（commit `ddefc45fbc`）。共 **4 篇**，全部有中文版。
 > 这是**一手的一手材料**：官方自己写的「事故 → 根因 → 防护措施 → 教训」。
 > 引用一律逐字，标注来源文件。
 

@@ -2,12 +2,12 @@
 
 > **本文件用途**：插件开发的完整工作流，四部分顺序阅读：① 环境准备（版本对照、从源码跑起来、三个环境坑、验收清单）② CLI 与安装机制逐字实证（DSH_HOME 默认值、profile 目录布局、dsh plugin 的 pnpm 转发逻辑、declares no dsh.bundle 警告的判定代码）③ 打包与分发（文件结构、package.json 逐字、patch 引用、三种分发方式对比）④ 调试与排错五招 + 五步排错法。注意：DSH_HOME 与 profile 在 ① 和 ② 都出现，以 ② 的源码实证为准。
 > **合成来源**：DSH插件开发指导手册.md（第 2/11/12 章） + G-install-and-cli.md
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.1.6-alpha.1` / commit `0a15e36e7f`，2026-09-15），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.1.6-alpha.2` / commit `ddefc45fbc`，2026-09-17），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
 
-> **本文件导航 —— 共 713 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
+> **本文件导航 —— 共 740 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
 > - **上游素材原文**：约 259 行（36%），起点：`G-install-and-cli.md`（文件开头）。**不是本技能重写的整理稿**；性质不一——**有的是官方文档逐字摘录（属权威原文），有的是调研期粗笔记（仅备查）**。读某一段前，务必连带读**该段开头的取材说明**。
 > - **其余部分 = 面向任务的整理稿**，可直接照做；但它同样是基线快照，写代码前先过版本闸门。
 > - 常用检索：`grep -n '^## '`（四部分）、`grep -n '^# G\.'`（档案起点）
@@ -79,28 +79,41 @@ C:\Users\<你的用户名>\.dsh
 
 所以本手册所有示例都用 `console.log`。等你想用正式日志时，需要自己把 logger-console 插件插进组合。
 
-### 坑 2：HMR（热更新）默认关闭
+### 坑 2：HMR 的模块名、默认开关、监听根**三样都变了** ★
 
-源码实证（`packages/bundle/base/cordis.patch.yml:21-25`）：
+源码实证（`packages/bundle/base/cordis.patch.yml`，`dsh-v0.1.6-alpha.2` 起）：
+
+```yaml
+# Profile configuration reloads by default; module roots are opt-in.
+- id: hmr
+  name: '@deepseek-ai/dsh-hmr'
+  disabled: !!js "!ctx.get('profileContext')"
+  config:
+    root: []
+```
+
+与旧版（≤ `dsh-v0.1.6-alpha.1`）的三处差异：
+
+| 项 | 旧 | 新（`alpha.2` 起） |
+|---|---|---|
+| 模块名 | `@deepseek-ai/cordis-plugin-hmr` | **`@deepseek-ai/dsh-hmr`**（工作区仍保留 vendored 包） |
+| 默认启用 | `disabled: true`（恒关） | `disabled: !ctx.get('profileContext')` —— **有 profile 上下文就开**（profile 的配置改动会自动重载） |
+| 监听根 | `root: ['.']` | `root: []` —— **模块根改为显式 opt-in** |
+
+**官方原话**（`packages/boot/hmr/README.zh.md:36`，逐字）：
+
+> 已有配置将模块名 `@deepseek-ai/cordis-plugin-hmr` 替换为 `@deepseek-ai/dsh-hmr`。继续提供 `hmr` 服务键、`baseDir`、`config`、`getLinked()`、`getOuterStack()`、`hmr/change` 和 `hmr/reload`。工作区保留 vendored 包；DSH profile 使用本包。
+
+→ **迁移动作只有一条：把模块名换掉。** 服务键、配置键、事件名都没动。想恢复监听模块根，在你的 patch 里覆盖这一行（patch 是**替换整行 config**，所以要把想保留的键重述）：
 
 ```yaml
 - id: hmr
-  name: '@deepseek-ai/cordis-plugin-hmr'
-  disabled: true
+  name: '@deepseek-ai/dsh-hmr'
   config:
     root: ['.']
 ```
 
-要开启，在你的 patch 里覆盖这一行（注意 patch 是**替换整行 config**，所以要把想保留的键重述）：
-
-```yaml
-- id: hmr
-  disabled: false
-  config:
-    root: ['.']
-```
-
-⚠️ HMR 还依赖 `@deepseek-ai/cordis-plugin-timer`，缺了它会永久 PENDING。
+⚠️ HMR 仍依赖 `@deepseek-ai/cordis-plugin-timer`（`packages/boot/hmr/package.json:31` 的 peerDependency），缺了它会永久 PENDING。
 
 ### 坑 3：改了 `cordis.yml` 里的 `config` 会自动热替换
 
@@ -130,7 +143,7 @@ C:\Users\<你的用户名>\.dsh
 
 # G. 安装 / 运行 / CLI 机制 —— 逐字实证（原始素材）
 
-> 来源：`deepseek-harness`（commit `0a15e36e7f`）。全部结论附**源码路径或命令原文**。
+> 来源：`deepseek-harness`（commit `ddefc45fbc`）。全部结论附**源码路径或命令原文**。
 > 这份笔记解决新手最容易搞错的三个问题：**插件装到哪、怎么装、装完为什么没生效**。
 
 ---
@@ -232,41 +245,55 @@ Examples:
 
 > 🔥 `--profile` 用的是 `.requiredOption(...)` —— **省略直接报错**。网上流传的 `dsh plugin add xxx` 是错的。
 
-### 2.3 它到底做了什么（逐字，`apps/cli/src/plugin.ts:1-10` 模块注释）
+### 2.3 它到底做了什么（`dsh-v0.1.6-alpha.2` 起是**两层**）
 
-```
-/**
- * `dsh plugin --profile <name> <args...>` — profile plugin management as a
- * thin pnpm forwarder: initialize the profile on first use, run
- * `pnpm <args...>` in the profile directory, then reconcile the
- * `dsh.profile.bundles` layer list against the installed state (a dependency
- * resolving to a package that declares `dsh.bundle` joins the layer stack; a
- * removed or bundle-less dependency leaves it). Reconciling by installed
- * state, not by dependency diff, means `update` activates a package that
- * gained its `dsh.bundle` declaration in a newer version.
- * @module @deepseek-ai/dsh/plugin
- */
-```
-
-**三步（照抄原文）**：
-1. 首次使用时初始化 profile；
-2. 在 profile 目录里跑 `pnpm <你的参数>`；
-3. 把 `dsh.profile.bundles` 层列表与**实际安装状态**对账。
-
-### 2.4 装插件最常见的那个警告（逐字，`apps/cli/src/plugin.ts`）
+**第一层 · CLI 入口**（`apps/cli/src/plugin.ts`，全文 25 行，逐字 `:1-2` 与 `:12-18`）：
 
 ```ts
-      process.stderr.write(
-        `${NAME}: warning: ${packageName} declares no dsh.bundle — installed as a plain dependency, not a profile layer `
-        + '(a later update that gains one activates it automatically)\n',
-      )
+/** dsh plugin forwards pnpm through the shared profile package operations. */
+import { runPluginCommand } from '@deepseek-ai/dsh-plugin-manager/operations'
+
+export async function runPlugin(profile: string, args: readonly string[]): Promise<number> {
+  const result = await runPluginCommand({ profile, installAnchor: INSTALL_ANCHOR, cwd: process.cwd() }, args, {
+    execution: 'cli',
+    outputBytes: 16384,
+    lockWaitMs: 120000,
+    onOutput: (text, stream) => { process[stream].write(text) },
+  })
+```
+
+**第二层 · 真正的实现**（`packages/boot/plugin-manager/src/operations.ts`，逐字 `:72-73`）：
+
+```ts
+/** Reconcile package removals and newly installed bundles without re-enabling retained dependencies. */
+async function reconcile(before: ProfileManifest, dir: string, anchor: string, options: PackageOperationOptions): Promise<void> {
+```
+
+**三步**：
+1. 首次使用时初始化 profile；
+2. 在 profile 目录里跑 `pnpm <你的参数>`；
+3. 把 `dsh.profile.bundles` 层列表与**实际安装状态**对账（`reconcile()`：依赖解析到声明了 `dsh.bundle` 的包 → 进层栈；被移除或没声明的 → 出栈）。
+
+> ⚠️ **定位变了**：`apps/cli/src/plugin.ts` 在 `alpha.1 → alpha.2` 之间从 **163 行缩到 25 行**，对账逻辑整体搬进 `@deepseek-ai/dsh-plugin-manager`（新包，`packages/boot/plugin-manager/`）。按旧文档去 CLI 文件里找 `exportsPatch()` 会扑空。
+>
+> 顺带新增的两条 CLI 诊断（`:19-23`）：`pnpm` 不在 PATH 时打印 `dsh: pnpm was not found`；走 `git+` / `github:` / `.git` 的依赖装失败时，直接提示把 pnpm 打印的键加到 profile 的 `pnpm-workspace.yaml` 的 `allowBuilds` 下（见 §4 的 git 安装一节）。
+
+### 2.4 装插件最常见的那个警告（逐字，`packages/boot/plugin-manager/src/operations.ts:85-88`）
+
+```ts
+    if (metadata?.dsh?.bundle === undefined) {
+      options.onOutput?.(`dsh: warning: ${name} declares no dsh.bundle — installed as a plain dependency, not a profile layer\n`, 'stderr')
+      continue
+    }
 ```
 
 **你实际会看到的完整警告**：
 
 ```
-dsh: warning: <你的包名> declares no dsh.bundle — installed as a plain dependency, not a profile layer (a later update that gains one activates it automatically)
+dsh: warning: <你的包名> declares no dsh.bundle — installed as a plain dependency, not a profile layer
 ```
+
+> ⚠️ `dsh-v0.1.6-alpha.2` 起**结尾那句 `(a later update that gains one activates it automatically)` 被删掉了**——按旧文案去 grep 会一无所获。语义没变：先按普通依赖装进去，之后某版补上 `dsh.bundle` 时会被自动激活（对账看的是**安装状态**，不是依赖 diff）。
 
 > ## 🔴 这是新手第一号安装事故
 > `pnpm add` 会成功、`node_modules` 里也有你的包，**但插件完全不起作用**——因为你只在 `package.json` 里写了 `dsh.client` 或什么都没写，**没写 `dsh.bundle.patch`**。
@@ -480,10 +507,10 @@ dsh plugin --profile demo add ./hello-plugin
 
 `dsh plugin` 本质是**在 profile 目录里把参数转发给 pnpm**，然后在 pnpm 成功后重算 bundles 列表。
 
-**源码实证**（`apps/cli/src/plugin.ts:59-91`）：
-- 凡是解析到的包 manifest 声明了 `"dsh": { "bundle": { "patch": ... } }`，该依赖就**加入层栈**（按依赖顺序追加）
-- 没有 `dsh.bundle` 声明的依赖保留为普通依赖，并打印**一次性警告**
-- 被移除的依赖从层栈删除
+**源码实证**（`packages/boot/plugin-manager/src/operations.ts:73-97` 的 `reconcile()`）：
+- 凡是解析到的包 manifest 声明了 `"dsh": { "bundle": { "patch": ... } }`，该依赖就**加入层栈**（按依赖顺序追加），并 `loadOverlayPatches()` 载入它的补丁（`:89`）
+- 没有 `dsh.bundle` 声明的依赖保留为普通依赖，并向 stderr 打印**一条警告**后 `continue`（`:85-88`）
+- 被移除的依赖从层栈删除（`:78-81` 的 `filter`）
 
 安装后 profile manifest 变成（`publish.zh.md:85-100`）：
 

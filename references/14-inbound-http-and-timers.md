@@ -1,7 +1,7 @@
 <!--
 本文件是**手工维护**的 curated 参考，不由 scripts/build_dsh_skill.sh 生成。
 （生成器只产出 01~13 号文件；本文件已在脚本的 KEEP 白名单内，重跑不会被删。）
-所有断言均对 DSH `dsh-v0.1.6-alpha.1` / commit `0a15e36e7f`（2026-09-15）逐条源码核验，
+所有断言均对 DSH `dsh-v0.1.6-alpha.2` / commit `ddefc45fbc`（2026-09-17）逐条源码核验，
 复现脚本：`scripts/verify_absorbed_claims.py <DSH 仓库路径>`。
 -->
 
@@ -155,19 +155,35 @@ export function apply(ctx) {
 
 > bundle 必须是 loader 的 **lazy-CJS factory** 产物。
 
-**格式契约**（源码 `packages/client/tsdown.client.ts:566-568`，逐字三行）：
+**格式契约**（源码 `packages/client/tsdown.client.ts:618-624`，逐字）：
 
 ```js
-banner: `window.__ModuleLoader__.load({ id: ${JSON.stringify(id)}, factory: (require) => {`
-intro:  'var module = { exports: {} }; var exports = module.exports;'
+banner: (chunk) => {
+  const registration = `window.__ModuleLoader__.load({ id: ${JSON.stringify(id)}, ${chunk.isEntry ? '' : `chunk: ${JSON.stringify(chunk.fileName)}, `}factory: (require) => {`
+  const prefix = clientBanner?.(chunk.fileName)
+  return prefix === undefined ? registration : `${prefix}\n${registration}`
+}
 footer: 'return module.exports; } });'
+intro:  'var module = { exports: {} }; var exports = module.exports;'
 ```
 
 配套的构建设置：`format: 'cjs'`、`platform: 'browser'`、产物路径恰好是 `lib/client.js`（`entryFileNames: 'client.js'`）。
 
+**入口合同没变，但 0.1.6-alpha.2 起多了「包内分块」这一层**（新增能力，旧版没有）：
+
+| 项 | 值 | 源码出处 |
+|---|---|---|
+| 分块文件名 | `client.<name>.js`（入口仍固定为 `client.js`） | `packages/client/tsdown.client.ts:605,608` |
+| 分块的 banner | 对**非入口**分块多写一个 `chunk: "<fileName>",` 字段（入口 chunk 的 banner 与旧版逐字相同） | 同上 `:619` |
+| 动态加载 | 包内动态 import 编译成 `require.async('./client.x.js')`，由 loader 按需拉取 | 同上 `:457`（`asyncChunkRequirePlugin`） |
+| 分块名校验 | `/^client\.[A-Za-z0-9][A-Za-z0-9._-]*\.js$/`；不合法抛 `client-modules: invalid package-local chunk` | `packages/client/modules/src/client/system.ts:39,150-151` |
+| 法务 / 署名 banner | `clientBundle(id, libEntry, { clientBanner: (fileName) => string \| undefined })` 按产物文件名注入前缀文本 | `packages/client/tsdown.client.ts`（`ClientBundleOptions.clientBanner`） |
+
+> **对第三方作者的意思**：只发一个 `client.js` 的插件**不受影响**（入口 banner 未变）；但如果你复刻产物格式又想用代码分割，注册对象里必须补 `chunk` 字段，否则 `id` 会与入口撞名，抛 `duplicate factory registration`。
+
 注册侧契约（`packages/client/modules/src/client/system.ts`）：
 
-- `window.__ModuleLoader__.load(registration)`，`registration = { id, factory }`；
+- `window.__ModuleLoader__.load(registration)`，`registration = { id, chunk?, factory }`（`chunk` 仅包内非入口分块才带）；
 - `factory(require)` 返回 `module.exports`；
 - `id` **必须等于包名**；同一 bundle 执行两次会抛
   `client-modules: duplicate factory registration for "<id>" (bundle executed twice without invalidate?)`。

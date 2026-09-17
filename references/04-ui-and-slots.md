@@ -2,12 +2,12 @@
 
 > **本文件用途**：UI 插件与设置卡片的完整实现：两个半侧结构、三个登记点、slot 插槽机制、React/TSX 技术栈约束、样式打包、开发期调试、三层配置解析模型。
 > **合成来源**：DSH插件开发指导手册.md（第 9/10 章）
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.1.6-alpha.1` / commit `0a15e36e7f`，2026-09-15），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.1.6-alpha.2` / commit `ddefc45fbc`，2026-09-17），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
 
-> **本文件导航 —— 共 511 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
+> **本文件导航 —— 共 534 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
 > - **本文件全是整理稿**（无上游素材混杂），但它仍是基线快照——写代码前先过版本闸门。
 > - 常用检索：`grep -n '^## '`、`grep -n '插槽'`（插槽名出现处）
 
@@ -186,8 +186,11 @@ root
 │     │  ├─ settings.general.item
 │     │  ├─ settings.models.provider-card
 │     │  └─ settings.plugins.tab
-│     │     └─ settings.plugin.item        ← 设置卡片（第 10 章）
 ├─ main
+│  ├─ main.plugins                        ← 插件页（key = 'plugins'）；**设置卡片改挂这里**（第 10 章）
+│  │  ├─ plugins.item                     ← list：插件自己的配置条目
+│  │  ├─ plugins.bundle.config            ← keyed：按 bundle 包名
+│  │  └─ plugins.row.config               ← keyed：按 `<包名>#<行 id>`
 │  └─ main.conversation
 │     ├─ conversation.session
 │     │  └─ conversation.view
@@ -411,21 +414,23 @@ installSection<
 
 ## 10.3 浏览器半侧：注册卡片
 
-来源：`docs/cookbook/adding-a-settings-card.zh.md:52-70`（逐字，原文标注 `ts ignore-check`）
+来源：`docs/cookbook/adding-a-settings-card.zh.md:52-70` 的骨架 —— **但该 cookbook 对 `dsh-v0.1.6-alpha.2` 已过时**（见下方警告），示例已按源码改写。
 
 ```ts ignore-check
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
-// Type-only: the keyed slot's declaration. Cross-plugin collaboration goes
-// through cordis services; a value import fails the client bundle-purity gate.
-import type {} from '@deepseek-ai/dsh-client-ui-settings-plugins/client'
+// Type-only: the slot contract. Cross-plugin collaboration goes through cordis
+// services; a value import fails the client bundle-purity gate.
+import type {} from '@deepseek-ai/dsh-client-ui-plugin-manager/client'
 
 export const inject = ['slots', 'locale', 'connection', 'remote', 'settingsScope']
 
 export function apply(ctx: ClientContext): void {
   const card = new MyPluginCardController(ctx.settingsScope.bind({ namespace: 'my-plugin' }))
-  ctx.slots.inject('settings.plugin.item', () => ctx.slots.register({
-    name: 'settings.plugin.item',
-    key: 'my-plugin',
+  ctx.slots.inject('plugins.item', () => ctx.slots.register({
+    name: 'plugins.item',
+    id: 'my-plugin',
+    order: 100,
+    label: () => t('myPluginTitle'),
     locale: 'settings.myPlugin',
     inject: () => card.inject(),
   }, MyPluginCard),
@@ -433,16 +438,33 @@ export function apply(ctx: ClientContext): void {
 }
 ```
 
-**`settings.plugin.item` 的声明**（源码 `packages/client/ui-settings-plugins/src/client/slot-contract.ts`，逐字）：
+> 🔴 **`dsh-v0.1.6-alpha.2` 起：插槽名是 `plugins.item`（`list` 语义），不再是 `settings.plugin.item`（`keyed` 语义）。**
+> 两者**不是别名关系**：旧槽以「卡片所编辑的 settings 命名空间」为 `key`，新槽是普通列表项，用 `id` / `order` / `label`，组件额外收 `view: 'summary' | 'page'` 两个态。
+> 依据：`packages/client/ui-plugin-manager/src/client/slot-contract.ts:32`（权威声明）、`packages/client/ui-settings-plugins/src/client/index.ts:105-120`（官方自己的注册方已改用 `plugins.item`）。
+> ⚠️ **上游文档没跟上**：`docs/cookbook/adding-a-settings-card.zh.md` 在 `alpha.1 → alpha.2` 区间**零改动**，仍在教 `settings.plugin.item`；照抄它会往一个**已不存在的插槽**注册（`ui-slots` 会抛「is not declared」）。
+> 机器判据：`verify_absorbed_claims.py` 的 `U06` / `U07`（新槽已声明）与 `X06`（旧槽不再被声明）。
+
+**这组插槽的声明**（源码 `packages/client/ui-plugin-manager/src/client/slot-contract.ts`，逐字）：
 
 ```ts
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface SlotMap {
-    /** One plugin's card inside the plugin configuration section (see module JSDoc). */
-    'settings.plugin.item': { kind: 'keyed'; scope: 'root'; owner: SettingsPluginItemOwnerProps }
+    'plugins.item': { kind: 'list'; scope: 'root'; owner: PluginConfigViewProps }
+    'plugins.bundle.config': { kind: 'keyed'; scope: 'root'; owner: PluginConfigViewProps }
+    'plugins.row.config': { kind: 'keyed'; scope: 'root'; owner: PluginConfigViewProps }
   }
 }
 ```
+
+`PluginConfigViewProps` = `{ readonly view: 'summary' | 'page' }`：`summary` 渲染标题下的一行摘要，`page` 渲染带保存控件的整张表单。`plugins.bundle.config` 以 **bundle 包名**为键、`plugins.row.config` 以 **`<包名>#<行 id>`** 为键——给「一个 bundle 自己的配置」和「bundle 里某一行插件的配置」用，不占 `plugins.item`。
+
+**什么时候用哪个**：
+
+| 你要做的事 | 用哪个插槽 |
+|---|---|
+| 给一个官方插件做配置页 | `plugins.item`（`id` + `order` + `label`） |
+| 给一个 bundle 整体做配置页 | `plugins.bundle.config`（key = 包名） |
+| 给 bundle 里某一行做配置页 | `plugins.row.config`（key = `<包名>#<行 id>`） |
 
 ## 10.4 浏览器侧读写配置的 API
 
@@ -470,19 +492,20 @@ export interface SettingsScope<T> {
 
 ## 10.5 卡片什么时候才会显示
 
-来源：`docs/cookbook/adding-a-settings-card.zh.md:74-78`
+来源：`packages/client/ui-settings-plugins/src/client/index.ts:100-103`（官方注释，逐字翻译）＋ `:125-148`（实现）
 
-> **插件配置**标签页读 Host 服务了哪些命名空间并为每个派发一个 slot 键；Host 服务了某卡片的键才渲染，从未组装 Host 半侧的部署不会留下痕迹；卡片按注册顺序出现，keyed entry 不声明 `order`。
+> 配置页在 **Host 正服务其命名空间期间**才注册；没有这些插件的部署**看不到任何痕迹**。卡片注册顺序就是页面顺序，**不是** Host 的描述顺序（后者跟随插件激活，不同次启动可能变）。
 
-**翻译**：卡片显示的前提是 **Host 半侧真的注册了那个命名空间**。你只写浏览器半侧是没用的。
+**翻译**：卡片显示的前提仍然是 **Host 半侧真的注册了那个命名空间**。你只写浏览器半侧是没用的。区别在于**谁来判定**：旧机制由标签页统一读 Host 的命名空间清单再派发 slot 键；新机制（`alpha.2` 起）由**注册方自己**订阅 `ctx.settingsScope.describe()`，命名空间上线才 `inject`、下线就 `off()`（`:125-148`）。所以顺序由 `order` 决定，不再由 Host 决定。
 
 ## 10.6 真实范本
 
 | 范本 | 路径 | 教什么 |
 |---|---|---|
-| 插件配置卡片全套 | `packages/client/ui-settings-plugins/`（2208 行） | `settings.plugin.item` 卡片宿主 + 4 张真实卡片 |
-| 设置行 + 主题服务 | `packages/client/ui-theme/`（890 行） | `settings.general.item` + locale + store + CSS 全套 |
-| 卡片控制器写法 | `packages/client/ui-settings-plugins/src/client/bash-card-controller.ts:41-71` | 如何把 `SettingsScope` 包成表单 |
+| **插件页 + 配置插槽宿主** | `packages/client/ui-plugin-manager/` | `plugins.item` / `plugins.bundle.config` / `plugins.row.config` 的声明与两态（`summary` / `page`）渲染；面板注册进 `main`（key = `plugins`） |
+| 4 张真实配置卡片 | `packages/client/ui-settings-plugins/` | 官方自己怎么写宿主面（`bash` / `agent-loop` / `subagent` / `web-search`），并自带 `settings.plugins.tab` 的两个标签页 |
+| 设置行 + 主题服务 | `packages/client/ui-theme/` | `settings.general.item` + locale + store + CSS 全套 |
+| 卡片控制器写法 | `packages/client/ui-settings-plugins/src/client/bash-card-controller.ts` | 如何把 `SettingsScope` 包成表单 |
 | Host 侧 schema | `packages/client/ui-theme/src/theme-settings.ts` | "配置项 = Cordis Config = schemastery schema" 同一份声明 |
 
 ## 10.7 🤖 让 AI Agent 帮你做这一课
@@ -491,7 +514,7 @@ export interface SettingsScope<T> {
 > 请：
 > 1. 先讲清楚三层解析模型（schema 默认 / base / 用户层），并说明我的每个字段分别落在哪一层；
 > 2. 写 Host 半侧：用 `installSection`（把我的 `cordis.yml` entry 作为 base 层）；
-> 3. 写浏览器半侧：注册 `settings.plugin.item` 卡片；
+> 3. 写浏览器半侧：注册 `plugins.item` 卡片（`id` + `order` + `label`，组件按 `view` 渲染 `summary` 与 `page` 两态）；
 > 4. 写卡片的读写逻辑：**必须**带 `expectedRevision` 做栅栏，并处理失败重读；
 > 5. 告诉我怎么验证「用户改动真的落到了用户层」。
 > 约束：不跨插件导入运行时值；字段"是否被覆盖"按是否出现在 user 层判断，不要用值比较。

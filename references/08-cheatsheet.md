@@ -2,12 +2,12 @@
 
 > **本文件用途**：速查卡，三部分：① 三种插件形态对照表（最容易搞混，放最前）② 完整 API 速查——服务名（inject 字符串）、事件名（含 waterfall 全套）、UI 插槽名、官方斜杠命令、CLI 命令、目录与路径、工具参数 DSL 类型（全部由源码 grep 提取，带实证来源列）③ 主手册的插件骨架、四类注册、真实范本清单、判断口诀，以及带 core/seam/bundle 角色的 ctx 键速查表。写代码时随手查这一份就够。
 > **合成来源**：DSH插件开发实战补充-模板与踩坑.md（仅第六篇 6.5） + I-quickref.md + DSH插件开发指导手册.md（附录 A/B/C）
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.1.6-alpha.1` / commit `0a15e36e7f`，2026-09-15），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.1.6-alpha.2` / commit `ddefc45fbc`，2026-09-17），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
 
-> **本文件导航 —— 共 430 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
+> **本文件导航 —— 共 431 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
 > - **上游素材原文**：约 192 行（46%），起点：`I-quickref.md`（文件开头）。**不是本技能重写的整理稿**；性质不一——**有的是官方文档逐字摘录（属权威原文），有的是调研期粗笔记（仅备查）**。读某一段前，务必连带读**该段开头的取材说明**。
 > - **其余部分 = 面向任务的整理稿**，可直接照做；但它同样是基线快照，写代码前先过版本闸门。
 > - 常用检索：`grep -n '^## '`、`grep -n '^# I\.'`（档案起点）
@@ -35,7 +35,7 @@
 
 # I. 速查表 —— 服务 / 事件 / 插槽 / 命令 / 扩展点（全部实测）
 
-> 来源：`deepseek-harness`（commit `0a15e36e7f`）。全部由源码 grep 提取，**不是文档复述**。
+> 来源：`deepseek-harness`（commit `ddefc45fbc`）。全部由源码 grep 提取，**不是文档复述**。
 > 使用方法：写插件时先在这张表里找"我要挂到哪"。
 
 ---
@@ -148,7 +148,7 @@
 
 ---
 
-## 3. UI 插槽名（**最常用的几个**；权威全量约 **61** 个公开键 —— 对基线 `dsh-v0.1.6-alpha.1` 抽取：声明侧 77、并集 79、剔除 18 个测试专用键后约 61 个公开可用。用 `scripts/extract_slots.py` 复现）
+## 3. UI 插槽名（**最常用的几个**；权威全量约 **66** 个公开键 —— 对基线 `dsh-v0.1.6-alpha.2` 抽取：声明侧 81、并集 84、剔除 18 个测试专用键后约 66 个公开可用。用 `scripts/extract_slots.py` 复现）
 
 **最常用的三个**：
 
@@ -348,7 +348,8 @@ ctx.slots.inject('插槽名', () => ctx.slots.register({ name: '插槽名', id, 
 | `@deepseek-ai/dsh-client-ui-plan` | `packages/client/ui-plan` | 单一功能 UI 插件 |
 | `@deepseek-ai/dsh-client-ui-jobs` | `packages/client/ui-jobs` | 后台任务卡片 |
 | `@deepseek-ai/dsh-client-ui-theme` | `packages/client/ui-theme` | UI + 设置行 + locale + store + CSS |
-| `@deepseek-ai/dsh-client-ui-settings-plugins` | `packages/client/ui-settings-plugins` | **设置卡片宿主 + 4 张真实卡片**（首选） |
+| `@deepseek-ai/dsh-client-ui-settings-plugins` | `packages/client/ui-settings-plugins` | 4 张官方配置卡片 + `settings.plugins.tab` 的两个标签页 |
+| `@deepseek-ai/dsh-client-ui-plugin-manager` | `packages/client/ui-plugin-manager` | **插件页 + 配置插槽宿主**（`plugins.item` / `plugins.bundle.config` / `plugins.row.config`）（首选） |
 | `@deepseek-ai/dsh-client-ui-slots` | `packages/client/ui-slots` | 插槽注册表核心（非 React） |
 | `@deepseek-ai/dsh-client-ui-renderer` | `packages/client/ui-renderer` | React 渲染器（唯一的 `useSyncExternalStore` 宿主） |
 | `@deepseek-ai/dsh-client-modules` | `packages/client/modules` | `dsh.client` 扫描与 boot 图 |

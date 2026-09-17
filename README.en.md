@@ -169,7 +169,7 @@ It will do one thing first, and **skipping it is not allowed**:
 ```bash
 # Step 0 · version gate: re-verify the facts this skill records against YOUR DSH version
 python scripts/dsh-api-probe.py <PATH_TO_DSH_CHECKOUT>
-# 0 = all assertions hold (43 positive + 5 negative = 48)
+# 0 = all assertions hold (48 positive + 8 negative = 56)
 # 1 = something is STALE — do not copy the templates blindly
 # 2 = that path is not a DSH checkout (guards against conclusions from the wrong directory)
 # 3 = assertion table is empty — nothing was verified, the result is not valid
@@ -379,8 +379,8 @@ So this skill does not promise to stay current. It promises one thing: **stalene
 |---|---|
 | **Step 0 · version gate (mandatory)** | Answer three questions and run the probe before writing any DSH code; with no source available, declare explicitly which facts are unverified |
 | **Fact grading S / M / V** | One-line test: *if this fact changed tomorrow, would my code break?* Yes → verify it. No → use it as-is |
-| `dsh-api-probe.py` | Re-verifies **48 assertions** (43 positive + 5 negative) against a **live** source checkout |
-| `verify_absorbed_claims.py` | A second set of **27** (inbound HTTP, timers, client artifact format, slots, plus **negative assertions that keep fabricated API names out**) |
+| `dsh-api-probe.py` | Re-verifies **56 assertions** (48 positive + 8 negative) against a **live** source checkout |
+| `verify_absorbed_claims.py` | A second set of **39** (inbound HTTP, timers, client artifact format, slots, baseline-advance facts, plus **negative assertions that keep fabricated API names out**) |
 | `extract_slots.py` | Extracts the **authoritative slot list** from source and diffs it against the skill's claims — use it before writing any slot name, never copy from a table |
 | `check_refs.py` | Proves every path cited in the skill resolves inside the skill, with no absolute paths pointing at the author's machine |
 
@@ -441,7 +441,7 @@ Because those numbers are **reproducible**. The project rule is that any stateme
 
 | Item | Value |
 |---|---|
-| DSH baseline | tag `dsh-v0.1.6-alpha.1` / commit `0a15e36e7f` / 2026-09-15 |
+| DSH baseline | tag `dsh-v0.1.6-alpha.2` / commit `ddefc45fbc` / 2026-09-17 |
 | Upstream | [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) |
 | Skill version | `version` in `SKILL.md` frontmatter (**the single source of truth**) |
 | Version ↔ baseline table | `references/13-version-history.md` §1.5 |

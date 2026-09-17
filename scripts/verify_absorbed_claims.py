@@ -48,9 +48,9 @@ CHECKS: list[tuple[str, str, str, str, str, str]] = [
      r"- id: timer[\s\S]{0,80}@deepseek-ai/cordis-plugin-timer", "has"),
 
     # ── 17.3 浏览器半侧产物格式 ───────────────────────────────────────────
-    ("B01", "S", "客户端 bundle 是 lazy-CJS factory：banner 调 __ModuleLoader__.load({id, factory})",
+    ("B01", "S", "客户端 bundle 是 lazy-CJS factory：banner 按 chunk 生成，非入口分块多带 chunk 字段",
      "packages/client/tsdown.client.ts",
-     r"banner: `window\.__ModuleLoader__\.load\(\{ id: \$\{JSON\.stringify\(id\)\}, factory: \(require\) => \{`", "has"),
+     r"banner: \(chunk\) => \{[\s\S]{0,240}?window\.__ModuleLoader__\.load\(\{ id: \$\{JSON\.stringify\(id\)\}, \$\{chunk\.isEntry", "has"),
     ("B02", "S", "intro 建立 CJS 的 module/exports 外壳",
      "packages/client/tsdown.client.ts",
      r"intro: 'var module = \{ exports: \{\} \}; var exports = module\.exports;'", "has"),
@@ -69,6 +69,14 @@ CHECKS: list[tuple[str, str, str, str, str, str]] = [
     ("B08", "M", "官方明确：没有已发布的客户端预设，仓库外需自行复刻输出格式",
      "docs/cookbook/adding-a-settings-card.zh.md",
      r"没有已发布的预设暴露该包，因此本仓库之外的包得自行复刻同样的输出格式", "has"),
+    ("B09", "M", "非入口客户端分块命名为 client.<name>.js（入口固定 client.js）",
+     "packages/client/tsdown.client.ts", r"chunkFileNames: 'client\.\[name\]\.js'", "has"),
+    ("B10", "M", "包内动态分块改走 require.async（CJS 外壳下的异步加载）",
+     "packages/client/tsdown.client.ts",
+     r"require\.async\(\$\{JSON\.stringify\(specifier\)\}\)", "has"),
+    ("B11", "M", "clientBundle 支持按产物文件名选法务/署名文本（clientBanner）",
+     "packages/client/tsdown.client.ts",
+     r"readonly clientBanner\?: \(fileName: string\) => string \| undefined", "has"),
 
     # ── 17.4 插槽真实签名 ────────────────────────────────────────────────
     ("U01", "M", "slots.register(options, component) —— 组件是第二个参数",
@@ -86,6 +94,33 @@ CHECKS: list[tuple[str, str, str, str, str, str]] = [
     ("U05", "M", "ui-layout 是可禁用的补丁行 id（根布局替换法）",
      "packages/bundle/web-app/cordis.patch.yml",
      r"- id: ui-layout[\s\S]{0,80}@deepseek-ai/dsh-client-ui-layout", "has"),
+    ("U06", "M", "插件配置插槽更名为 plugins.item，且为 list 语义（id/order，非 keyed）",
+     "packages/client/ui-plugin-manager/src/client/slot-contract.ts",
+     r"'plugins\.item': \{ kind: 'list'; scope: 'root'", "has"),
+    ("U07", "M", "新增 plugins.bundle.config / plugins.row.config 两个 keyed 配置插槽",
+     "packages/client/ui-plugin-manager/src/client/slot-contract.ts",
+     r"'plugins\.bundle\.config': \{ kind: 'keyed'; scope: 'root'[\s\S]{0,400}?'plugins\.row\.config': \{ kind: 'keyed'; scope: 'root'",
+     "has"),
+    ("U08", "M", "配置插槽的组件收 view: 'summary' | 'page' 两态",
+     "packages/client/ui-plugin-manager/src/client/slot-contract.ts",
+     r"readonly view: 'summary' \| 'page'", "has"),
+
+    # ── 17.5 推进基线 0.1.6-alpha.2 时吸收的破坏性事实 ────────────────────
+    ("P01", "M", "base 补丁的 hmr 行改用 @deepseek-ai/dsh-hmr（旧名 cordis-plugin-hmr 已不再是模块名）",
+     "packages/bundle/base/cordis.patch.yml",
+     r"- id: hmr[\s\S]{0,120}?@deepseek-ai/dsh-hmr", "has"),
+    ("P02", "M", "官方 README 明写改动范围：只换模块名，hmr 服务键与事件名不变",
+     "packages/boot/hmr/README.zh.md",
+     r"已有配置将模块名 `@deepseek-ai/cordis-plugin-hmr` 替换为 `@deepseek-ai/dsh-hmr`", "has"),
+    ("P03", "M", "base 补丁新增 plugin-manager / tool-plugin-manager 两行",
+     "packages/bundle/base/cordis.patch.yml",
+     r"- id: tool-plugin-manager[\s\S]{0,200}?- id: plugin-manager", "has"),
+    ("P04", "M", "CLI 插件安装改为转发给 @deepseek-ai/dsh-plugin-manager/operations",
+     "apps/cli/src/plugin.ts",
+     r"import \{ runPluginCommand \} from '@deepseek-ai/dsh-plugin-manager/operations'", "has"),
+    ("P05", "M", "bundle 对账（含「未声明 dsh.bundle」警告）实现位于 plugin-manager 包",
+     "packages/boot/plugin-manager/src/operations.ts",
+     r"declares no dsh\.bundle — installed as a plain dependency, not a profile layer", "has"),
 
     # ── 反面教材：这些「编造名」在源码中必须不存在（未命中 = HOLDS）───────
     ("X01", "N", "不存在名为 ui 的服务（同类方案 ctx.ui.request 属编造）",
@@ -98,6 +133,8 @@ CHECKS: list[tuple[str, str, str, str, str, str]] = [
      "packages", r"['\"]workspace['\"]\s*:\s*\{\s*kind:", "not"),
     ("X05", "N", "webServer.register 不接受 router 回调（无 router.get/post 路由对象）",
      "packages", r"webServer\.register\(\s*\(router\)", "not"),
+    ("X06", "N", "settings.plugin.item 不再作为插槽被声明（已整体改名为 plugins.item）",
+     "packages", r"['\"]settings\.plugin\.item['\"]\s*:\s*\{\s*kind:", "not"),
 ]
 
 TEXT_SUFFIXES = {".ts", ".tsx", ".md", ".yml", ".yaml", ".json", ".js", ".mjs"}
@@ -112,6 +149,8 @@ NEGATIVE_GUARDS: dict[str, tuple[str, str]] = {
     "X03": ("packages", r"['\"]conversation\.view['\"]\s*:\s*\{\s*kind:"),
     "X04": ("packages", r"['\"]conversation\.view['\"]\s*:\s*\{\s*kind:"),
     "X05": ("packages", r"webServer\.register\("),
+    "X06": ("packages/client/ui-plugin-manager/src/client/slot-contract.ts",
+            r"'plugins\.item': \{ kind: 'list'"),
 }
 
 
