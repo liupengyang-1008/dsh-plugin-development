@@ -2,7 +2,7 @@
 
 > **本文件用途**：工具插件（defineTool 与裸 register 两条路径）、可配置插件（Config 与 Schema DSL）、斜杠命令、事件五种分发模式与 waterfall 拦截、服务插件、终端家族。写具体功能时按需查。
 > **合成来源**：DSH插件开发指导手册.md（第 4~8 章）
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.1.6-alpha.2` / commit `ddefc45fbc`，2026-09-17），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.1.7-rc.1` / commit `46a7f68b09`，2026-09-23），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
@@ -67,7 +67,7 @@ export function apply(ctx: Context) {
 **三个必知要点**：
 
 1. `export const inject = ['tools']` —— 没写这行，`ctx.tools` 就是 undefined，插件直接报错。
-2. 工具名 `name: 'greet'` **必须唯一**；`run_code` 是保留名，不能用（`docs/subsystems/tools.zh.md:500`）。
+2. 工具名 `name: 'greet'` **必须唯一**；`run_code` 是保留名，不能用（`docs/subsystems/tools.zh.md:525`；⚠️ 原引 `:500` 在**旧树里就已偏 15 行**，属历史笔误，非本区间漂移）。
 3. `ctx.tools.register(...)` 是**副作用**：插件卸载时工具自动注销，你不需要手动清。
 
 ## 4.3 `defineTool` 的完整字段
@@ -134,7 +134,7 @@ type ValueSchemaSpec =
   | { oneOf: [分支A, 分支B, ...] }  // 至少两分支，恰好命中一个
 ```
 
-**四条硬规则**（`docs/subsystems/tools.zh.md:100-149` + 源码）：
+**四条硬规则**（`docs/subsystems/tools.zh.md:110-159` + 源码；旧引 `:100-149`）：
 
 1. **`parameters` 是一个「隐式开放对象」的属性映射** —— 你直接写属性名即可，**不要**自己包一层 `{ type: 'object', properties: {...} }`。
 2. **必填靠逐属性 `required: true`**；**不写就是可选**：
@@ -253,7 +253,7 @@ export function apply(ctx: Context) {
 
 官方立场（`docs/cookbook/adding-a-tool.zh.md:61`）：**尽量不要把部署策略内建到工具中。**
 
-权限走**注册表流水线**——`tools/pre-execute` 事件（详细写法见第 7 章）。决策类型（`docs/subsystems/tools.zh.md:378-402`）：
+权限走**注册表流水线**——`tools/pre-execute` 事件（详细写法见第 7 章）。决策类型（`docs/subsystems/tools.zh.md:388-412`；旧引 `:378-402`）：
 
 ```ts
 type PreToolDecision =
@@ -270,7 +270,7 @@ type ToolGuard = (execution: Readonly<ToolExecution>) => string | undefined
 
 ## 4.8 工具的注册表 API 速查
 
-来源：`docs/subsystems/tools.zh.md:478-570`（由源码生成的 cordis-surface）
+来源：`docs/subsystems/tools.zh.md:488-580`（由源码生成的 cordis-surface；旧引 `:478-570`）
 
 ```ts
 register(definition: ToolDefinition): () => void
@@ -774,7 +774,7 @@ export function apply(ctx: Context) {
 
 **这一个插件就能管住所有工具**（包括官方工具）——这就是「一切皆插件」架构的威力：你没有改官方一行代码，却改变了它的行为。
 
-`ask` 决策需要审批服务配合才生效；**没有审批通道时，`ask` 会变成拒绝**（`docs/subsystems/tools.zh.md:402`）。
+`ask` 决策需要审批服务配合才生效；**没有审批通道时，`ask` 会变成拒绝**（`docs/subsystems/tools.zh.md:412`；旧引 `:402`）。
 
 ## 7.5 自定义事件（声明类型）
 
@@ -1023,7 +1023,7 @@ export const Config: z<Config> = z.object({
 | `presentCall(args)` | 调用**进行中** | `ToolCallView` |
 | `presentResult(args, result)` | 调用**完成** | `ToolResultView` |
 
-可用的卡片类型（`docs/subsystems/tools.zh.md:459-468`）：
+可用的卡片类型（`docs/subsystems/tools.zh.md:469-478`；旧引 `:459-468`）：
 
 - `presentCall` → `generic` / `terminal` / `diff`
 - `presentResult` → `generic` / `terminal` / `diff` / `read` / `search` / `web`

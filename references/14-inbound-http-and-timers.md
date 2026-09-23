@@ -1,7 +1,7 @@
 <!--
 本文件是**手工维护**的 curated 参考，不由 scripts/build_dsh_skill.sh 生成。
 （生成器只产出 01~13 号文件；本文件已在脚本的 KEEP 白名单内，重跑不会被删。）
-所有断言均对 DSH `dsh-v0.1.6-alpha.2` / commit `ddefc45fbc`（2026-09-17）逐条源码核验，
+所有断言均对 DSH `dsh-v0.1.7-rc.1` / commit `46a7f68b09`（2026-09-23）逐条源码核验，
 复现脚本：`scripts/verify_absorbed_claims.py <DSH 仓库路径>`。
 -->
 
@@ -151,9 +151,11 @@ export function apply(ctx) {
 
 ## 17.3 浏览器半侧的产物格式（lazy-CJS factory）
 
-官方（`docs/cookbook/adding-a-settings-card.zh.md:94`，逐字）：
+官方（`docs/cookbook/adding-a-settings-card.zh.md:60`）；⚠️ 该文档本区间被**整篇改写**、由 102 行缩到 72 行，旧引 `:94` 已越界，**且原引文本身也不再逐字存在**：
 
-> bundle 必须是 loader 的 **lazy-CJS factory** 产物。
+> 构建出的 `./client` 文件必须是客户端模块系统的 **lazy-CJS factory** 格式：一段脚本，向页面的模块加载器登记包名和一个 `factory(require)`。
+
+同段还写明：生成它的 `clientBundle` tsdown 预设位于 `packages/client/tsdown.client.ts`，**而不在任何已发布的包里**，因此仓库之外的包要自己复刻这一步构建（本手册 `04` §9.6 已就此展开）。
 
 **格式契约**（源码 `packages/client/tsdown.client.ts:618-624`，逐字）：
 

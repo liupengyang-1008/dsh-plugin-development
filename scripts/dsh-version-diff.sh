@@ -16,7 +16,7 @@
 # 用法：
 #   bash dsh-version-diff.sh                       # 用 skill 内的 vendor/dsh-src
 #   bash dsh-version-diff.sh <DSH 仓库路径>
-#   bash dsh-version-diff.sh <路径> --baseline dsh-v0.1.6-alpha.2
+#   bash dsh-version-diff.sh <路径> --baseline dsh-v0.1.7-rc.1
 #   bash dsh-version-diff.sh <路径> --list-only    # 只列基线之后的新 tag
 set -uo pipefail
 
@@ -25,7 +25,7 @@ SKILL_DIR="$(dirname "$SCRIPT_DIR")"
 STATE="$SKILL_DIR/vendor/dsh-state.json"
 
 REPO=""
-BASELINE="dsh-v0.1.6-alpha.2"
+BASELINE="dsh-v0.1.7-rc.1"
 LIST_ONLY=0
 
 while [ $# -gt 0 ]; do

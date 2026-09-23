@@ -2,12 +2,12 @@
 
 > **本文件用途**：UI 插件与设置卡片的完整实现：两个半侧结构、三个登记点、slot 插槽机制、React/TSX 技术栈约束、样式打包、开发期调试、三层配置解析模型。
 > **合成来源**：DSH插件开发指导手册.md（第 9/10 章）
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.1.6-alpha.2` / commit `ddefc45fbc`，2026-09-17），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.1.7-rc.1` / commit `46a7f68b09`，2026-09-23），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
 
-> **本文件导航 —— 共 534 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
+> **本文件导航 —— 共 530 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
 > - **本文件全是整理稿**（无上游素材混杂），但它仍是基线快照——写代码前先过版本闸门。
 > - 常用检索：`grep -n '^## '`、`grep -n '插槽'`（插槽名出现处）
 
@@ -22,7 +22,7 @@
 
 ## 9.1 核心概念：一个插件 = 两个半侧
 
-官方原文（`docs/cookbook/adding-a-settings-card.zh.md:5-7`，逐字）：
+官方原文（`docs/cookbook/adding-a-settings-card.zh.md`，**0.1.7-rc.1 之前**的版本 `:7`；该文档本区间被**整篇改写**，此句已不在其中 —— 事实与写法仍成立，稳定出处见 `packages/client/AGENTS.md`「One UI feature = one plugin package（`src/client/` browser half）」）：
 
 > 两个半侧住在同一个包里——Host 半侧在 `src/`，浏览器半侧在 `src/client/`，以 `./client` 导出并用 `dsh.client` 声明。
 
@@ -158,7 +158,7 @@ ctx.slots.register({ name, id?, key?, order?, children?, store?, inject? }, Comp
 
 ### 9.4.2 两个正交维度：基数与作用域
 
-来源：`docs/subsystems/slots.zh.md:46-58`（逐字表格）
+来源：`docs/subsystems/slots.zh.md:48-60`（逐字表格；旧引 `:46-58`）
 
 | 维度 | 值 | 含义 |
 |---|---|---|
@@ -172,7 +172,7 @@ ctx.slots.register({ name, id?, key?, order?, children?, store?, inject? }, Comp
 
 ### 9.4.3 可用的插槽树（节选）
 
-完整树见 `docs/subsystems/slots.zh.md:111-172`。以下是**最常用的部分**：
+完整树见 `docs/subsystems/slots.zh.md:113-174`（旧引 `:111-172`）。以下是**最常用的部分**：
 
 ```text
 root
@@ -211,7 +211,7 @@ root
 
 ### 9.4.4 最小可用示例：往标题栏加一个按钮
 
-来源：`docs/subsystems/slots.zh.md:19-42`（逐字，原文标注 `tsx ignore-check`）
+来源：`docs/subsystems/slots.zh.md:21-44`（逐字，原文标注 `tsx ignore-check`；旧引 `:19-42`）
 
 ```tsx ignore-check
 import type { Context } from '@deepseek-ai/cordis'
@@ -251,7 +251,7 @@ export function apply(ctx: Context): void {
 
 ### 9.4.5 组件能拿到什么（四个 share）
 
-来源：`docs/subsystems/slots.zh.md:60-75`
+来源：`docs/subsystems/slots.zh.md:62-77`（旧引 `:60-75`）
 
 | props 组 | 内容 |
 |---|---|
@@ -294,13 +294,13 @@ export function apply(ctx: Context): void {
 ⚠️ **反直觉的事实（源码实证）**：动态 plugin bundle 是 **lazy-CJS factory**（`window.__ModuleLoader__.load({id, factory})`），**不是 ESM**。
 
 > 🔧 **校正（2026-09-11）**：本节原先说「这是构建产物格式，你写代码时不用管」——**对仓库内开发成立，对仓库外开发不成立**。
-> `clientBundle()` 这个共享 preset **没有对外发布**，官方原文（`adding-a-settings-card.zh.md:102`）写明「本仓库之外的包**得自行复刻同样的输出格式**」。
+> `clientBundle()` 这个共享 preset **没有对外发布**，官方原文（`adding-a-settings-card.zh.md`，`dsh-v0.1.7-rc.1` 里的新位置 **`:60`**；该文档本区间被整篇改写，旧行号 `:102` 已失效）写明「……`clientBundle` tsdown 预设位于 `packages/client/tsdown.client.ts`，而**不在任何已发布的包里**，因此仓库之外的包要自己复刻这一步构建」。
 > 所以第三方 UI 插件作者**必须自己产出**这个格式：esbuild/rolldown 的 `format: 'cjs'` + `platform: 'browser'`，并自己拼那三行 banner/intro/footer。完整契约（含逐字三行与平台种子表 9 项）见 `14-inbound-http-and-timers.md` §17.3。
 
 ## 9.7 开发期调试 UI 插件
 
 1. **客户端 HMR 需要单独跑 watcher**：源码实证 `apps/cli/reference/README.zh.md:81` —— 接收器始终挂载，但要单独运行 `pnpm run dev:web` 重建客户端 bundle 才会生效。
-2. **不需要重新构建整个 Web 应用**：`adding-a-settings-card.zh.md:82` 原文——「只要 `cordis.yml` 挂载了插件，它就会出现在页面上——无需重新构建 Web 应用」。
+2. **不需要重新构建整个 Web 应用**：机制在新版 `adding-a-settings-card.zh.md:58` —— 客户端模块系统**扫描已启用的 Loader 条目**，找出声明了 `dsh.client` 的包并送出各自构建好的 `./client` 导出。（旧版 `:82` 那句逐字「只要 `cordis.yml` 挂载了插件，它就会出现在页面上——无需重新构建 Web 应用」已随该文档在 `0.1.7-rc.1` 被整篇改写而消失，**事实不变**。）
 3. 用 `cordis_inspect what:"client"` 看实时插槽树。
 
 ## 9.8 🤖 让 AI Agent 帮你做这一课
@@ -337,124 +337,99 @@ UI 插件最容易出错，**强烈建议先让 Agent 做一次"抄范本 + 登�
 
 ## 10.1 三层配置解析模型（必须先理解）
 
-这是整个设置机制的地基。来源：`docs/subsystems/settings.zh.md:5`
+> 🔴 **`dsh-v0.1.7-rc.1` 起整个设置机制被重做**（本区间最大的破坏性变更）：旧的「插件自选一个 settings 命名空间 + 手写设置卡片」模型**已整体移除**，改为「**从 Config schema 自动派生表单** + 配置编辑器写 Cordis patch 持久化」。`SettingsScope` / `installSection` / `settings.yaml` 在源码里**已不存在**（逐条对照见 §10.9）。
+
+**现在的分层**（来源：`docs/subsystems/settings.zh.md:9`，逐字口径）：
 
 ```
-① schema 默认值        ← 你在 Config 里写的 .default(...)
-        ↓ 被覆盖
-② 注册方 base          ← cordis.yml 里那一行的 config（第 5 章）
-        ↓ 被覆盖
-③ 用户在界面里改的部分  ← 用户在设置卡片里改的值，只写这一层
+① 继承值 inherited      ← schema 默认值 + 注册方 base（cordis.yml 那一行的 config，第 5 章）
+        ↓ 被 profile 覆盖
+② 显式 profile 覆盖值    ← 配置编辑器写进 profile 的 Cordis patch（用户在界面上改的部分）
+        ↓ 合成
+③ 实际值 actual         ← 业务消费者对自己 Config 引用调用 .get() 读到的值
 ```
 
-**核心机制**：`SettingsScope.update(patch)` 把稀疏 patch **只合并进"用户层"，绝不进 base 层**。
+**核心机制**：`ctx.settings.update(ns, patch, expectedRevision?)` 把稀疏 patch **合并进该条目自己的 Config**；每次写入**先校验完整 Config**，并带**乐观并发栅栏** `expectedRevision` —— 不匹配就抛 `SettingsConflictError`（`code = 'SETTINGS_CONFLICT'`），**不覆盖并发变更**。
 
-来源：`docs/subsystems/settings.zh.md:66-93`
+来源：`docs/subsystems/settings.zh.md:9-15`（逐字）；实现 `packages/settings/settings/src/index.ts`
 
-## 10.2 Host 半侧：注册一个设置命名空间
+## 10.2 Host 半侧：**不写注册代码**，表单从 Config 派生
 
-来源：`docs/cookbook/adding-a-settings-card.zh.md:13-44`（逐字）
+> 🔴 **本区间最需要改认知的一条**：`0.1.6-alpha.2` 及以前，你必须写一段 Host 半侧代码把插件**注册成设置命名空间**；**`0.1.7-rc.1` 起这条路没了** —— 表单由**你的 `Config` schema + profile 条目**自动派生，**你不写任何注册调用**。
+
+旧写法（**已失效，仅供识别老代码/老教程**；原骨架取自 `docs/cookbook/adding-a-settings-card.zh.md:13-44` 的旧版，该文档本区间已被整篇改写）：
 
 ```ts
-import type { Context } from '@deepseek-ai/cordis'
-import type {} from '@deepseek-ai/dsh-settings'
-import z from '@deepseek-ai/schemastery'
-
-declare function assertReachable(endpoint: string | undefined): void
-declare function rebuildFromSettings(config: Config): void
-
-export const MY_PLUGIN_NS = 'my-plugin'
-
-export interface Config {
-  endpoint?: string
-  retries?: number
-}
-
-export const Config: z<Config> = z.object({
-  endpoint: z.string(),
-  retries: z.number().step(1).min(0).default(3),
-})
-
-export function apply(ctx: Context, config: Config) {
-  let source = () => config
-  ctx.inject(['settings'], (settingsCtx) => {
-    settingsCtx.settings.installSection(ctx, MY_PLUGIN_NS, Config, config, {
-      // Constraints the schema cannot express refuse the write, not the next use.
-      validate: value => void assertReachable(value.endpoint),
-      setSource: (current) => { source = current },
-      onChange: () => { rebuildFromSettings(source()) },
-    })
+// ⚠️ 已失效：installSection 在 0.1.7-rc.1 的新树源码里已无定义
+ctx.inject(['settings'], (settingsCtx) => {
+  settingsCtx.settings.installSection(ctx, MY_PLUGIN_NS, Config, config, {
+    validate: value => void assertReachable(value.endpoint),
+    setSource: (current) => { source = current },
+    onChange: () => { rebuildFromSettings(source()) },
   })
-}
+})
 ```
 
-⚠️ 注意：这个片段里 `assertReachable` 和 `rebuildFromSettings` 是 `declare function`（**只有类型声明，没有实现**）——说明**这段代码不能直接复制运行**，你需要自己实现这两个函数。这是官方文档的省略，本手册如实指出。
+**现在你要做的只有两件事**：
 
-**`installSection` 的精确签名**（`docs/subsystems/settings.zh.md:215`）：
+1. 在插件里正常声明 `Config`（schemastery schema，见第 5 章）—— **表单字段就是从它派生的**；
+2. 想让某个实例**不自动出页面**时，才调用一次 `ctx.settings.configure({ auto: false }, owner)`（`owner` 省略即当前 fiber）。
+
+**命名空间是什么**（关键变化）：`ns` 不再是你自选的字符串，而是**当前 profile 里可唯一定位该条目的本地 id**（同一插件的多个实例，条目 id 不同 → 各自独立表单）。普通字段被排除。
+
+**`ctx.settings`（`SettingsForms`）的精确签名**（`docs/subsystems/settings.zh.md:31-71`，逐字）：
 
 ```ts
-installSection<
-  const Namespace extends string,
-  T,
->(
-  owner: Context,
-  ns: Namespace & SettingsNamespaceInput<Namespace>,
-  schema: z<T>,
-  entry: T,
-  hooks: SettingsSectionHooks<T>,
-): void
+configure(presentation: { auto?: boolean }, owner: Fiber = this.ctx.fiber): () => void
+prepareDocument(): Promise<string>
+describe(options?: SettingsDescribeOptions): SettingsDescriptor[]
+async update(ns: string, patch: object, expectedRevision?: number): Promise<void>
+async replace(ns: string, section: object, expectedRevision?: number): Promise<void>
+async mutate(ns: string, ops: readonly SettingsPathOp[], expectedRevision?: number): Promise<void>
 ```
 
-**两个 API 的选择**（关键区分）：
+**三个写入 API 的选择**（关键区分）：
 
-| API | 何时用 | 真实范例 |
+| API | 语义 | 何时用 |
 |---|---|---|
-| `installSection(owner, ns, schema, entry, hooks)` | 你有 `cordis.yml` 条目，要把 entry 当作 **base 层** | `packages/web/web-search-deepseek/src/index.ts:127-140` |
-| `settings.register(ns, schema, options?)` | 纯卡片、自带命名空间，不需要 base 层 | `packages/client/ui-theme/src/index.ts:37-39` |
+| `update(ns, patch, expectedRevision?)` | **合并**提交的字段 | 表单改了几个字段，其余保持 |
+| `replace(ns, section, expectedRevision?)` | 先把**即时字段重置为继承配置**，再应用提交字段 | 「先恢复默认、再整体设一遍」 |
+| `mutate(ns, ops, expectedRevision?)` | 按**独立路径**编辑，**保留客户端响应中未包含的秘密值**；`unset` 某个数组下标即删除该元素 | 精细编辑、要避开脱敏字段 |
 
-## 10.3 浏览器半侧：注册卡片
+## 10.3 浏览器半侧：配置页也从 Config 派生
 
-来源：`docs/cookbook/adding-a-settings-card.zh.md:52-70` 的骨架 —— **但该 cookbook 对 `dsh-v0.1.6-alpha.2` 已过时**（见下方警告），示例已按源码改写。
+> 🔴 **手写设置卡片这条路在 `0.1.7-rc.1` 已被移除**：`packages/client/ui-settings-plugins/src/client/` 的卡片族（`BashCard` / `AgentLoopCard` / `SubagentCard` / `WebSearchCard` / `card-form.ts` / `fields.tsx` / 各 `*-card-controller.ts`）**整体删除**（本区间 **−4608 行 / +73 行**），客户端服务 `settingsScope` 也**已移除**。原先挤在一个包里的官方配置页，现在拆成**每个插件一个伴生包**：`ui-settings-shell` / `ui-settings-agent-loop` / `ui-settings-subagent` / `ui-settings-web-search` / `ui-settings-plugin-inventory`。
 
-```ts ignore-check
-import type { Context as ClientContext } from '@deepseek-ai/cordis'
-// Type-only: the slot contract. Cross-plugin collaboration goes through cordis
-// services; a value import fails the client bundle-purity gate.
-import type {} from '@deepseek-ai/dsh-client-ui-plugin-manager/client'
+**默认情况：你不用写任何浏览器半侧代码** —— 你的 `Config` schema 会在**插件页**自动渲染出配置表单（读写与持久化由配置编辑器承担）。
 
-export const inject = ['slots', 'locale', 'connection', 'remote', 'settingsScope']
+**只有要「自定义一张页面」时才注册插槽**（`plugins.*` 声明见下面 7 键块）。注册进 `plugins.item` 的宿主组件收到的是 `PluginConfigViewProps`（**只有 `view: 'summary' | 'page'`**），**不再**是 `SettingsScope` —— 读写配置要走 `ctx.remote.settings`（Host 侧 `ctx.settingsController`）。
 
-export function apply(ctx: ClientContext): void {
-  const card = new MyPluginCardController(ctx.settingsScope.bind({ namespace: 'my-plugin' }))
-  ctx.slots.inject('plugins.item', () => ctx.slots.register({
-    name: 'plugins.item',
-    id: 'my-plugin',
-    order: 100,
-    label: () => t('myPluginTitle'),
-    locale: 'settings.myPlugin',
-    inject: () => card.inject(),
-  }, MyPluginCard),
-  )
-}
-```
+> ⚠️ **「内置插件」设置分区现在只是个壳**：`ui-settings-plugins` 只拥有设置导航项与标签行，声明 `settings.plugins.tab`（根级 list slot）—— 它**不再自带任何配置卡片**。要贡献标签页就按 `id` / `order` / `label` 注册进 `settings.plugins.tab`（官方口径：`packages/client/ui-settings-plugins/README.zh.md`）。
 
 > 🔴 **`dsh-v0.1.6-alpha.2` 起：插槽名是 `plugins.item`（`list` 语义），不再是 `settings.plugin.item`（`keyed` 语义）。**
 > 两者**不是别名关系**：旧槽以「卡片所编辑的 settings 命名空间」为 `key`，新槽是普通列表项，用 `id` / `order` / `label`，组件额外收 `view: 'summary' | 'page'` 两个态。
-> 依据：`packages/client/ui-plugin-manager/src/client/slot-contract.ts:32`（权威声明）、`packages/client/ui-settings-plugins/src/client/index.ts:105-120`（官方自己的注册方已改用 `plugins.item`）。
-> ⚠️ **上游文档没跟上**：`docs/cookbook/adding-a-settings-card.zh.md` 在 `alpha.1 → alpha.2` 区间**零改动**，仍在教 `settings.plugin.item`；照抄它会往一个**已不存在的插槽**注册（`ui-slots` 会抛「is not declared」）。
-> 机器判据：`verify_absorbed_claims.py` 的 `U06` / `U07`（新槽已声明）与 `X06`（旧槽不再被声明）。
+> 依据：`packages/client/ui-plugin-manager/src/client/slot-contract.ts:88`（权威声明；本区间由 `:32` 位移至此）、`packages/client/ui-settings-agent-loop/src/client/index.ts:47-48`（官方自己的注册方 —— 配置页已拆成**每插件一个伴生包**，并用 `ctx.configForms.whileServed([NS], …)` 包住 `slots.inject('plugins.item', …)`，即「Host 正服务该条目期间」才注册）。
+> ✅ **上游文档已跟上（2026-09-23 复核，撤销上一轮的警告）**：上一轮（基线 `0.1.6-alpha.2`）曾记录「该 cookbook 零改动、仍在教 `settings.plugin.item`」。**在 `dsh-v0.1.7-rc.1` 里它已被整篇改写**：标题换成「实践指南：即时配置表单」，全文**再无 `settings.plugin.item`**，并改为教 `plugins.item`（`:72`）与新的 `plugins.detail.actions` / `.badge` / `.section`（`:46-53`）。
+> ⚠️ **但改写带来另一类风险：行号级引用全线失效**。该文档由 100+ 行缩到 **72 行**，本技能原先指向它的逐字引文（旧 `:50` / `:72` / `:82` / `:94` / `:102` / `:13-44` / `:52-70`）**已不再指向原文** —— 本节与 `14 §17.3` 的引用已就地改为「旧位置 + 新位置」或改引源码。**这正是「完备性/出处措辞会静默腐化」的又一实例**：事实没变，出处漂了。
+> 机器判据：`verify_absorbed_claims.py` 的 `U06` / `U07` / `U09` / `U10`（新槽已声明）、`X06`（旧槽不再被声明）、`X07`（`conversation.session.header.leading` 已移除）、`B08`（预设仍未发布，按**新措辞**锚定）。
 
-**这组插槽的声明**（源码 `packages/client/ui-plugin-manager/src/client/slot-contract.ts`，逐字）：
+**这组插槽的声明**（源码 `packages/client/ui-plugin-manager/src/client/slot-contract.ts`，`dsh-v0.1.7-rc.1` 逐字；**本区间由 3 个键增至 7 个**）：
 
 ```ts
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface SlotMap {
+    'plugins.bundle.activation': { kind: 'keyed'; scope: 'root'; owner: PluginActivationOwnerProps }
     'plugins.item': { kind: 'list'; scope: 'root'; owner: PluginConfigViewProps }
     'plugins.bundle.config': { kind: 'keyed'; scope: 'root'; owner: PluginConfigViewProps }
     'plugins.row.config': { kind: 'keyed'; scope: 'root'; owner: PluginConfigViewProps }
+    'plugins.detail.actions': { kind: 'list'; scope: 'root'; owner: PluginDetailProps }
+    'plugins.detail.badge': { kind: 'list'; scope: 'root'; owner: PluginDetailProps }
+    'plugins.detail.section': { kind: 'list'; scope: 'root'; owner: PluginDetailProps }
   }
 }
 ```
+
+> **`plugins.detail.*` 三兄弟怎么选**（官方 cookbook `:46` 原文口径）：对**不属于自己**的组合包 / 行 / 官方插件有话要说的插件 —— 页头控件用 `.actions`、标题旁的标签用 `.badge`、页面自身内容之下的区块用 `.section`。条目按页面的 `subject` 渲染（`{ kind: 'bundle', pkg }` / `{ kind: 'row', pkg, row }` / `{ kind: 'item', id }`），对无话可说的 subject **返回 `null`**。
 
 `PluginConfigViewProps` = `{ readonly view: 'summary' | 'page' }`：`summary` 渲染标题下的一行摘要，`page` 渲染带保存控件的整张表单。`plugins.bundle.config` 以 **bundle 包名**为键、`plugins.row.config` 以 **`<包名>#<行 id>`** 为键——给「一个 bundle 自己的配置」和「bundle 里某一行插件的配置」用，不占 `plugins.item`。
 
@@ -468,64 +443,85 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 
 ## 10.4 浏览器侧读写配置的 API
 
-来源：`packages/client/ui-settings/src/client/settings-contract.ts:54-101`（逐字）
+> 🔴 **`SettingsScope` 与 `settings-contract.ts` 在 `0.1.7-rc.1` 已被删除**（客户端 `ui-settings` 现在给的是 `config-form.ts` / `config-form-types.ts`）。读写契约换成**远程设置控制器**。
+
+来源：`docs/subsystems/settings.zh.md:77-129`（逐字）；实现 `packages/api/settings-controller/src/index.ts`
+
+**`ctx.remote.settings` —— 读写都走它**（Host 侧由 `ctx.settingsController` = `SettingsController` 承载，全部标 `@Remote`）：
 
 ```ts
-export interface SettingsScope<T> {
-  getSnapshot(): SettingsScopeSnapshot<T>
-  subscribe(listener: () => void): () => void
-  mutate(ops: readonly SettingsPathOpView[], expectedRevision?: number): Promise<void>
-  set(field: string, value: unknown): Promise<void>
-  unset(field: string): Promise<void>
-}
+// 读：描述每个条目的表单（脱敏后的分层值 + 页面渲染表单用的序列化 schema）
+describe(): SettingsDescribeValue
+// 三种写
+update(ns: string, patch: Record<string, JsonValue>, expectedRevision: number | undefined): Promise<SettingsNamespaceView>
+replace(ns: string, section: Record<string, JsonValue>, expectedRevision: number | undefined): Promise<SettingsNamespaceView>
+mutate(ns: string, ops: SettingsPathOpView[], expectedRevision: number | undefined): Promise<SettingsNamespaceView>
+// 在原生编辑器里打开 provider 拥有的设置文档
+openSettingsDocument(signal: AbortSignal): Promise<SettingsDocumentOpenValue>
 ```
 
 **三条必须知道的规则**：
 
-1. **"字段是否被覆盖"看的是它有没有出现在 `user` 层，而不是它的值**（`adding-a-settings-card.zh.md:72`）。
-2. **`set(field, value)` 存一个字段；`unset(field)` 把它清回组装层**（恢复默认）。
-3. **⚠️ 每次写入都要带 `expectedRevision` 作栅栏**：不匹配的写入会被**拒绝**，从而不覆盖并发变更。官方原文（`adding-a-settings-card.zh.md:50`）：
+1. **命名空间 = profile 条目 id**（不再是插件自选字符串）；描述符里同时带**实际值 / 继承值 / 显式 profile 覆盖值**与乐观修订号（`docs/subsystems/settings.zh.md:9`）。
+2. **`update` 合并 / `replace` 先重置为继承配置再应用 / `mutate` 按路径编辑且保留客户端响应里未包含的秘密值**（同文档 `:13`）。
+3. **⚠️ 每次写入都要带 `expectedRevision` 作栅栏**：`undefined` = 无条件写；不匹配的写入会被**拒绝**（Host 抛 `SettingsConflictError`，`code = 'SETTINGS_CONFLICT'`；远程面归类为 `settings/conflict` 或 `settings/rejected`），**不覆盖并发变更**。
 
-> 每次写入都以读取时的 `revision` 作 `expectedRevision`，不匹配的写入被拒绝，不覆盖并发变更。
+**对新手的意思**：**读 → 改 → 带 revision 写**，失败就重新读一遍。事件 `settings/document-updated`（emit）在 Loader 配置变化后让表单描述符失效，客户端收到后要**重读 schema、值与修订号**。
 
-**对新手的意思**：不要把设置卡片做成"输入框一变就写"。要**读 → 改 → 带 revision 写**，失败就重新读一遍。
+## 10.5 配置页什么时候才会显示
 
-## 10.5 卡片什么时候才会显示
+来源：`docs/subsystems/settings.zh.md:9`（描述符口径）＋ `packages/client/ui-settings-plugins/README.zh.md`（分区壳口径）
 
-来源：`packages/client/ui-settings-plugins/src/client/index.ts:100-103`（官方注释，逐字翻译）＋ `:125-148`（实现）
+> 表单命名空间是**当前 profile 中可唯一定位条目的本地 id**；多个插件实例在条目 id 不同时拥有独立表单。
 
-> 配置页在 **Host 正服务其命名空间期间**才注册；没有这些插件的部署**看不到任何痕迹**。卡片注册顺序就是页面顺序，**不是** Host 的描述顺序（后者跟随插件激活，不同次启动可能变）。
+**翻译**：配置页的前提改为「**你的插件在活动 profile 里有条目、且声明了 `Config` schema**」。旧机制里「Host 半侧先注册命名空间、浏览器半侧才敢挂卡片」的两段式依赖**已经消失** —— 表单是**派生**出来的，不是注册出来的。
 
-**翻译**：卡片显示的前提仍然是 **Host 半侧真的注册了那个命名空间**。你只写浏览器半侧是没用的。区别在于**谁来判定**：旧机制由标签页统一读 Host 的命名空间清单再派发 slot 键；新机制（`alpha.2` 起）由**注册方自己**订阅 `ctx.settingsScope.describe()`，命名空间上线才 `inject`、下线就 `off()`（`:125-148`）。所以顺序由 `order` 决定，不再由 Host 决定。
+**分区与标签页**：设置导航项由 `ui-settings-plugins` 这个**壳**拥有（注册进 `settings.section` 的 `plugins` 项，子槽 `settings.plugins.tab`）；条目顺序由 `order` 决定、`label` 随当前语言解析。**一个标签页贡献都没有的部署只显示空提示**。
 
 ## 10.6 真实范本
 
 | 范本 | 路径 | 教什么 |
 |---|---|---|
 | **插件页 + 配置插槽宿主** | `packages/client/ui-plugin-manager/` | `plugins.item` / `plugins.bundle.config` / `plugins.row.config` 的声明与两态（`summary` / `page`）渲染；面板注册进 `main`（key = `plugins`） |
-| 4 张真实配置卡片 | `packages/client/ui-settings-plugins/` | 官方自己怎么写宿主面（`bash` / `agent-loop` / `subagent` / `web-search`），并自带 `settings.plugins.tab` 的两个标签页 |
+| **设置分区壳** | `packages/client/ui-settings-plugins/` | 只拥有设置导航项与 `settings.plugins.tab` 标签行 —— 看「一个壳怎么把内容让给功能插件」 |
+| 官方配置页（每插件一个伴生包） | `packages/client/ui-settings-shell` / `-agent-loop` / `-subagent` / `-web-search` / `-plugin-inventory` | 本区间新拆出的**标准形态**：功能插件自带页面，不再挤在一个包里 |
 | 设置行 + 主题服务 | `packages/client/ui-theme/` | `settings.general.item` + locale + store + CSS 全套 |
-| 卡片控制器写法 | `packages/client/ui-settings-plugins/src/client/bash-card-controller.ts` | 如何把 `SettingsScope` 包成表单 |
+| **Host 侧配置服务** | `packages/settings/settings/src/index.ts`（`SettingsForms`） | `describe` / `update` / `replace` / `mutate` / `configure` 与 `SettingsConflictError` |
+| **远程设置面** | `packages/api/settings-controller/src/index.ts` | `ctx.remote.settings` 的 `@Remote` 读写与拒绝分类 |
 | Host 侧 schema | `packages/client/ui-theme/src/theme-settings.ts` | "配置项 = Cordis Config = schemastery schema" 同一份声明 |
 
 ## 10.7 🤖 让 AI Agent 帮你做这一课
 
-> 我要给「（插件名）」加一张设置卡片，让用户能在界面里改 **（字段列表）**。
+> 我要让用户能在界面里配置「（插件名）」的 **（字段列表）**。
 > 请：
-> 1. 先讲清楚三层解析模型（schema 默认 / base / 用户层），并说明我的每个字段分别落在哪一层；
-> 2. 写 Host 半侧：用 `installSection`（把我的 `cordis.yml` entry 作为 base 层）；
-> 3. 写浏览器半侧：注册 `plugins.item` 卡片（`id` + `order` + `label`，组件按 `view` 渲染 `summary` 与 `page` 两态）；
-> 4. 写卡片的读写逻辑：**必须**带 `expectedRevision` 做栅栏，并处理失败重读；
-> 5. 告诉我怎么验证「用户改动真的落到了用户层」。
-> 约束：不跨插件导入运行时值；字段"是否被覆盖"按是否出现在 user 层判断，不要用值比较。
+> 1. 先讲清楚现在的分层模型（继承值 = schema 默认 + 注册方 base / profile 覆盖值 / 实际值），并说明我的每个字段分别落在哪一层；
+> 2. 检查我的 `Config` 是否是 schemastery schema —— **表单是它派生的，不要写任何 Host 半侧「注册命名空间」的代码**（`installSection` 已不存在）；
+> 3. 说明默认情况下插件页会**自动**出现配置表单；只有我要自定义页面时才注册 `plugins.item` / `plugins.bundle.config` / `plugins.row.config`（组件按 `view` 渲染 `summary` 与 `page` 两态）；
+> 4. 写读写逻辑：走 `ctx.remote.settings`，**必须**带 `expectedRevision` 做栅栏，并处理 `settings/conflict` 失败重读；
+> 5. 告诉我怎么验证「用户改动真的落到了 profile 覆盖值」。
+> 约束：不跨插件导入运行时值；命名空间就是 profile 条目 id，不要自造字符串。
 
 ## 10.8 ✅ 第 10 章验收清单
 
-- [ ] 我能说清三层解析模型
-- [ ] Host 半侧注册了命名空间，浏览器半侧注册了卡片
-- [ ] 写设置时带了 `expectedRevision`
-- [ ] 我知道卡片显示的前提是 Host 半侧注册了命名空间
+- [ ] 我能说清现在的分层模型（继承值 / profile 覆盖值 / 实际值）
+- [ ] 我知道**不需要**写 Host 半侧注册代码 —— 表单从 `Config` schema 派生
+- [ ] 我能说清 `SettingsScope` / `installSection` / `settings.yaml` **已被移除**，不再照抄老教程
+- [ ] 写设置时带了 `expectedRevision`，并会处理 `settings/conflict`
 - [ ] 我能在界面里改配置，并确认它生效了
+
+## 10.9 🔴 本区间设置机制改动速查（`0.1.6-alpha.2` → `0.1.7-rc.1`）
+
+| 旧（`0.1.6-alpha.2` 及以前） | 新（`dsh-v0.1.7-rc.1`） | 判据 |
+|---|---|---|
+| Host 半侧 `ctx.settings.installSection(owner, ns, schema, entry, hooks)` | **移除**；表单从 `Config` schema 自动派生 | 新树源码中已无 `installSection` 定义（旧定义在 `packages/settings/settings/src/index.ts:472`） |
+| `interface SettingsScope<T>`（`getSnapshot` / `subscribe` / `update(patch)`） | **移除**；改 `SettingsForms` 的 `update` / `replace` / `mutate(ns, …, expectedRevision?)` | 旧定义在 `packages/settings/settings/src/index.ts:115`；新树全树仅存在于 `.agents/notes/archived/` |
+| 命名空间 = 插件自选字符串 | 命名空间 = **profile 条目本地 id** | `docs/subsystems/settings.zh.md:9` |
+| 用户层落在 `$DSH_HOME/settings.yaml`（热重载） | **移除**；改由**配置编辑器写 Cordis patch**；`settings.yaml` 只剩一次性迁移 `importLegacyDocument()`（成功后改名 `.imported`） | 新 `docs/subsystems/settings.zh.md:5`；`packages/settings/settings/src/index.ts` |
+| 写入无并发保护 | **乐观并发**：`expectedRevision` 不匹配抛 `SettingsConflictError`（`code = 'SETTINGS_CONFLICT'`） | 新 `SettingsForms` 源码 |
+| 客户端手写卡片族（`card-form.ts` / `fields.tsx` / `*-card-controller.ts` / `BashCard` / `SubagentCard` …） | **整体删除**（−4608 / +73 行）；官方配置页拆为**每插件一个伴生包** | `packages/client/ui-settings-plugins/src/client/` 现只剩 4 个文件 |
+| 客户端服务 `settingsScope` + `settings-contract.ts` | **移除**；改 `ctx.remote.settings`（Host `ctx.settingsController`） | `packages/client/ui-settings/src/client/settings-contract.ts` 已删 |
+| （无） | **新增事件** `settings/document-updated`（emit） | `docs/subsystems/settings.zh.md:139-151` |
+| （无） | **新增包** `@deepseek-ai/dsh-config-editor`（base 补丁新增 `config-editor` 行） | `packages/boot/config-editor/package.json`；`packages/bundle/base/cordis.patch.yml:97-98` |
 
 ---
 

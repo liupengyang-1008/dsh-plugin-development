@@ -3,7 +3,7 @@
 > **文件来源**：本文件由 `10-community-casebook.md` 拆分而来，正文为原文的**逐行搬迁**，未做改写。
 > **本册性质**：**全部是上游一手素材原文** —— 性质不一：既有官方文档的**逐字摘录（属权威原文）**，也有调研期写下的**粗笔记（仅备查）**。**读某一段前，务必连带读该段开头的取材说明**，那是判断这段能信多少的依据。
 > **不要整读**：先 `grep -n '^#{1,2} '` 拿小节清单，再只读需要的那一节。总索引见 `10-community-casebook.md`。
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.1.6-alpha.2` / commit `ddefc45fbc`，2026-09-17），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.1.7-rc.1` / commit `46a7f68b09`，2026-09-23），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 
@@ -115,7 +115,7 @@ GIT_NO_LAZY_FETCH=1 git show HEAD:<路径>
   slot entry crashed in 'settings.section'
   ```
   每次安装，这个区块首次渲染就崩（v0.3.11 起）。
-- **根因**：`AutoSettings.tsx` 把 `props.settings.subscribe` / `props.settings.getSnapshot` 当裸引用传给 `useSyncExternalStore`。settings prop 是官方 `SettingsScope` 实例，这两个方法**是读 `this.store` 的 prototype 方法**；React 以裸函数调用它们，`this` 是 `undefined`。
+- **根因**：`AutoSettings.tsx` 把 `props.settings.subscribe` / `props.settings.getSnapshot` 当裸引用传给 `useSyncExternalStore`。settings prop 是官方 `SettingsScope` 实例，这两个方法**是读 `this.store` 的 prototype 方法**；React 以裸函数调用它们，`this` 是 `undefined`。（⚠️ **时效**：该 `SettingsScope` 与手写卡片族已在 `dsh-v0.1.7-rc.1` 移除；本坑按**通用教训**保留。）
 - **修复**：用 `useMemo` 绑定：`settings.subscribe.bind(settings)`（保持 hook 身份稳定；scope 对象每个条目身份稳定，不会引起重复订阅）。并**审计全仓所有 `useSyncExternalStore`**，确认只有 settings scope 是 prototype-方法面；补一个「故意用 prototype 方法 fake」的回归测试 + 一个断言「裸调用该 fake 会崩」的前提守卫。
 - **给新手的教训**：`ctx.*` / service 上的方法是**带 `this` 的方法**；解构或当回调传出去前先 `bind`。这条和「`ctx.slots.register` 丢 this」（坑 C1）是**同一类事故**，在 DSH 里反复出现。
 
@@ -1173,6 +1173,8 @@ slot entry crashed in 'settings.section'
 → **崩溃日志会带插槽名 `settings.section`**，这是排查"卡片没显示/卡片崩了"的第一手线索。
 
 ### 二.3.3 必须照抄的一条：拿到官方 `SettingsScope` 后要 **bind**
+
+> ⚠️ **时效（2026-09-23）**：`SettingsScope` 本体与手写设置卡片族已在 `dsh-v0.1.7-rc.1` **整体移除**。本节的**具体 API** 已不适用，**通用教训**（类实例方法交给 React 前先 `bind`）仍然成立。
 
 - 卡片组件收到的 `props.settings` 是官方的 `SettingsScope` **实例**，它的 `subscribe` / `getSnapshot` 是**读 `this.store` 的原型方法**。
 - React 的 `useSyncExternalStore` 会把回调**当裸函数调用**，`this` 变成 `undefined`，第一次 `getSnapshot()` 就抛。

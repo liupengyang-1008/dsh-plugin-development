@@ -2,7 +2,7 @@
 
 > **本文件用途**：由易到难的 12 个可直接复制的插件模板（T1~T12），覆盖零代码组合包、补丁语法、工具、命令、配置、服务、UI、设置卡片、流程拦截、外部集成、工程骨架。**官方七类模板的逐字源码**已拆到 `02b-official-templates.md`，**社区零代码组合包全文**已拆到 `02c-community-bundle.md`。T3/T5/T6 与 `02b` 的模板 3/4/5 是同一件事的两种粒度：本文件给讲解与坑，`02b` 给可逐字照抄的完整源码——**冲突时以 `02b` 的官方源码为准**。
 > **合成来源**：DSH插件开发实战补充-模板与踩坑.md（第二篇）
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.1.6-alpha.2` / commit `ddefc45fbc`，2026-09-17），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.1.7-rc.1` / commit `46a7f68b09`，2026-09-23），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 
@@ -837,7 +837,7 @@ export function apply(ctx: ClientContext): void {
 | `settings.general.item` | 通用设置里加一行/一项 |
 | `conversation.view` | 替换对话主视图（最激进） |
 
-> ⚠️ 基线时本手册说这里有「40 个官方插槽名」——**那是低估**。对 `dsh-v0.1.6-alpha.2` 重新抽取：声明侧 **81 个键**、并集 84 个，剔除 18 个测试专用键后**约 66 个公开可用**。
+> ⚠️ 基线时本手册说这里有「40 个官方插槽名」——**那是低估**。对 `dsh-v0.1.7-rc.1` 重新抽取：声明侧 **96 个键**、并集 99 个，剔除 18 个测试专用键后**约 81 个公开可用**。
 > 完整清单与可复现命令：`<skill>/scripts/extract_slots.py <DSH仓库路径> <skill目录>`；签名与报错见 `14-inbound-http-and-timers.md` §17.4，那份是权威。
 
 ### 8.6 🔴 UI 插件的三条硬约束
@@ -1015,6 +1015,7 @@ export function AppearanceRow({ t, setTheme, useStore }: AppearanceRowComponentP
 ### 9.5 ⚠️ 两个真实事故（社区侧证据）
 
 1. **把类实例的方法交给 React 当回调 → 必须 `.bind()`**
+   （⚠️ **时效**：下面这个 `SettingsScope` 已在 `dsh-v0.1.7-rc.1` 被移除，本例按**通用规则**保留。）
    官方 `SettingsScope` 的 `subscribe`/`getSnapshot` 是读 `this.store` 的原型方法，React 的 `useSyncExternalStore` 会当裸函数调用，`this` 变 `undefined`，第一次 `getSnapshot()` 就抛：
    ```
    TypeError: Cannot read properties of undefined (reading 'store')
@@ -1050,7 +1051,7 @@ ctx.on('事件名', async (payload, next) => {
 
 #### `agent/pre-step` —— **改消息 / 拦步骤**
 
-官方逐字文档（`docs/subsystems/core.zh.md:1076`）：
+官方逐字文档（`docs/subsystems/core.zh.md:925-950`，**整节**；引文在 `:937-945`。旧引 `:1076`，本区间该文档由 1265 行缩到 1114 行）：
 
 > ```
 > Reject a proposed step or replace the messages that enter it. Calling `next()` preserves the current messages.

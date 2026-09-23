@@ -34,7 +34,7 @@
 | **谁用** | 装了 DSH、想给它写插件的人；以及替人写插件的 AI Agent |
 | **怎么用** | **对它说话**——不是敲命令行工具。加载后它指导 Agent 完成开发全流程 |
 | **装在哪** | 装进你的 **AI 客户端**的 skills 目录。它遵循通用的 **Agent Skills** 开放格式，**不绑定任何一家客户端**——Claude Code / Codex / Cursor / Gemini CLI / Copilot / OpenClaw（社区昵称「小龙虾」）/ WorkBuddy 等都能用 |
-| **它给你什么** | 12 个可复制模板 · 23 条踩坑 · 8 个校验脚本 · 1 套防过时版本闸门 · 10 个结对提示词 |
+| **它给你什么** | 12 个可复制模板 · 23 条踩坑 · 9 个校验脚本 · 1 套防过时版本闸门 · 10 个结对提示词 |
 | **它不给你什么** | ❌ 现成的可装插件（那是它帮你**做**的东西）❌ DSH 运行时依赖 |
 | **对你的环境要求** | ① 一个能加载 `SKILL.md` 的 AI 客户端 ② 能执行 shell（`python3` 或 `bash`）③ 可选：一份 DSH 源码，用于核验 API——没有也能用，走降级规则 |
 
@@ -381,7 +381,7 @@ DSH 处于 pre-stable / rc 阶段，**tag 间隔中位数约 1.1 天**，并且�
 | **第 0 步 · 版本闸门（强制）** | 写任何 DSH 代码前先答三问 + 跑探针；拿不到源码时按降级规则显式声明「本条未核验」 |
 | **事实分级 S / M / V** | 一句话判断法：*这条事实明天变了，我的代码会崩吗？* 会崩 → 必须核验；不会崩 → 可直接用 |
 | `dsh-api-probe.py` | 对**实时源码**重验 **56 条断言**（48 正向 + 8 反向） |
-| `verify_absorbed_claims.py` | 第二批 **39 条**（入站 HTTP / 定时器 / 客户端产物 / 插槽 / 基线推进事实 / **防编造的否定断言**） |
+| `verify_absorbed_claims.py` | 第二批 **49 条**（入站 HTTP / 定时器 / 客户端产物 / 插槽 / 基线推进事实 / **防编造的否定断言**） |
 | `extract_slots.py` | 从源码抽取**权威插槽清单**并与技能声明双向 diff——写插槽名前用它，不要凭表抄 |
 | `check_refs.py` | 证明技能里引用的每个路径都能在技能内解析，且没有指向作者机器的绝对路径 |
 
@@ -442,7 +442,7 @@ DSH 处于 pre-stable / rc 阶段，**tag 间隔中位数约 1.1 天**，并且�
 
 | 项 | 值 |
 |---|---|
-| DSH 基线 | tag `dsh-v0.1.6-alpha.2` / commit `ddefc45fbc` / 2026-09-17 |
+| DSH 基线 | tag `dsh-v0.1.7-rc.1` / commit `46a7f68b09` / 2026-09-23 |
 | 上游仓库 | [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) |
 | 技能版本 | 见 `SKILL.md` frontmatter 的 `version`（**唯一落点**） |
 | 版本 ↔ 基线对照 | `references/13-version-history.md` §1.5 |

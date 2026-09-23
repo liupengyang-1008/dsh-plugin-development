@@ -3,7 +3,7 @@
 > **文件来源**：本文件由 `10-community-casebook.md` 拆分而来，并按**来源政策定点改写**（**不是**逐行搬迁）：私有实现类条目不收录，通用教训以「自撰建议」形式保留。其余各册 `10a` / `10c` / `10d` 仍是逐行搬迁。
 > **本册性质**：**全部是上游一手素材原文** —— 性质不一：既有官方文档的**逐字摘录（属权威原文）**，也有调研期写下的**粗笔记（仅备查）**。**读某一段前，务必连带读该段开头的取材说明**，那是判断这段能信多少的依据。
 > **不要整读**：先 `grep -n '^#{1,2} '` 拿小节清单，再只读需要的那一节。总索引见 `10-community-casebook.md`。
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.1.6-alpha.2` / commit `ddefc45fbc`，2026-09-17），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.1.7-rc.1` / commit `46a7f68b09`，2026-09-23），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > 🔴 **许可警示（本册特有，务必先读）**：**本册只引用 MIT / Apache-2.0 / BSD-3-Clause 三类来源，不含任何 copyleft 内容。**（三者均为 permissive；BSD-3-Clause 比 MIT 只多一条无背书条款。）
@@ -529,7 +529,7 @@ modlens 的 dsh 相关修复提交极多（`git log --oneline -i --grep='dsh'` �
 > ## 🔴 重要校正（2026-09-11，由主线核对官方源码后加）
 >
 > 本节原标题写的是「`parameters` 属性级不能有 `required` 键」——**这个结论只对一半，直接照抄会写错**。
-> 官方仓库 `deepseek-harness` 源码（commit `ddefc45fbc`）实证：
+> 官方仓库 `deepseek-harness` 源码（commit `46a7f68b09`）实证：
 >
 > ```ts
 > // packages/core/tools/src/schema.ts:570-571（defineTool 实现体内）

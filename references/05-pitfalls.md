@@ -2,12 +2,12 @@
 
 > **本文件用途**：按症状检索的踩坑百科：23 条编号坑点（P1~P22b）+ 症状速查表 + 报错信息/界面现象对照表 + 官方 4 篇事故复盘全文摘录与八条红线。插件出问题时第一站。
 > **合成来源**：DSH插件开发实战补充-模板与踩坑.md（第三篇，略去与官方复盘重复的红线摘要） + DSH插件开发指导手册.md（附录 E 报错对照表） + F-official-pitfalls.md
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.1.6-alpha.2` / commit `ddefc45fbc`，2026-09-17），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.1.7-rc.1` / commit `46a7f68b09`，2026-09-23），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
 
-> **本文件导航 —— 共 633 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
+> **本文件导航 —— 共 634 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
 > - **上游素材原文**：约 200 行（32%），起点：`F-official-pitfalls.md`（文件末尾）。**不是本技能重写的整理稿**；性质不一——**有的是官方文档逐字摘录（属权威原文），有的是调研期粗笔记（仅备查）**。读某一段前，务必连带读**该段开头的取材说明**。
 > - **其余部分 = 面向任务的整理稿**，可直接照做；但它同样是基线快照，写代码前先过版本闸门。
 > - 常用检索：`grep -n '^### 坑 P'`（按编号定位单条坑）、`grep -n '^# F\.'`（档案起点）
@@ -304,6 +304,7 @@
   slot entry crashed in 'settings.section'
   ```
 - **根因**：`SettingsScope` 的 `subscribe`/`getSnapshot` 是读 `this.store` 的**原型方法**，React 的 `useSyncExternalStore` 当裸函数调用 → `this` 变 `undefined`。
+- **⚠️ 时效说明（2026-09-23）**：`SettingsScope` 本体与手写卡片族已在 `dsh-v0.1.7-rc.1` **被移除** —— 这个具体场景不会再复现，**但下面那条通用规则仍然成立**（同类事故在 `ctx.slots.register` 等处照样发生），故本条按「**通用教训**」保留、不再指向具体 API。
 - **怎么修**（社区维护者原话）：
   > `AutoSettingsPanel` now binds both methods to the scope with `useMemo` (`settings.subscribe.bind(settings)`)
 - **通用规则**：**凡是把类实例的方法交给 React 当回调，一律 `.bind(instance)`**。闭包 store（`createSnapshotStore` 之类）不用 bind。
@@ -421,7 +422,7 @@
 | git 装包失败，提示 `allowBuilds` | pnpm ≥10 默认拒绝跑 `prepare` | 按提示把包键写进 `pnpm-workspace.yaml` |
 | git 装完加载失败（找不到 `lib/`） | 作者没提供 `prepare`，拉到的是源码 | 让作者补 `prepare`，或改用 npm/tarball |
 | 浏览器里看不到我的 UI | Host 半侧缺失 / 插槽名写错 / 没登记 | 查三个登记点；用 `cordis_inspect what:"client"` |
-| 设置卡片不显示 | Host 半侧没注册命名空间 | 补 `installSection` / `register` |
+| 配置表单不显示 | 插件没有 `Config` schema，或该条目不在活动 profile 里 | 补 schemastery `Config`（**表单是它派生的**）；**不要**再写 `installSection` —— 它在 `0.1.7-rc.1` 已移除 |
 | 改代码没生效 | HMR 默认关闭；overlay 不热重载 | 开启 `id: hmr` 的 `disabled: false`，或重启 |
 | `ctx.logger` 输出看不到 | 交付 profile 未挂 console 导出器 | 改用 `console.log` 或自己挂 logger-console |
 | 找不到"完整内置事件清单" | 官方就没有静态清单 | 去查 `docs/subsystems/<服务>.zh.md` 的生成区块 |
@@ -435,7 +436,7 @@
 
 # F. 官方事故复盘（postmortem）—— 官方自己踩过的坑（原始素材）
 
-> 来源：`deepseek-harness/docs/postmortem/`（commit `ddefc45fbc`）。共 **4 篇**，全部有中文版。
+> 来源：`deepseek-harness/docs/postmortem/`（commit `46a7f68b09`）。共 **4 篇**，全部有中文版。
 > 这是**一手的一手材料**：官方自己写的「事故 → 根因 → 防护措施 → 教训」。
 > 引用一律逐字，标注来源文件。
 

@@ -2,12 +2,12 @@
 
 > **本文件用途**：工程规范，三部分：① 官方包的工程约定（目录结构、package.json 不变式、.ts 后缀规则、角色命名表、README 强制节、官方门禁脚本——这部分是权威原文）② 主手册的命名规范、代码硬规则、测试规范、质量门禁清单、提交规范，以及版本演进时间线与兼容性五条军规 ③ 补充手册的 12 条硬规则、发布前自查清单、8 条代码风格共识。①与②在 README 强制节、package.json 不变式上重叠，以①的官方原文为准。
 > **合成来源**：J-official-conventions.md + DSH插件开发指导手册.md（第 14/15 章） + DSH插件开发实战补充-模板与踩坑.md（第四篇）
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.1.6-alpha.2` / commit `ddefc45fbc`，2026-09-17），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.1.7-rc.1` / commit `46a7f68b09`，2026-09-23），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
 
-> **本文件导航 —— 共 474 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
+> **本文件导航 —— 共 475 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
 > - **上游素材原文**：约 149 行（31%），起点：`J-official-conventions.md`（文件开头）。**不是本技能重写的整理稿**；性质不一——**有的是官方文档逐字摘录（属权威原文），有的是调研期粗笔记（仅备查）**。读某一段前，务必连带读**该段开头的取材说明**。
 > - **其余部分 = 面向任务的整理稿**，可直接照做；但它同样是基线快照，写代码前先过版本闸门。
 > - 常用检索：`grep -n '^## '`、`grep -n '^# J\.'`（档案起点，在文件开头）
@@ -196,7 +196,7 @@ packages/<group>/<pkg>/
 
 ## 14.3 README 规范（官方强制）
 
-`docs/cookbook/adding-a-package.zh.md:74-108` 规定包 README 必须有这两个规范结尾章节：
+`docs/cookbook/adding-a-package.zh.md:76-110` 规定包 README 必须有这两个规范结尾章节（旧引 `:74-108`）：
 
 ```markdown
 ## Model Experience
@@ -287,6 +287,7 @@ docs: add tutorial for packaging and installing a plugin bundle
 | **2026-08-10** | client manifest 元数据**嵌套到 `dsh.client`**（`dshClient` → `dsh.client`） | `717792b631` |
 | 2026-08-17 | **最早的 tag** `dsh-v0.1.0-rc.7` | `99f6f02fec` |
 | **2026-08-30** | **`installSection` 出现**（设置卡片机制成型） | `f4e49ccf8f` |
+| **2026-09-23** | **`installSection` / `SettingsScope` / 手写设置卡片族整体移除**（改为「Config schema 派生表单 + 配置编辑器写 profile 补丁」） | `dsh-v0.1.7-rc.1`（`46a7f68b09`） |
 | 2026-09-10 | 最新 tag `dsh-v0.1.5-rc.2` | `fb2c4b9e69` |
 | 2026-09-10 | 本手册依据的 HEAD | `c291e7961a` |
 
@@ -294,7 +295,7 @@ docs: add tutorial for packaging and installing a plugin bundle
 
 1. **所有 UI 相关机制都很年轻**（2026-07-19 之后）。你在网上看到的 2026-07 之前的 UI 插件教程，**一定过时**。
 2. **`dsh.client` 这个字段名只从 2026-08-10 起有效**。之前叫 `dshClient`。
-3. **`installSection` 2026-08-30 才出现**——也就是**两周前**。相关文档可能还不完整（本手册已注明"找不到专门解释它的文档段落"）。
+3. **`installSection` 的寿命只有 3 周多**：2026-08-30 出现，**2026-09-23（`dsh-v0.1.7-rc.1`）就被整套移除**（详见 `04` §10.9）。这是本项目「pre-stable 上游会**整族重做机制**」的最强例证 —— **不要把任何一代 API 当成长期约定**；更不要因为「某 API 刚出现、文档还不全」就以为它会稳定下来。
 
 ## 15.2 一个真实的新旧 API 对比（工具注册）
 
@@ -373,7 +374,7 @@ export function apply(ctx: Context) {
 
 | # | 策略 | 做法 |
 |---|---|---|
-| 1 | **记录基线** | 在你的插件 README 里写明：「基于 commit `xxx` / 版本 `0.1.6-alpha.2` 开发」 |
+| 1 | **记录基线** | 在你的插件 README 里写明：「基于 commit `xxx` / 版本 `0.1.7-rc.1` 开发」（写你**实际**用的那版；本手册基线见 `00-version-gate.md` §1） |
 | 2 | **锁依赖** | 若引用官方包，用精确版本或 commit，不要用 `^` 漂移 |
 | 3 | **升级前评估** | 用第 13 章模板 4 让 Agent 分析 diff，重点看 `--grep='!'` |
 | 4 | **小步快跑** | 先做最小可用版本，跑通全链路，再加功能。别一次写 2000 行再调试 |

@@ -66,9 +66,12 @@ CHECKS: list[tuple[str, str, str, str, str, str]] = [
      r"export const PRELOADED_CLIENT_EXTERNALS = \[\s*\] as const", "has"),
     ("B07", "M", "跨插件值导入被纯度门禁拒绝（只允许 type-only）",
      "packages/client/tsdown.client.ts", r"client bundle purity:", "has"),
+    # 0.1.7-rc.1 复检：该文档仍在档，但句子被改写（旧句「没有已发布的预设暴露该包，因此本仓库之外的
+    # 包得自行复刻同样的输出格式」已不存在）。结论未变、措辞已变 —— 故断言改锚在**语义要点**上，
+    # 不锚整句。若哪天上游真发布了客户端预设，这条会 STALE 提醒我们改结论。
     ("B08", "M", "官方明确：没有已发布的客户端预设，仓库外需自行复刻输出格式",
      "docs/cookbook/adding-a-settings-card.zh.md",
-     r"没有已发布的预设暴露该包，因此本仓库之外的包得自行复刻同样的输出格式", "has"),
+     r"而不在任何已发布的包里[\s\S]{0,120}?要自己复刻", "has"),
     ("B09", "M", "非入口客户端分块命名为 client.<name>.js（入口固定 client.js）",
      "packages/client/tsdown.client.ts", r"chunkFileNames: 'client\.\[name\]\.js'", "has"),
     ("B10", "M", "包内动态分块改走 require.async（CJS 外壳下的异步加载）",
@@ -97,10 +100,20 @@ CHECKS: list[tuple[str, str, str, str, str, str]] = [
     ("U06", "M", "插件配置插槽更名为 plugins.item，且为 list 语义（id/order，非 keyed）",
      "packages/client/ui-plugin-manager/src/client/slot-contract.ts",
      r"'plugins\.item': \{ kind: 'list'; scope: 'root'", "has"),
+    # 0.1.7-rc.1 复检：两条声明仍在同一文件，但中间插入了 JSDoc，实测字符距离 **482** > 原窗口 400
+    # → 原断言是对**排版敏感**的假 STALE。窗口放宽到 900（仍要求同文件、同 kind/scope、先后有序）。
     ("U07", "M", "新增 plugins.bundle.config / plugins.row.config 两个 keyed 配置插槽",
      "packages/client/ui-plugin-manager/src/client/slot-contract.ts",
-     r"'plugins\.bundle\.config': \{ kind: 'keyed'; scope: 'root'[\s\S]{0,400}?'plugins\.row\.config': \{ kind: 'keyed'; scope: 'root'",
+     r"'plugins\.bundle\.config': \{ kind: 'keyed'; scope: 'root'[\s\S]{0,900}?'plugins\.row\.config': \{ kind: 'keyed'; scope: 'root'",
      "has"),
+    # 刻意**拆成两条独立断言**、不写一条跨 40 行的邻近表达式 —— 邻近窗口是对排版敏感的判据，
+    # 本轮 U07 的假 STALE 就是这么来的（同文件两条声明之间插入 JSDoc 使距离超窗）。
+    ("U09", "M", "插件页新增 plugins.bundle.activation 配置插槽（keyed）",
+     "packages/client/ui-plugin-manager/src/client/slot-contract.ts",
+     r"'plugins\.bundle\.activation': \{ kind: 'keyed'; scope: 'root'", "has"),
+    ("U10", "M", "详情页新增 plugins.detail.actions / .badge / .section 三个贡献插槽（list）",
+     "packages/client/ui-plugin-manager/src/client/slot-contract.ts",
+     r"'plugins\.detail\.section': \{ kind: 'list'; scope: 'root'", "has"),
     ("U08", "M", "配置插槽的组件收 view: 'summary' | 'page' 两态",
      "packages/client/ui-plugin-manager/src/client/slot-contract.ts",
      r"readonly view: 'summary' \| 'page'", "has"),
@@ -115,26 +128,62 @@ CHECKS: list[tuple[str, str, str, str, str, str]] = [
     ("P03", "M", "base 补丁新增 plugin-manager / tool-plugin-manager 两行",
      "packages/bundle/base/cordis.patch.yml",
      r"- id: tool-plugin-manager[\s\S]{0,200}?- id: plugin-manager", "has"),
+    # 0.1.7-rc.1 复检：同一 import 语句多了第二个符号（`setProfileVersionExemption`），
+    # 原断言把它写成了**逐字单符号**形式 → 假 STALE。事实（转发给 plugin-manager/operations）未变。
     ("P04", "M", "CLI 插件安装改为转发给 @deepseek-ai/dsh-plugin-manager/operations",
      "apps/cli/src/plugin.ts",
-     r"import \{ runPluginCommand \} from '@deepseek-ai/dsh-plugin-manager/operations'", "has"),
+     r"import \{[^}]*\brunPluginCommand\b[^}]*\} from '@deepseek-ai/dsh-plugin-manager/operations'", "has"),
     ("P05", "M", "bundle 对账（含「未声明 dsh.bundle」警告）实现位于 plugin-manager 包",
      "packages/boot/plugin-manager/src/operations.ts",
      r"declares no dsh\.bundle — installed as a plain dependency, not a profile layer", "has"),
 
+    # ── 17.6 推进基线 0.1.7-rc.1 时吸收的**新增**能力面 ────────────────────
+    ("P06", "M", "DefineToolOptions 新增 deferLoading（请求延迟加载该工具定义）",
+     "packages/core/tools/src/schema.ts",
+     r"readonly deferLoading\?: true", "has"),
+    ("P07", "M", "DefineToolOptions 新增 projectContent（在 tools/post-execute 策略前装入执行期内容）",
+     "packages/core/tools/src/schema.ts",
+     r"projectContent\?\(exec: Readonly<ToolExecution>, result: Readonly<ToolExecutionResult>\): ContentBlock\[\] \| undefined",
+     "has"),
+    ("V01", "M", "会话格式版本常量 = 4（0.1.7 起；0.1.5～0.1.6 为 3）",
+     "packages/core/session/src/types.ts",
+     r"export const SESSION_FORMAT_VERSION = 4\b", "has"),
+    # 🔴 0.1.7-rc.1 的**最大破坏性变更**：整套设置机制重做（`settings` 服务换成 SettingsForms）。
+    # 这一条此前在六维 diff 里被漏掉过 —— 漏的原因正是「只查手挑的几个包」，
+    # 没做「按改动量排序扫全部包」。下面两条把**新事实**钉住（U11/U12），
+    # 并用两条否定断言把**已移除的旧 API**钉住（X08/X09）。
+    ("U11", "M", "settings 服务改为 SettingsForms（Config schema 派生表单）",
+     "packages/settings/settings/src/index.ts",
+     r"settings: SettingsForms", "has"),
+    ("U12", "M", "设置写入带乐观并发码 SETTINGS_CONFLICT",
+     "packages/settings/settings/src/index.ts",
+     r"readonly code = 'SETTINGS_CONFLICT'", "has"),
+
     # ── 反面教材：这些「编造名」在源码中必须不存在（未命中 = HOLDS）───────
     ("X01", "N", "不存在名为 ui 的服务（同类方案 ctx.ui.request 属编造）",
      "packages", r"provide\(\s*'ui'\s*,", "not"),
+    # 🔴 0.1.7-rc.1 复检修掉的一类**假 STALE**：裸键断言原先只写 `{ kind:`，
+    # 而 `{ kind: 'workspace' }` 这种**上下文来源键**（`MessageSourceMap`，
+    # 见 packages/context/session-reference/tests/session-reference.spec.ts）形状与 UI 插槽键相同。
+    # 于是 X04 被一个**与 UI 插槽无关**的测试文件命中而误报。
+    # 现在把三个裸键断言都收紧到**只认 UI 插槽的 kind 取值**（single|list|keyed）——
+    # 这既是判据的正确边界，也符合「集合判定要用区域而非关键词」。
     ("X02", "N", "不存在裸 settings 插槽键（只有 settings.* 形式）",
-     "packages", r"['\"]settings['\"]\s*:\s*\{\s*kind:", "not"),
+     "packages", r"['\"]settings['\"]\s*:\s*\{\s*kind:\s*'(?:single|list|keyed)'", "not"),
     ("X03", "N", "不存在裸 status 插槽键",
-     "packages", r"['\"]status['\"]\s*:\s*\{\s*kind:", "not"),
-    ("X04", "N", "不存在裸 workspace 插槽键",
-     "packages", r"['\"]workspace['\"]\s*:\s*\{\s*kind:", "not"),
+     "packages", r"['\"]status['\"]\s*:\s*\{\s*kind:\s*'(?:single|list|keyed)'", "not"),
+    ("X04", "N", "不存在裸 workspace UI 插槽键",
+     "packages", r"['\"]workspace['\"]\s*:\s*\{\s*kind:\s*'(?:single|list|keyed)'", "not"),
     ("X05", "N", "webServer.register 不接受 router 回调（无 router.get/post 路由对象）",
      "packages", r"webServer\.register\(\s*\(router\)", "not"),
     ("X06", "N", "settings.plugin.item 不再作为插槽被声明（已整体改名为 plugins.item）",
-     "packages", r"['\"]settings\.plugin\.item['\"]\s*:\s*\{\s*kind:", "not"),
+     "packages", r"['\"]settings\.plugin\.item['\"]\s*:\s*\{\s*kind:\s*'(?:single|list|keyed)'", "not"),
+    ("X07", "N", "conversation.session.header.leading 插槽已被移除（同族其余键仍在）",
+     "packages", r"['\"]conversation\.session\.header\.leading['\"]\s*:\s*\{\s*kind:", "not"),
+    ("X08", "N", "旧设置注册 API installSection 已整体移除（0.1.7-rc.1 起换 SettingsForms）",
+     "packages", r"installSection", "not"),
+    ("X09", "N", "旧设置类型 SettingsScope 已整体移除（客户端手写卡片族同批删除）",
+     "packages", r"SettingsScope", "not"),
 ]
 
 TEXT_SUFFIXES = {".ts", ".tsx", ".md", ".yml", ".yaml", ".json", ".js", ".mjs"}
@@ -151,6 +200,13 @@ NEGATIVE_GUARDS: dict[str, tuple[str, str]] = {
     "X05": ("packages", r"webServer\.register\("),
     "X06": ("packages/client/ui-plugin-manager/src/client/slot-contract.ts",
             r"'plugins\.item': \{ kind: 'list'"),
+    # X07 的护栏刻意取**同族仍存在**的兄弟键：若整个 header 家族都被删掉，护栏失效 → 断言结果无效，
+    # 而不是假通过。（这正是「否定断言必须先证明扫描面读到了语料」的用法。）
+    "X07": ("packages", r"['\"]conversation\.session\.header\.actions['\"]\s*:\s*\{\s*kind:"),
+    # X08/X09 的护栏取**新设置服务本体**：若整个 settings 包被搬走/改路径，护栏失效 →
+    # 断言结果无效（而不是「旧 API 不存在」被假通过）。
+    "X08": ("packages", r"class SettingsForms extends Service"),
+    "X09": ("packages", r"class SettingsForms extends Service"),
 }
 
 
@@ -200,11 +256,20 @@ def run(root: Path) -> list[tuple[str, str, str, str, bool]]:
 
 
 def main() -> int:
-    args = [a for a in sys.argv[1:] if not a.startswith("--")]
-    selftest = "--selftest" in sys.argv
+    argv = sys.argv[1:]
+    selftest = "--selftest" in argv
+    args = [a for a in argv if not a.startswith("--")]
     # 默认写到**当前工作目录**，不写进 skill 目录（skill 目录可能只读，且不应被运行时产物污染）
     default_log = Path.cwd() / "_absorbed_claims.log"
-    log = Path(args[1]) if len(args) > 1 else default_log
+    # 🔴 位置参数的「下标」在两种模式下不同：
+    #   正向：args[0] = 仓库路径，args[1] = 日志路径
+    #   自检：没有仓库参数，args[0] 就是日志路径
+    # 早期实现统一写成 `args[1] if len(args) > 1`，导致 `--selftest <日志>` **静默忽略**日志参数、
+    # 写回默认文件 —— 属「参数被吞掉但退出码仍为 0」的静默失败，已按模式分别取值。
+    if selftest:
+        log = Path(args[0]) if args else default_log
+    else:
+        log = Path(args[1]) if len(args) > 1 else default_log
 
     out: list[str] = []
     lines_ok = True
