@@ -151,7 +151,7 @@
 
 | 论断 | 为什么不能自动 | 人工复核方式 |
 |---|---|---|
-| 官方文档**没有随仓库提交**插槽键完整清单（40 个系从源码提取，**且低估**） | skill 内没有官方文档副本，且官方文档会更新 | 三种复核：① 看 `<repo>/docs/subsystems/slots.*.md` 是否新增清单类章节；② `pnpm run gen-client-catalog` 是否已把 catalog 产物提交进仓库（基线时只有生成器 `scripts/gen-client-catalog.ts`，**产物未入库**）；③ 运行中的实例可用 `cordis_inspect what:"client"` 查实时树与某个精确 key |
+| 官方**文档**没有随仓库提交插槽键完整清单 | skill 内没有官方文档副本，且官方文档会更新 | ✅ **2026-09-23 复核：已有更好的权威源，且原前提是错的** —— `pnpm run gen-client-catalog` 的**产物其实早已入库**：`packages/extensions/cordis-client-runner/src/client/slot-catalog.ts`（引入于 `4064198560`，2026-08-13；由 `verify-client-catalog` 守新鲜度），给出**客户端半侧完整清单**（`0.1.7-rc.1` 实测 **86 个**，带 kind/scope/owner props）。`scripts/extract_slots.py` 的 **A2 段现在自动与它交叉核对**，漏抽量应为 0。**仍需人工的只剩**：宿主侧是否也有同类生成产物。⚠️ 另注：上游文档写的 `cordis_inspect what:"client"` 是**旧简写**，实际工具为 `cordis_inspect_list` / `cordis_inspect_query`（`packages/extensions/tool-cordis/src/index.ts:23,42`） |
 | 生态**没有官方插件市场**（发现机制是 GitHub topic `dsh-plugin`） | 生态事实，不在仓库内 | 查 GitHub 是否出现官方 marketplace 仓库 |
 | 官方文档存在**两处内部矛盾** | 需人工阅读理解 | 重读 `11-glossary-and-provenance.md` 记录的矛盾点是否被官方修正 |
 | `!!js` 写在 `config:`/`disabled:` 之外**静默失效（不报错）** | 运行时行为，静态搜不出来 | 写一个错位用例实跑一次 |
@@ -227,7 +227,7 @@
 | # | 位置 | 原表述（错） | 现状（核验后） |
 |---|---|---|---|
 | 1 | `02b-official-templates.md`（2 处）、`05-pitfalls.md`（1 处） | 浏览器半侧「平台种子表允许的**四个**：`react` / `cordis` / `ui-slots` / `ui-primitives`」 | 种子表实为 **9 个 specifier**，且是**全名**（含 `react-dom`、`react-dom/client`、`@deepseek-ai/dsh-client-store`、`@deepseek-ai/dsh-client-ui-dockkit`）；另有 `dsh.client.external` 可追加请求。以 `packages/client/web/src/platform.ts:8-14` 为准 |
-| 2 | `02b-official-templates.md` 插槽清单标题 | 「官方全部 UI 插槽名（**40 个**，实测提取）」 | 实为 **75 个声明侧键**（并集 77；剔除 18 个测试专用键后**约 59 个公开可用** —— 2026-09-16 对 0.1.6-alpha.1 重抽为 **77 / 79 / 约 61**；2026-09-18 对 0.1.6-alpha.2 再抽为 **81 / 84 / 约 66**；**2026-09-23 对 0.1.7-rc.1 重抽为 96 / 99 / 约 81**，见 §三），且**漏了内建的 `root`**。已把 4 处「40 个」的说法改成「节选/低估」并给出可复现命令（`08-cheatsheet.md`、`11-glossary-and-provenance.md`、`api-claims.md` 同批修正） |
+| 2 | `02b-official-templates.md` 插槽清单标题 | 「官方全部 UI 插槽名（**40 个**，实测提取）」 | 实为 **75 个声明侧键**（并集 77；剔除 18 个测试专用键后**约 59 个公开可用** —— 2026-09-16 对 0.1.6-alpha.1 重抽为 **77 / 79 / 约 61**；2026-09-18 对 0.1.6-alpha.2 再抽为 **81 / 84 / 约 66**；**2026-09-23 对 0.1.7-rc.1 重抽为 121 / 123 / 约 86**，见 §三）。🔴 **上面这条历史链里 2026-09-23 之前的全部数字（75 / 77 / 79 / 81 / 84 / 96 / 99）都由有缺陷的抽取器产出，是逐轮低估**：该器只扫 `.ts`、键字符类不含连字符、且用**非贪婪正则**截 `SlotMap` 正文（撞上嵌套的 `children: { … }` 即提前截断）。2026-09-23 修好后：0.1.6-alpha.2 重抽为 **104 / 106 / 约 70**、0.1.7-rc.1 为 **121 / 123 / 约 86**；并以随仓库提交的生成产物 `slot-catalog.ts` 交叉核对，**两棵树上漏抽量均为 0**），且**漏了内建的 `root`**。已把 4 处「40 个」的说法改成「节选/低估」并给出可复现命令（`08-cheatsheet.md`、`11-glossary-and-provenance.md`、`api-claims.md` 同批修正） |
 
 | 3 | `04-ui-and-slots.md` 第 10 章（整章） | 整章以 `ctx.settings.installSection(...)` + `SettingsScope.update(patch)` + 手写卡片族为**主路径**教学 | 🔴 **这套机制在 `dsh-v0.1.7-rc.1` 被整体移除**（`settings` 服务换成 `SettingsForms`，表单改由 `Config` schema 派生，持久化改走配置编辑器写 profile 的 Cordis patch；客户端卡片族 −4608/+73 行）。`04` §10 已改写为派生模型并新增 **§10.9** 旧→新对照速查表；`01` / `02` / `05` / `07` / `08` / `10a` / `11` 同步 |
 

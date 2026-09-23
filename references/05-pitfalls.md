@@ -421,7 +421,7 @@
 | `--dump-config` 找不到我的层 | 装到了别的 profile | 检查 `--profile` 名字 |
 | git 装包失败，提示 `allowBuilds` | pnpm ≥10 默认拒绝跑 `prepare` | 按提示把包键写进 `pnpm-workspace.yaml` |
 | git 装完加载失败（找不到 `lib/`） | 作者没提供 `prepare`，拉到的是源码 | 让作者补 `prepare`，或改用 npm/tarball |
-| 浏览器里看不到我的 UI | Host 半侧缺失 / 插槽名写错 / 没登记 | 查三个登记点；用 `cordis_inspect what:"client"` |
+| 浏览器里看不到我的 UI | Host 半侧缺失 / 插槽名写错 / 没登记 | 查三个登记点；用 `cordis_inspect_query`（`Slots.*`） |
 | 配置表单不显示 | 插件没有 `Config` schema，或该条目不在活动 profile 里 | 补 schemastery `Config`（**表单是它派生的**）；**不要**再写 `installSection` —— 它在 `0.1.7-rc.1` 已移除 |
 | 改代码没生效 | HMR 默认关闭；overlay 不热重载 | 开启 `id: hmr` 的 `disabled: false`，或重启 |
 | `ctx.logger` 输出看不到 | 交付 profile 未挂 console 导出器 | 改用 `console.log` 或自己挂 logger-console |

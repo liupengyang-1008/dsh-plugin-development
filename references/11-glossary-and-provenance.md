@@ -153,7 +153,7 @@
 | **B** | 工具 / 外部调用（52 坑 + 4 模板 + 10 规范） | 2273 | `10b-casebook-tools.md`；另经实战补充并入 `02-templates.md`、`05-pitfalls.md` |
 | **C** | 服务 / 记忆 / 状态内核（19 坑 + 14 模板） | 1517 | `10c-casebook-services.md` |
 | **D** | 宿主 / 桌面 / 组合包（32 坑 + 4 模板） | 1189 | `10d-casebook-host-bundle.md` |
-| **E** | 官方 7 类模板 + 插槽名提取（当时 40 个，⚠️ 非全量 —— 对基线重新抽取为**约 81 个公开键**，见 `api-claims.md` §三） | 1044 | `02b-official-templates.md`（原 `02-templates.md` 附录 E，2026-09-14 拆册） |
+| **E** | 官方 7 类模板 + 插槽名提取（当时 40 个，⚠️ 非全量 —— 对基线重新抽取为**约 86 个公开键**（2026-09-23 修好抽取器漏抽后；旧记 约 81 系低估），见 `api-claims.md` §三） | 1044 | `02b-official-templates.md`（原 `02-templates.md` 附录 E，2026-09-14 拆册） |
 | **F** | 官方 4 篇事故复盘 | 195 | `05-pitfalls.md` 附录 |
 | **G** | 安装 / CLI 机制逐字实证 | 254 | `06-workflow.md` 第 G 篇 |
 | **H** | ouroboros 零代码组合包全文 | 231 | `02c-community-bundle.md`（原 `02-templates.md` 附录 H） |

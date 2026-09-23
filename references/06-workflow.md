@@ -7,7 +7,7 @@
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
 
-> **本文件导航 —— 共 740 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
+> **本文件导航 —— 共 743 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
 > - **上游素材原文**：约 259 行（36%），起点：`G-install-and-cli.md`（文件开头）。**不是本技能重写的整理稿**；性质不一——**有的是官方文档逐字摘录（属权威原文），有的是调研期粗笔记（仅备查）**。读某一段前，务必连带读**该段开头的取材说明**。
 > - **其余部分 = 面向任务的整理稿**，可直接照做；但它同样是基线快照，写代码前先过版本闸门。
 > - 常用检索：`grep -n '^## '`（四部分）、`grep -n '^# G\.'`（档案起点）
@@ -342,6 +342,7 @@ dsh: warning: <你的包名> declares no dsh.bundle — installed as a plain dep
 | `dsh --profile tui --patch ./extra.yml` | 启动自定义 profile，额外叠一层补丁 |
 | `dsh --profile web --dump-config` | **打印组装后的完整配置树**（调试神器） |
 | `dsh --profile web --dump-default-config` | 只打印 bundle 层（不含 `--patch`） |
+| `dsh --profile web --dump-config-schema` | 🆕 `0.1.7-rc.1`：打印配置的 **JSON Schema**（条目/补丁可用的键与类型；**接受** `--patch`） |
 | `dsh --profile <名字> --from-default-profile web` | 从官方 web 模板复制出一个新 profile 再启动 |
 | `dsh plugin --profile web add <包>` | 装插件 |
 | `dsh plugin --profile web update` | 更新插件（会重新对账 bundle 层） |
@@ -354,8 +355,9 @@ dsh: warning: <你的包名> declares no dsh.bundle — installed as a plain dep
   program.error('error: profile "desktop" is managed exclusively by the Electron application')
   ```
 
-**`--dump-config` 的用法约束（逐字，`args.ts:105-115`）**：
-> `--dump-config` 与 `--dump-default-config` **互斥**；
+**`--dump-config` / `--dump-default-config` / `--dump-config-schema` 的用法约束（逐字，`apps/cli/src/args.ts:115-120`）**：
+> 🔴 `--dump-config` / `--dump-default-config` / `--dump-config-schema` **三者互斥**（上游把三个布尔量收进 `const dumps = [...]`，`dumps.length > 1` 即报错 —— `apps/cli/src/args.ts:115-120`）。**注意这是 `0.1.7-rc.1` 才从「两者互斥」改成「三者互斥」的**：照抄旧资料同时传两个 dump 开关会直接报错；
+> 🆕 `--dump-config-schema`（`0.1.7-rc.1` 新增，源码 `apps/cli/src/dump-config-schema.ts`）：打印**组装后配置的 JSON Schema 2020-12 文档**（「without mounting」）—— 根 schema 描述 `--dump-config` 输出解析后的 entry list，`$defs.patchList` 单独描述 profile/home/CLI overlay（**校验片段时要保留 `$defs`**）。**它接受可重复的 `--patch` 与 `--from-default-profile`**（与 `--dump-default-config` 相反）；收集/投影失败时**保留部分输出并退出 1**，准备或组合失败则非零退出且不输出 schema；诊断走 stderr。权威文档 = `apps/cli/reference/README.zh.md:57-58`（CLI reference **不在** `docs/` 下 —— 用 `grep -rn … docs/` 会误判为「无文档」）；
 > dump 是"无启动"的（不跑 app 命令行 provider）；
 > `--dump-default-config` **不接受** `--patch`。
 
@@ -645,10 +647,11 @@ dsh --profile web --patch ./extra.yml --dump-config                      # 加�
 
 **输出会带注释标明每行来自哪里**、哪些 overlay 改过它（格式是 `# == <标签>` 分组）。
 
-**约束**（`apps/cli/reference/README.zh.md:53`）：
-- `--dump-config` 与 `--dump-default-config` **互斥**
-- `--dump-default-config` 不接受 `--patch`
-- 配置 dump **不接受应用参数**（如 `--port`）
+**约束**（`apps/cli/reference/README.zh.md:49-58`）：
+- 🔴 `--dump-config` / `--dump-default-config` / `--dump-config-schema` **三种 dump flag 互斥**（`0.1.7-rc.1` 起由「两种互斥」扩为三种 —— 见 `apps/cli/src/args.ts:115-120`）。**照抄旧资料同时传两个 dump 开关会直接报错**
+- `--dump-default-config` 不接受 `--patch`（`--dump-config` 与 `--dump-config-schema` 都接受）
+- 三种 dump 都**不接受应用参数**（如 `--port`），也拒绝保留的 `desktop` profile
+- 🆕 `--dump-config-schema` 输出 JSON Schema；**收集或投影失败时保留部分输出并退出 1**（`partial` 投影同样适用）
 
 ## 12.2 第二招：看 PENDING 审计（插件没反应时第一件事）
 

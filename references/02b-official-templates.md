@@ -920,7 +920,7 @@ export function AppearanceRow({ t, setTheme, useStore }: AppearanceRowComponentP
 ## 附：官方 UI 插槽名（**节选 40 余个**，实测提取）
 
 > ⚠️ **这不是全清单。** 本表由 `grep -rhoE "slots\.(inject|register)\(\s*'[^']+'" packages/*/*/src` 提取，因此**天然抓不到内建键**（如 `root` 是用 `renderSlot('root')` 渲染的）。
-> 对 `dsh-v0.1.7-rc.1` 的声明侧复核结果：**96 个键**（并集 99 个；剔除 18 个测试专用键后**约 81 个公开可用**）。完整清单与可复现的抽取命令见 `14-inbound-http-and-timers.md` 与 `scripts/extract_slots.py`；注册签名（组件是第二个参数）与「未声明 slot 报什么错」也记在那里。
+> 对 `dsh-v0.1.7-rc.1` 的声明侧复核结果：**121 个键**（并集 **123** 个；剔除 **37** 个测试专用键后**约 86 个公开可用**）—— 2026-09-23 修好抽取器两处漏抽后重抽（旧值 96/99/约81 系低估）。另有**客户端半侧的权威口径**：上游生成产物 `packages/extensions/cordis-client-runner/src/client/slot-catalog.ts` 现有 **86 个**，抽取器 A2 段与它自动交叉核对，**漏抽量须为 0**。完整清单与可复现的抽取命令见 `14-inbound-http-and-timers.md` 与 `scripts/extract_slots.py`；注册签名（组件是第二个参数）与「未声明 slot 报什么错」也记在那里。
 > 用法：`ctx.slots.inject('<插槽名>', () => ctx.slots.register({ name: '<插槽名>' }, 组件))`
 
 ### 会话 / 对话区（conversation.*）
@@ -1064,4 +1064,40 @@ my-plugin/
 > ⚠️ `README.zh.md` / `README.i18n.yaml`：官方每个包都有中英双份 README + 一份 i18n 索引。第三方插件不强制，但**若想被官方精选清单收录，README 是硬门槛**。
 
 ---
+
+## 附：🔴 上游**随产品自带**的开发 skill 与官方模板（`0.1.7-rc.1` 新增 —— 别错过）
+
+> 本节由 **2026-09-23 复核补入**：本轮首轮六维度差异**整块漏掉了它**。重要性与本册同级 —— **上游现在自己发布了一套插件开发技能与模板**，随 `dsh-agent-preset` 包装到用户机器上。
+
+**位置**：`packages/preset/agent-preset/skills/`（旧基线**完全没有**该目录；本区间由 `d1e22a7e24 feat(preset): declare Agent compositions in profile YAML (#4569)` 一次引入 15 个文件）
+
+| 官方 skill | 覆盖什么 | 规模 |
+|---|---|---|
+| **`cordis-plugin-development`** | **持久化插件 / MCP 连接的编写、安装、配置、调试** —— 本册的官方对应物。流程：先写进工作区 → 用 `plugin_manager` 装 → **拿插件本身当第一版预览**（首装前不得造预览 HTML / mock 外壳 / 截图脚本）→ 验证 → 同插件内修缺陷 | `SKILL.md` + `references/{host-plugin,mcp-bundle,practices,ui-plugin,verification}.md` + **`templates/{mcp,decoration}/`** |
+| `cordis-composition-reference` | **Loader YAML 方言**（`insert` / 按 id `override` / `group` / `disabled` / `isolate` / `!!js`）+ **可安装包清单** | `SKILL.md`(29 行) + `packages/preset/agent-preset/skills/cordis-composition-reference/references/packages.md`(**501 行**) |
+| `editing-cordis-compositions` | agent preset 的改动流程 | `SKILL.md`(84 行) |
+
+**官方模板** = 本册 `assets/minimal-*` 的官方对应物：`templates/mcp/`（`cordis.patch.yml` 8 行 + `package.json` 7 行）、`templates/decoration/`（`client.js` 22 + `cordis.patch.yml` 3 + `index.js` 2 + `package.json` 15）。
+
+> 🔴 **用法的硬约束**（官方 `SKILL.md` 原文）：这些文件在 **Desktop 里位于 `app.asar` 内**，只有 Host 自身的文件读取能打开 —— `ls` / `cat` / `cp` / `cmp`、glob、原生 ripgrep、`node`、pnpm **全部失败**。必须先**用文件读写工具把模板复制进工作区**再装，**绝不就地安装或就地做语法检查**。
+
+### 两条 agent 侧能力面（本册此前完全没写）
+
+**1. `plugin_manager` 工具 —— agent 自己就能装插件，不必走 CLI**（`packages/boot/plugin-manager/src/tools.ts:20`）
+
+- `action`（必填）**共 8 个**：`list_plugins` / `list_bundles` / `set_plugin` / `set_bundle` / `install_bundle` / `remove_bundle` / `list_version_exemptions` / `set_version_exemption`；
+- `target` 含义随 action 变（插件条目 id / bundle 包名 / 安装 spec）；`enabled` 用于 set；`approvedBuilds` **只在用户显式同意**跑安装脚本时传；`registry` 指定 npm 源；`offset`/`limit` 分页（1–100，默认 25）；
+- 🔴 **每个 action 都需要 `danger-full-access` 权限或本次调用的批准**，且**批准不改变会话权限模式**；改动影响该 profile 的**每个会话**；live profile 立即生效、startup profile 需重启；**DSH peer 依赖不兼容会阻止**安装与激活；
+- 🔴 `set_version_exemption` 是**风险操作**：官方文案要求「先警告用户可能的**崩溃与数据丢失**、并取得对该**确切插件与运行时版本**的显式许可」—— 通用安装许可**不算**。
+- → 与 `09-agent-pairing.md` 直接相关：结对时 agent 装插件走这条**或** CLI（`dsh plugin --profile <n> add <包>`），而不是让用户手动拷文件。
+
+**2. `cordis_inspect_*` 三件套**（`packages/extensions/tool-cordis/src/index.ts:23,42`）：`cordis_inspect_list`（列 Provider/method）→ `cordis_inspect_query`（按 method 查）。可查 Service 方法、Event 模式、**已挂载插件的 Config JSON Schema**（`Config.listConfigs`：按 `name` 过滤分页目录，再查该 `entry` id → 返回 `packageDir`）、本 agent 可调用的 Tool、实时 Client Slots 与 Theme token。
+
+- ⚠️ **没有裸 `cordis_inspect`**：`docs/subsystems/slots.zh.md:189` 与历史 Agent Notes 里的 `cordis_inspect what:"client"` / `what:"api"` 是**旧简写**，照抄会找不到工具（`04` / `05` 已改为 `cordis_inspect_query`）。
+- `Config.listConfigs` 返回的 `packageDir` 是**权威包目录**：官方强调**不要**从 `$DSH_PROFILE_DIR` 猜路径（内置包解析自 dsh 安装目录，profile 装的 bundle 解析自 profile）。
+- 顺带：`DSH_PROFILE`（profile 名）/ `DSH_PROFILE_DIR`（其目录，`node_modules` 只含 profile 装的 bundle）在 **profile 启动的 harness 里每次 shell 调用都有**，不带 profile 启动时**不存在**；Bash 读 `$DSH_PROFILE`、PowerShell 读 `$env:DSH_PROFILE`。
+
+### 为什么首轮会漏掉它（判据缺陷，已登记进 SOP §9 与 `13` §2）
+
+六个维度分别看「**包**增删 / `docs/` / 插槽 / 事件 / API / 补丁行」，**没有任何一维覆盖「包内新发布的*非代码资源*」** —— 而 `skills/` 是**既有包 `dsh-agent-preset` 里的目录**：包级 diff 看不见、`docs/` diff 也看不见 → **最大的一处结构性新增静默逃逸**。本节收录它，正是为了把这个盲区堵上。
 

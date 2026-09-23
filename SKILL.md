@@ -4,7 +4,7 @@ slug: dsh-plugin-development
 displayName: DSH Plugin Development
 summary: Develop DSH (DeepSeek Harness) / Cordis plugins end to end — plugin forms, templates, an API cookbook, catalogued pitfalls, packaging and publishing, plus a mandatory version gate for the pre-stable upstream. Third-party fragments quoted here remain under their own licences (MIT / Apache-2.0 / BSD-3-Clause) — see the bundled LICENSE and NOTICE.
 description: A development-time skill for building plugins on DSH (DeepSeek Harness) / Cordis. It is not itself an installable DSH plugin; it is the tooling that guides a developer or AI agent through creating, debugging, packaging, and publishing one. This skill should be used when the user asks to develop a DSH plugin, write or modify a cordis plugin, add a tool, slash command, config schema, service, UI slot or HTTP route to DSH, run a periodic task inside a plugin, fix a plugin that fails to load or stays in PENDING, or package a plugin bundle for installation or distribution. It covers the plugin forms and official conventions, with 12 templates, 23 catalogued pitfalls, and copy-ready prompts for AI-agent pair development. Because DSH is pre-stable and ships breaking changes on a short cadence, it also ships a mandatory pre-coding version gate, a probe that re-verifies its own claims against a live source checkout, and a per-tag history of upstream breaking changes.
-version: 1.3.0
+version: 1.3.1
 license: MIT-0
 agent_created: true
 metadata:
@@ -73,7 +73,8 @@ DSH 每次发版的破坏性变更集中在少数几类。
 4. **官方包增删**：`@deepseek-ai/dsh-agent-presets` → **`dsh-agent-preset`**（改名）；`dsh-settings-file`、`dsh-client-ui-settings-unarchive-sessions`、`dsh-experimental-agent-team-web-profile` 移除。新增 20 个（`dsh-config-editor`、`dsh-deepseek-account` / `-platform`、`dsh-agent-preset-registry`、`dsh-api-{account,job}-controller`、`dsh-tool-workspace-dependencies`、`dsh-session-format-v3-to-v4` 等）。
 5. **工具 DSL 新增两个可选契约**（`DefineToolOptions`）：`deferLoading?: true` 与 `projectContent?(exec, result)` —— 后者在 `tools/post-execute` 策略**之前**装入执行期内容，策略替换仍具权威性。**都是新增可选字段，不破坏既有插件**；旧代码不必改。
 6. **base 补丁新增** `config-editor` / `authorization` / `deepseek-account` 三行；base 内配置键 `maxInlineBytes` → **`maxInlineTokens`**（写死旧键的配置会失效）。
-7. **客户端插槽旁增**：`plugins.bundle.activation`、`plugins.detail.actions` / `.badge` / `.section`、`deliverables.file.actions`、`deliverables.review.file.actions`、`settings.launcher`、`shell.leading`。
+7. **客户端插槽旁增**：`plugins.bundle.activation`、`plugins.detail.actions` / `.badge` / `.section`、`deliverables.file.actions`、`deliverables.review.file.actions`、`settings.launcher`、`shell.leading`、`settings.models.sign-in`、`sidebar.workspaces.session.menu.item`。
+8. 🔴 **上游开始自带插件开发技能与官方模板**：`dsh-agent-preset` 包内新增 `skills/` —— **`cordis-plugin-development`**（＝本技能的官方对应物，含 `templates/{mcp,decoration}`）＋ `cordis-composition-reference`（Loader YAML 方言 + 501 行可安装包清单）＋ `editing-cordis-compositions`。同批要认的两条 agent 侧能力面：**`plugin_manager` 工具**（8 个 action，agent 自己就能装插件，需 `danger-full-access` 权限）与 **`cordis_inspect_list` / `cordis_inspect_query`**（⚠️ **没有裸 `cordis_inspect`**，文档里的 `what:"client"` 是旧简写）。详见 `references/02b-official-templates.md` 末节。
 
 **上一轮（`dsh-v0.1.6-alpha.1` → `0.1.6-alpha.2`，887 个提交）** —— 手上是 alpha.1 时代资料的人仍要看这五条：
 

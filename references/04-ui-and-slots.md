@@ -207,7 +207,7 @@ root
 └─ shell.overlay
 ```
 
-💡 运行中的 DSH 可以用 `cordis_inspect what:"client"` 查询**实时**的插槽树（`slots.zh.md:174`）。
+💡 运行中的 DSH 用 `cordis_inspect_query`（先 `cordis_inspect_list` 拿 method）查**实时**插槽树。⚠️ 上游文档写作 `cordis_inspect what:"client"`（`docs/subsystems/slots.zh.md:189`），但**当前工具面没有裸 `cordis_inspect`** —— 实际只有族名 `cordis_inspect_list` / `cordis_inspect_query` / `cordis_inspect_self`（`packages/extensions/tool-cordis/src/index.ts:23,42`）；UI 侧具体查 `Slots.listSubTree`。**客户端插槽的静态权威**是生成产物 `slot-catalog.ts`（见 `scripts/extract_slots.py` 的 A2 段）。
 
 ### 9.4.4 最小可用示例：往标题栏加一个按钮
 
@@ -301,7 +301,7 @@ export function apply(ctx: Context): void {
 
 1. **客户端 HMR 需要单独跑 watcher**：源码实证 `apps/cli/reference/README.zh.md:81` —— 接收器始终挂载，但要单独运行 `pnpm run dev:web` 重建客户端 bundle 才会生效。
 2. **不需要重新构建整个 Web 应用**：机制在新版 `adding-a-settings-card.zh.md:58` —— 客户端模块系统**扫描已启用的 Loader 条目**，找出声明了 `dsh.client` 的包并送出各自构建好的 `./client` 导出。（旧版 `:82` 那句逐字「只要 `cordis.yml` 挂载了插件，它就会出现在页面上——无需重新构建 Web 应用」已随该文档在 `0.1.7-rc.1` 被整篇改写而消失，**事实不变**。）
-3. 用 `cordis_inspect what:"client"` 看实时插槽树。
+3. 用 `cordis_inspect_query`（`Slots.*`）看实时插槽树（**裸 `cordis_inspect` 不存在**，见第 2 章的说明）。
 
 ## 9.8 🤖 让 AI Agent 帮你做这一课
 
@@ -372,7 +372,7 @@ ctx.inject(['settings'], (settingsCtx) => {
 
 **现在你要做的只有两件事**：
 
-1. 在插件里正常声明 `Config`（schemastery schema，见第 5 章）—— **表单字段就是从它派生的**；
+1. 在插件里正常声明 `Config`（schemastery schema，见第 5 章）—— **表单字段就是从它派生的**（依据：`docs/subsystems/settings.zh.md:29` 逐字 —— `Project Config schemas into forms and own optional instance-level UI policy.`；实现侧在 `packages/boot/app-boot/src/config-schema/`，`generateConfigSchema()` 由 `--dump-config-schema` 输出，见 `06-workflow.md` §12.1）；
 2. 想让某个实例**不自动出页面**时，才调用一次 `ctx.settings.configure({ auto: false }, owner)`（`owner` 省略即当前 fiber）。
 
 **命名空间是什么**（关键变化）：`ns` 不再是你自选的字符串，而是**当前 profile 里可唯一定位该条目的本地 id**（同一插件的多个实例，条目 id 不同 → 各自独立表单）。普通字段被排除。

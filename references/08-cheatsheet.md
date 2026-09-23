@@ -7,7 +7,7 @@
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
 
-> **本文件导航 —— 共 431 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
+> **本文件导航 —— 共 432 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
 > - **上游素材原文**：约 192 行（46%），起点：`I-quickref.md`（文件开头）。**不是本技能重写的整理稿**；性质不一——**有的是官方文档逐字摘录（属权威原文），有的是调研期粗笔记（仅备查）**。读某一段前，务必连带读**该段开头的取材说明**。
 > - **其余部分 = 面向任务的整理稿**，可直接照做；但它同样是基线快照，写代码前先过版本闸门。
 > - 常用检索：`grep -n '^## '`、`grep -n '^# I\.'`（档案起点）
@@ -148,7 +148,7 @@
 
 ---
 
-## 3. UI 插槽名（**最常用的几个**；权威全量约 **81** 个公开键 —— 对基线 `dsh-v0.1.7-rc.1` 抽取：声明侧 96、并集 99、剔除 18 个测试专用键后约 81 个公开可用。用 `scripts/extract_slots.py` 复现）
+## 3. UI 插槽名（**最常用的几个**；权威全量约 **86** 个公开键 —— 对基线 `dsh-v0.1.7-rc.1` 抽取：声明侧 **121**、并集 **123**、剔除 **37** 个测试专用键后约 86 个公开可用。用 `scripts/extract_slots.py` 复现（**2026-09-23 修好抽取器两处漏抽后重抽**；此前公布的 96/99/约81 系低估））
 
 **最常用的三个**：
 
@@ -185,6 +185,7 @@ dsh --profile headless "跑一下测试"          # 单任务模式，答完即�
 dsh --profile tui --patch ./extra.yml      # 启动并叠一层补丁
 dsh --profile web --dump-config            # 打印组装后的完整配置树（调试神器）
 dsh --profile web --dump-default-config    # 只打印 bundle 层
+dsh --profile web --dump-config-schema     # 🆕 0.1.7-rc.1：打印配置的 JSON Schema（接受 --patch）
 dsh --profile <名字> --from-default-profile web   # 从官方模板复制出新 profile
 dsh plugin --profile web add <包>           # 装插件
 dsh plugin --profile tui add <package>     # 官方帮助里的原文示例
@@ -194,7 +195,7 @@ dsh plugin --profile tui add <package>     # 官方帮助里的原文示例
 - `--profile` 对 `plugin` 子命令是 **required**（省略直接报错）
 - `web` = `--profile web` 的硬编码别名
 - `desktop` profile 禁止手动操作（`error: profile "desktop" is managed exclusively by the Electron application`）
-- `--dump-config` 与 `--dump-default-config` 互斥；`--dump-default-config` 不接受 `--patch`
+- 🔴 `--dump-config` / `--dump-default-config` / `--dump-config-schema` **三者互斥**（`0.1.7-rc.1` 起由「两者互斥」扩为三种）；`--dump-default-config` 不接受 `--patch`
 
 ---
 
