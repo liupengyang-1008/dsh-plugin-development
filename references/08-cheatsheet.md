@@ -2,12 +2,12 @@
 
 > **本文件用途**：速查卡，三部分：① 三种插件形态对照表（最容易搞混，放最前）② 完整 API 速查——服务名（inject 字符串）、事件名（含 waterfall 全套）、UI 插槽名、官方斜杠命令、CLI 命令、目录与路径、工具参数 DSL 类型（全部由源码 grep 提取，带实证来源列）③ 主手册的插件骨架、四类注册、真实范本清单、判断口诀，以及带 core/seam/bundle 角色的 ctx 键速查表。写代码时随手查这一份就够。
 > **合成来源**：DSH插件开发实战补充-模板与踩坑.md（仅第六篇 6.5） + I-quickref.md + DSH插件开发指导手册.md（附录 A/B/C）
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.1.7-rc.1` / commit `46a7f68b09`，2026-09-23），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.1.7-rc.2` / commit `477b4f4205`，2026-09-24），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
 
-> **本文件导航 —— 共 432 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
+> **本文件导航 —— 共 438 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
 > - **上游素材原文**：约 192 行（46%），起点：`I-quickref.md`（文件开头）。**不是本技能重写的整理稿**；性质不一——**有的是官方文档逐字摘录（属权威原文），有的是调研期粗笔记（仅备查）**。读某一段前，务必连带读**该段开头的取材说明**。
 > - **其余部分 = 面向任务的整理稿**，可直接照做；但它同样是基线快照，写代码前先过版本闸门。
 > - 常用检索：`grep -n '^## '`、`grep -n '^# I\.'`（档案起点）
@@ -35,7 +35,7 @@
 
 # I. 速查表 —— 服务 / 事件 / 插槽 / 命令 / 扩展点（全部实测）
 
-> 来源：`deepseek-harness`（commit `46a7f68b09`）。全部由源码 grep 提取，**不是文档复述**。
+> 来源：`deepseek-harness`（commit `477b4f4205`）。全部由源码 grep 提取，**不是文档复述**。
 > 使用方法：写插件时先在这张表里找"我要挂到哪"。
 
 ---
@@ -54,7 +54,7 @@
 | `slots` | UI 插槽注册表（客户端） | `client/ui-brand-official` |
 | `locale` | 文案（客户端） | `client/ui-theme` |
 | `remote` | 宿主↔客户端转发 | `client/ui-theme` |
-| `settingsScope` | 客户端设置订阅 | `client/ui-theme` |
+| `settingsScope` | ~~客户端设置订阅~~ 🔴 **`0.1.7-rc.1` 起已移除，不要再 `inject`** —— 整套「手写设置卡片」机制被「`Config` schema 派生表单 + 配置编辑器写 profile 补丁」取代（见 `04-ui-and-slots.md` §10 / §10.9）。本节 2026-09-25 复核：rc.2 源码里 `settingsScope` **零命中** | ~~`client/ui-theme`~~ |
 | `approval` | 审批分发服务 | `docs/subsystems/approval.zh.md` |
 | `tokenMeter` | token 计量 | `docs/subsystems/compaction.zh.md` |
 | `toolResultPruner` | 工具结果裁剪 | `docs/subsystems/compaction.zh.md` |
@@ -65,6 +65,8 @@
 | `computerUse` | 桌面自动化后端注册（同上，独立于 `browserUse`） | `packages/computer-use/computer-use/src/index.ts` |
 | `mcpResources` | MCP 资源面：`register(server, provider)`，暴露「列资源 / 列模板 / 读 URI」三个共享工具 | `packages/mcp/mcp-resources/src/index.ts` |
 | `terminalController` | 会话级终端进程的远程控制面（含 `webTerminals` 客户端侧） | `packages/api/terminal-controller/src/index.ts` |
+| `schedule` | 定时任务域（宿主侧）：任务表持久化（`ctx.storageDomain.open(scheduleDomain)`）、投递、会话恢复、保留策略（`deliveryHistoryDays` / `deliveryHistoryRecords`）。**`0.1.7-rc.2` 新增** | `packages/schedule/schedule/src/index.ts:121` |
+| `shortcuts` | 键盘快捷键注册表（**客户端侧**）：绑定 / 配置 / 持久化 + 目录（`catalog` / `fixedCatalog`）。**`0.1.7-rc.2` 新增**；desktop 运行时必须有 `dshDesktop.keyboard` 桥，缺了构造函数**直接抛** | `packages/client/shortcuts/src/client/index.ts:47` |
 
 > ⚠️ **服务名大小写敏感**（`sessionProjections` 不是 `session-projection`）。
 > 💡 探测可选服务：`ctx.get('settings')`；**只有 `inject` 里声明过的**才能写 `ctx.settings`。
@@ -102,6 +104,10 @@
 | `permission-presets/catalog-changed` | 可选权限预设目录变化（0.1.6-alpha.1 新增） |
 | `session-telemetry/record` | 遥测（**脱敏 waterfall**） |
 | `webserver/index-inject` | **往页面 HTML 注入**（UI 首屏，避免闪烁） |
+| `deepseek-account/session-expired` | 账号会话过期（**`0.1.7-rc.2` 新增**）。emit 处 `packages/credentials/deepseek-account-platform/src/index.ts:337`；客户端经 `ctx.remote.$on` 订阅（`packages/client/ui-settings-account/src/client/index.ts:158`） |
+| `deepseek-account/model-sign-in-required` | 某个模型要求重新登录（**`0.1.7-rc.2` 新增**）。emit 处 `packages/credentials/deepseek-account/src/account-tasks.ts:24` |
+| `deepseek-account/signed-out` | 已登出（**`0.1.7-rc.2` 新增**）。监听处 `packages/credentials/deepseek-account/src/account-tasks.ts:27` |
+| `schedule/changed` | 定时任务变化（**`0.1.7-rc.2` 新增**，客户端经 `ctx.remote.$on`）；由新服务 `schedule` 驱动 |
 
 ### 2.2 ⭐ waterfall 事件 —— **Agent 会话流程的扩展点**（重要）
 
@@ -148,7 +154,7 @@
 
 ---
 
-## 3. UI 插槽名（**最常用的几个**；权威全量约 **86** 个公开键 —— 对基线 `dsh-v0.1.7-rc.1` 抽取：声明侧 **121**、并集 **123**、剔除 **37** 个测试专用键后约 86 个公开可用。用 `scripts/extract_slots.py` 复现（**2026-09-23 修好抽取器两处漏抽后重抽**；此前公布的 96/99/约81 系低估））
+## 3. UI 插槽名（**最常用的几个**；权威全量约 **89** 个公开键 —— 对基线 `dsh-v0.1.7-rc.2` 抽取：声明侧 **124**、并集 **126**、剔除 **37** 个测试专用键后约 89 个公开可用。用 `scripts/extract_slots.py` 复现（**2026-09-23 修好抽取器两处漏抽后重抽**；**2026-09-25 随 rc.2 推进 +3 / −0**；此前公布的 96/99/约81 系低估））
 
 **最常用的三个**：
 

@@ -2,13 +2,13 @@
 > ⚠️ **例外**：§1.5「本 skill 版本 ↔ DSH 基线对照表」是**手工维护**章节（不来自上游手册）。它是本技能自身的版本台账，每次发布都会在此追加一行；若整文件被重新生成，这一节需要人工补回。
 
 > **本文件用途**：按官方 tag 列出 DSH 的版本变化与破坏性变更；说明当目标版本高于本 skill 基线时，如何拉取最新源码并自行刷新这份表。
-> **来源**：`deepseek-harness` 仓库 git 历史（**22 个 tag**，19,676 个提交），逐条机器核验。
-> **快照警告**：本文件是**冻结快照**（基线 `dsh-v0.1.7-rc.1` / commit `46a7f68b09`，2026-09-23）。**下游 tag 一旦发布，本表就落后了**。
+> **来源**：`deepseek-harness` 仓库 git 历史（**23 个 tag**，20,022 个提交），逐条机器核验。
+> **快照警告**：本文件是**冻结快照**（基线 `dsh-v0.1.7-rc.2` / commit `477b4f4205`，2026-09-24）。**下游 tag 一旦发布，本表就落后了**。
 > **本 skill 版本 ↔ DSH 基线**：见 **§1.5**。本技能自己的三段版本号与官方基线是**两条独立的轴**，唯一绑定处就是那张表。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`；版本落后时按本文第 5 节刷新。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 
-> **本文件导航 —— 共 483 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
+> **本文件导航 —— 共 498 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
 > - **本文件全是整理稿**（无上游素材混杂），但它仍是基线快照——写代码前先过版本闸门。
 > - 常用检索：`grep -n '^## '`（章节）、`grep -n '§1.5'`（技能版本↔基线对照表）
 
@@ -18,7 +18,7 @@
 
 1. **DSH 没有 CHANGELOG，也不用 `BREAKING CHANGE:` 页脚**（提交标题与正文里都搜不到 `BREAKING` 字样：各 0 条）。但它**会用 Conventional Commits 的 `type(scope)!:` 标题标记**自报破坏性提交。**两条路必须并用**：`git log --grep='!:'` 抓自报的（便宜但覆盖不全，见第 2.5 节），源码级机器化对比抓「影响插件作者却没标 `!`」的（见第 3 节）。
 2. **API 名字长期稳定，但会「整族改名」**：探针的 48 条正向断言里，**基础 43 条**（S 级 6 + M 级 32 + L 级 5）在 0.1.5-rc.2 之前的 16 个 tag 上均为绿；**吸收 0.1.6-alpha.1 时新增的 5 条**（`M33`~`M37`）断言的是该版才出现的事实，**按设计**在更早的 tag 上必然 STALE（对旧 tag 检出跑一次即可自证：`holds=47 stale=7`）。真正的破坏性变更集中在**配置键、官方包名、模型 ID、数据格式版本、宿主方法废弃、加载语义**六类——前四类 `dsh-version-diff.sh` 能直接检出，后两类只能从决策记录（`.agents/notes/`）读。
-3. 因此，「防过时」的正确姿势不是背 API 名，而是**盯住这几类 + 每次开工前跑一次探针 + `git log --grep='!:'` 补一路自报变更**。⚠️ 但**不要指望 `!:` 会替你报信**：`0.1.6-alpha.1` 区间（800 个提交、含整族改名）的 `!:` 命中数是 **0**，`0.1.7` 区间（1617 个提交）也只有 **1** 条，见 §2.5。
+3. 因此，「防过时」的正确姿势不是背 API 名，而是**盯住这几类 + 每次开工前跑一次探针 + `git log --grep='!:'` 补一路自报变更**。⚠️ 但**不要指望 `!:` 会替你报信**：`0.1.6-alpha.1` 区间（800 个提交、含整族改名）的 `!:` 命中数是 **0**，`0.1.7` 大区间（1617 个提交）只有 **1** 条，**最新的 `0.1.7-rc.1 → 0.1.7-rc.2`（346 个提交）是 0 条** —— 而该区间确实改了 base 补丁里一条插件行的实现包。见 §2.5。
 
 ---
 
@@ -26,6 +26,8 @@
 
 口径说明（**重要，别误读**）：
 - 「官方包数」= `packages/**/package.json` 文件数，**含测试夹具**，仅用于看增长趋势，不代表可用包数量。
+  复现命令（**唯一口径，别再换**）：`git -C <repo> ls-tree -r --name-only <tag> -- packages/ | grep -c "package\.json$"`
+  > 🔴 **2026-09-25 校正**：`0.1.7-alpha.1` / `-alpha.2` / `-rc.1` 三行原先记的是 **307**，那是用**另一个口径**（只数 `packages/<a>/<b>/package.json` 两层，把嵌套测试夹具排除在外）数出来的，与本表其余 18 行**不可比** —— 同一个数字在不同口径下差 9。已按上面这条命令**统一回本表口径**：三行改为 **316**，新行 `0.1.7-rc.2` 为 **321**。（历史行 `rc.7`~`0.1.6-alpha.2` 经复核本就是本口径，未动。）
 - 「该版提交数」= 从上一个 tag 到本 tag 的提交数（`git rev-list --count`）。tag 之间不总是线性祖先关系，该数字为近似规模，**不要**当作精确工作量。
 - 日期取 tag 创建时间。
 
@@ -49,9 +51,10 @@
 | 16 | `dsh-v0.1.5-rc.2` | 0.1.5-rc.2 | 2026-09-10 | `fb2c4b9e69` | 274 | 4 |
 | 17 | `dsh-v0.1.6-alpha.1` | 0.1.6-alpha.1 | 2026-09-15 | `0a15e36e7f` | 290 | 800 |
 | 18 | `dsh-v0.1.6-alpha.2` | 0.1.6-alpha.2 | 2026-09-17 | `ddefc45fbc` | 298 | 887 |
-| 19 | `dsh-v0.1.7-alpha.1` | 0.1.7-alpha.1 | 2026-09-22 | `c36a83ff6b` | 307 | **1299** |
-| 20 | `dsh-v0.1.7-alpha.2` | 0.1.7-alpha.2 | 2026-09-22 | `00102833df` | 307 | 162 |
-| 21 | `dsh-v0.1.7-rc.1` | **0.1.7-rc.1**（本 skill 基线） | 2026-09-23 | `46a7f68b09` | 307 | 156 |
+| 19 | `dsh-v0.1.7-alpha.1` | 0.1.7-alpha.1 | 2026-09-22 | `c36a83ff6b` | 316 | **1299** |
+| 20 | `dsh-v0.1.7-alpha.2` | 0.1.7-alpha.2 | 2026-09-22 | `00102833df` | 316 | 162 |
+| 21 | `dsh-v0.1.7-rc.1` | 0.1.7-rc.1 | 2026-09-23 | `46a7f68b09` | 316 | 156 |
+| 22 | `dsh-v0.1.7-rc.2` | **0.1.7-rc.2**（本 skill 基线） | 2026-09-24 | `477b4f4205` | 321 | 346 |
 | — | `dsh-v0.1.5-rc.3` | 0.1.5-rc.3（**旁支**，见下） | 2026-09-22 | `a4c74a91e0` | 267 | 3 |
 | — | `master` HEAD（**1.0.x 期间**检出的树） | — | 2026-09-10 | `c291e7961a` | 275 | 139 |
 
@@ -61,7 +64,7 @@
 
 **从这张表该读出的三件事**：
 
-- **节奏**：**主线 21 个 tag 跨 37.1 天**（另有 `0.1.5-rc.3` 一条旁支，共 22 个），**平均 1.85 天一个 tag、中位 1.12 天**；rc.2 与 rc.1 在同一天（间隔 4 个提交）。本轮两个大区间：`alpha.2 → 0.1.7-alpha.1` 隔了 **4.62 天 / 1299 个提交**（**本周期第一大区间**，比上一周期最大的 1079 还多 220），`0.1.7-alpha.1 → alpha.2` 仅 **0.47 天 / 162 个提交**，`alpha.2 → rc.1` **0.90 天 / 156 个提交**。→ 任何写死的版本号都会很快过期。
+- **节奏**：**主线 22 个 tag 跨 38.1 天**（另有 `0.1.5-rc.3` 一条旁支，共 23 个），**平均 1.81 天一个 tag、中位 1.09 天**；最新区间 `rc.1 → rc.2` 隔 **1.03 天 / 346 个提交**（同日次日的常规补丁节奏）。本周期三个大区间：`alpha.2 → 0.1.7-alpha.1` 隔了 **4.62 天 / 1299 个提交**（**本周期第一大区间**，比上一周期最大的 1079 还多 220），`0.1.7-alpha.1 → alpha.2` 仅 **0.47 天 / 162 个提交**，`0.1.6-alpha.2 → rc.1` **0.90 天 / 156 个提交**。→ 任何写死的版本号都会很快过期。
 - **版本号跳跃**：没有 `0.1.4`。`0.1.3-alpha.2` 之后直接是 `0.1.5-alpha.1`。**并且 tag 可以出现在旁支上**：`dsh-v0.1.5-rc.3`（2026-09-22）是从 `0.1.5-rc.2` 分出的维护分支，与 `0.1.7-alpha.1` 同日发布，**不是主线的下一步**。→ **不要假设版本号连续，也不要假设新 tag 一定在链条上**。
 - **规模**：`alpha.2 → 0.1.7-alpha.1` 的 **1299 个提交是本周期最大的变更潮**（超过此前纪录 `0.1.1-rc.2 → 0.1.2-alpha.1` 的 1079）—— 会话格式 v3→v4、模型/账号/预设等 20 个新包都发生在其中。→ 「一个大版本没有破坏性变更」是错误直觉。
 
@@ -98,6 +101,8 @@
 
 | `1.3.0` | `dsh-v0.1.7-rc.1` | `46a7f68b09` | 2026-09-23 | tag `v1.3.0` | 🔴 **基线推进到 0.1.7-rc.1**（区间 `ddefc45fbc..46a7f68b09`：**1617** 个提交 / **4** 个新 tag〔版本链 3 个台阶 `0.1.7-alpha.1` / `-alpha.2` / `-rc.1`，另 `dsh-v0.1.5-rc.3` 为旁线发布、于本区间被后合并进主线故同样落入祖先链 —— 抽取命令 `git merge-base --is-ancestor <tag>^{commit} <基线>`〕；**破坏性证据四条 → 第二段进位**：① 区间唯一 `!:` 提交 `0dca00b425`（删 activity 平面）；② `SESSION_FORMAT_VERSION` 3 → 4；③ `installSection` + `SettingsScope` 整体移除；④ base 补丁键 `maxInlineBytes` → `maxInlineTokens`。判定表见第 11 节）。① 基线四通道同步（`00-version-gate.md` §1 / `13` §1.5 / `15` §18.2 / commit + annotated tag）；② **会话格式 `SESSION_FORMAT_VERSION` 3 → 4**（新增迁移包 `dsh-session-format-v3-to-v4`）→ `08` / `13 §3.4` 同步；③ **插槽新增 17 个、移除 1 个**：新增 `conversation.header` / `.header.leading` / `.input.activity` / `plugins.bundle.activation` / `plugins.detail.actions`/`.badge`/`.section` / `deliverables.file.actions` / `deliverables.review.file.actions` / `settings.launcher` / `shell.leading` / `sidebar.right.tab.document.action`/`.actions`/`.unpreviewable` / `sidebar.workspaces.session.row.action` / `sidebar.workspaces.session.menu.item` / `settings.models.sign-in`，**移除 `conversation.session.header.leading`**（同族其余键保留，其位置由新的顶层 `conversation.header.leading` 承担）→ `04` / `08` 同步，计数由 81/84/约 66 改为 **121/123/约 86**（2026-09-23 修好抽取器漏抽后重抽；上一轮公布的 96/99/约 81 系低估）；④ **工具 DSL 新增两个可选契约**：`DefineToolOptions.deferLoading` 与 `projectContent`（在 `tools/post-execute` 策略**之前**装入执行期内容）→ `02` / `03` / `08` 同步；⑤ **base 补丁新增** `config-editor` / `authorization` / `deepseek-account` 三行；⑥ **官方包净增**：区间内新增 20 个（含 `dsh-config-editor`、`dsh-deepseek-account(-platform)`、`dsh-agent-preset(-registry)`、`dsh-tool-workspace-dependencies`、`dsh-session-format-v3-to-v4`、`dsh-host-product-telemetry-otel`、语音输入族），移除/改名 4 个（`dsh-agent-presets` → `dsh-agent-preset`、`dsh-settings-file`、`dsh-client-ui-settings-unarchive-sessions`、`dsh-experimental-agent-team-web-profile`）；⑦ 🔴 **唯一的 `!:` 提交**：`0dca00b425 refactor(api,client)!: delete the activity plane; one job roster with record observation` —— 删除 `packages/activity/*` 与 `packages/api/activity-controller`，`ui-activity` 回归上游名 `ui-jobs`（本技能从不引用 activity 面 → 文档**无影响**，但已登记进 §2）；⑧ 第二批断言 **39 → 49 条**：先修掉 4 条**判据缺陷型假 STALE**（`B08` 整句锚定 / `U07` 邻近窗口 400 对排版敏感 / `P04` 逐字单符号 import / `X04` 裸键正则过宽误命中上下文来源键），新增 `P06`/`P07`/`U09`/`U10`/`V01`/`X07`（→ 45 条）；**复核时又发现并补记「设置机制重做」一大项**，为其新增 `U11`/`U12` 正向与 `X08`/`X09` 否定（→ **49 条**）；负向自检 `49/49 STALE`、正向 `49/49 HOLDS`；主探针 56 条对新基线 `holds=56 stale=0`；⑨ 探针脚本内嵌基线常量同步推进（两个探针的 `BASELINE_COMMIT`/`BASELINE_VER`、同步脚本的 `skillBaseline`、差异脚本的 `BASELINE`）—— **基线的「当前值」不止在文档里** |
 | `1.3.1` | `dsh-v0.1.7-rc.1` | `46a7f68b09` | 2026-09-23 | tag `v1.3.1` | 🔴 **复核轮：修自身缺陷（基线未变，故只动第三段）**。触发 = 用户指令「审查内容执行」→ 对 1.3.0 做对抗性复核，查出 5 项并全部修掉：① **首轮六维度漏掉「上游开始自带开发 skill 与官方模板」整块面**（`dsh-agent-preset/skills/` 15 文件 / 3 个 skill，含 **`cordis-plugin-development`** ＋ `templates/{mcp,decoration}`；旧基线**无该目录**）→ `02b` 末节 + `SKILL.md` 变更清单第 8 条 + **SOP §9 补两维与三条可复现命令**（根因：没有任何维度覆盖「包内新发布的非代码资源」）；② **`cordis_inspect what:"client"` 不是可执行工具名**（实际只有 `cordis_inspect_list` / `_query` / `_self`，裸名仅存于历史 Agent Notes 与注释）→ `04`（2 处）/ `05`（1 处），引用 `slots.zh.md:174` → **`:189`**；③ **`plugin_manager` 工具（8 个 action、需 `danger-full-access`）未覆盖** —— agent 侧装插件的正路 → `02b` 末节；④ **插槽计数长期低估**：`extract_slots.py` 三处漏抽（只扫 `.ts` ／ 键字符类不含连字符 ／ **非贪婪正则截断 `SlotMap` 正文**）→ 修好后为 **121 / 123 / 约 86**，并新增「与随仓库提交的生成产物 `slot-catalog.ts` 自动交叉核对」（**漏抽量 0**，两棵树都验过）→ 据此**推翻 1.3.0 行里的「插槽净增 15」**，权威口径为**新增 17 / 移除 1**；⑤ **CLI 新增 `--dump-config-schema` 未记录**，且 dump 族由「两者互斥」改为「**三者互斥**」（照旧资料同时传两个开关会报错）→ `06` / `08`。**并纠正我自己的一个错误结论**：曾说「上游 `docs/` 没有记录 `--dump-config-schema`」—— 实为**搜错树**，权威文档在 `apps/cli/reference/README.zh.md:57-58`（CLI reference **不在** `docs/` 下） |
+
+| `1.3.2` | `dsh-v0.1.7-rc.2` | `477b4f4205` | 2026-09-25 | tag `v1.3.2` | 🔴 **基线推进到 0.1.7-rc.2**（区间 `46a7f68b09..477b4f4205`：**346** 个提交 / **1** 个新 tag；**本区间无「会让已有插件代码/配置失效」的项 → 只动第三段**）。① 基线四通道同步（`00-version-gate.md` §1 / `13` §1.5 / `15` §18.2 / commit + annotated tag）；② 🔴 **反向完备性检查：API 面零移除** —— 「服务名 / `defineTool` 工具名 / 事件名」三类各用**两条互相独立的方法**（正则直抽 + 600 字符窗口抽）扫两端全集，**移除数全为 0**，只有新增：服务 `schedule` / `shortcuts`、工具 `schedule_update`、事件 `deepseek-account/{model-sign-in-required,session-expired,signed-out}` 与 `schedule/changed`。这直接支持「本区间不构成破坏性变更」的判定（判定表见 `15-…` §18.2 与第 11 节）；③ **插槽新增 3 / 移除 0**：`shell.quota-notice`、`sidebar.session.row.hover`、`sidebar.session.row.leading` —— 计数由 **121/123/约 86** 改为 **124/126/约 89**，客户端半侧权威目录 `slot-catalog.ts` 由 **86 → 89**（抽取器「漏抽量 = 0」护栏两棵树都过）→ `04` / `08` / `02` / `02b` 同步；④ **base 补丁的包名替换（本区间唯一有实际影响的一条）**：`llm-deepseek` 行的实现包由 `@deepseek-ai/dsh-llm-deepseek` 换成 **`@deepseek-ai/dsh-llm-deepseek-api-key`** —— 但**行 `id: llm-deepseek` 不变**，按 id 定位的补丁/配置**不受影响**；旧包 `packages/llm/llm-deepseek/` **仍在仓库里**（`name` 仍为 `@deepseek-ai/dsh-llm-deepseek`），故**不是移除**。同批新增 `llm-deepseek-account` 行（`@deepseek-ai/dsh-llm-deepseek-account`）；⑤ **官方包 +5 / 移除改名 0**：`dsh-client-shortcuts`、`dsh-client-ui-shortcuts`、`dsh-llm-deepseek-account`、`dsh-llm-deepseek-api-key`、`dsh-util-code-language`；⑥ **未变项（逐条实测，不是没查）**：`SESSION_FORMAT_VERSION` 仍为 **4**、base 补丁**配置键无任何增删改名**、`apps/cli/src/args.ts` **无新增 `.option(`**、`packages/*/{skills,templates,examples}/` 文件清单**两端逐字相同**、区间内 `!:` 自报破坏性提交 **0 条**；⑦ 修掉两处**既有**缺陷（非本轮引入）：**`08-cheatsheet.md` 服务表仍把 `settingsScope` 列为可用服务**，而该服务在 `rc.1` 就已随设置机制重做被移除（rc.2 源码里 `settingsScope` 零命中）→ 删行；**`13 §1` 的 `0.1.7-alpha.1`/`-alpha.2`/`-rc.1` 三行「官方包数」用的是与其余 18 行不同的数法**（307 = 只数 `packages/<a>/<b>/package.json` 两层）→ 按表内声明的口径统一为 **316**，并把**可复现命令写进口径说明**，堵住再次漂移；⑧ 断言数**不变**（主探针 56 条 `holds=56 stale=0`；第二批 49 条 `HOLDS 49 / STALE 0`，负向自检 49/49 STALE）；⑨ 四个脚本内嵌的基线常量同步推进（`dsh-api-probe.py`/`.sh` 的 `BASELINE_COMMIT`/`BASELINE_VER`、`dsh-sync.sh` 的 `skillBaseline`、`dsh-version-diff.sh` 的 `BASELINE`） |
 
 > `1.0.1` / `1.0.2` 无独立提交，不单列。**不要为了凑连续性补造条目** —— 本表只登记能举证的版本。
 
@@ -145,6 +150,8 @@ git tag -n99 v1.0.4        # 复核注解确实带上了基线
 
 | **0.1.6-alpha.2 → 0.1.7-rc.1**（1617 个提交 / 4 个新 tag：版本链 3 个台阶 `0.1.7-alpha.1` / `-alpha.2` / `-rc.1` + 旁线 `dsh-v0.1.5-rc.3` 于本区间被后合并进主线） | ① 🔴 **`SESSION_FORMAT_VERSION` 从 `3` 升到 `4`** —— 已落盘的 session 日志需经迁移链读取（新增包 `dsh-session-format-v3-to-v4`）。**写在插件里的 `3` 字面量会失效；不要钉版本号，用 `SESSION_FORMAT_VERSION` 常量**（`packages/core/session/src/types.ts:89`）<br>② 🔴 **插槽移除 `conversation.session.header.leading`** —— 按旧键注册会抛「is not declared」；同族的 `.header` / `.actions` / `.corner` / `.lineage` / `.utilities` **均保留**。新增的是**顶层** `conversation.header` / `conversation.header.leading`（都是 single）—— 注意这是**位置迁移**，新键**不在** `conversation.session.*` 命名空间下<br>③ **activity 平面被删除**（区间内唯一的 `!:` 提交 `0dca00b425`）：`packages/activity/*` 与 `packages/api/activity-controller` 移除，客户端 `ui-activity` 回归上游名 `ui-jobs`（`@deepseek-ai/dsh-client-ui-jobs`），作业输出观察改为 `packages/api/job-controller` 的 `observeJobOutput()`。⚠️ **但这一条对读者不是破坏性变更**：该提交的**父提交不在基线之后**（`git merge-base --is-ancestor dsh-v0.1.6-alpha.2 0dca00b425^` 不成立），且 `packages/activity` 在 **alpha.2 与 rc.1 两端都不存在**（`git cat-file -e <tag>:packages/activity/activity-local/package.json` 两处均失败）→ 它是在**旁线**上先建后删的，**从未到达本技能基线所描述的世界**。登记它是为了「区间内破坏性变更」完整，并印证 §2.5 的论点<br>④ **官方包增删 / 改名**：移除或改名 4 个（`dsh-agent-presets` → **`dsh-agent-preset`**、`dsh-settings-file`、`dsh-client-ui-settings-unarchive-sessions`、`dsh-experimental-agent-team-web-profile`）；新增 20 个（`dsh-config-editor`、`dsh-deepseek-account` / `-platform`、`dsh-agent-preset-registry`、`dsh-api-account-controller`、`dsh-api-job-controller`、`dsh-tool-workspace-dependencies`、`dsh-session-format-v3-to-v4`、`dsh-host-product-telemetry-otel`、客户端 settings 分册与实验性语音输入族）<br>⑤ **base 补丁新增** `config-editor` / `authorization` / `deepseek-account` 三行；**配置键改名** `maxInlineBytes` → **`maxInlineTokens`**（spill-policy，base 内默认 `12500`，`packages/bundle/base/cordis.patch.yml:409`）<br>⑥ **工具 DSL 新增两个可选契约**（`packages/core/tools/src/schema.ts`）：`DefineToolOptions.deferLoading?: true` 与 `projectContent?(exec, result)` —— 后者在 `tools/post-execute` 策略**之前**装入执行期内容，且策略替换仍具权威性。两者都是**新增可选字段**，不破坏既有插件<br>⑦ `MessageSourceMap` 新增来源键 `'tool-registry'`（`packages/core/tools/src/index.ts`）<br>⑧ 🔴 **本区间最大的破坏性变更：整套「设置卡片」机制被重做**（⚠️ 此条为**复核补记** —— 首轮六维 diff 只查了手挑的几个包而漏掉，改用「按改动量扫全部包」后才补上）—— ① `packages/settings/settings/src/index.ts` **964 → 431 行**（+251 / −713）：**移除** `SettingsScope`（旧 `:115`）与 `installSection`（旧 `:472`），改为 **`SettingsForms` 服务**（`ctx.settings`，`inject = ['configEditor', 'profileContext']`），对外只有 `configure` / `prepareDocument` / `describe` / `update` / `replace` / `mutate(ns, …, expectedRevision?)`；**写入带乐观并发**，冲突抛 `SettingsConflictError`（`code = 'SETTINGS_CONFLICT'`）。② **命名空间语义变了**：不再是插件自选字符串，而是**当前 profile 里可唯一定位该条目的本地 id**。③ **持久化换承载**：`$DSH_HOME/settings.yaml` 移除，改由**配置编辑器写 profile 的 Cordis patch**（残留文件在启动时一次性迁移并改名 `.imported`）。④ **客户端手写卡片族整体删除**：`packages/client/ui-settings-plugins/src/client/` **−4608 / +73 行**（`card-form.ts` / `fields.tsx` / `*-card-controller.ts` / `BashCard` / `SubagentCard` / `WebSearchCard` / `PluginConfigForm` 全删），客户端服务 `settingsScope` 与 `ui-settings/src/client/settings-contract.ts` 同批移除；官方配置页**拆成每插件一个伴生包**（`ui-settings-shell` / `-agent-loop` / `-subagent` / `-web-search` / `-plugin-inventory`），`ui-settings-plugins` 只剩「设置导航项 + `settings.plugins.tab` 标签行」的壳。⑤ **新增**：事件 `settings/document-updated`（emit）、`ctx.settingsController`（`@Remote`，承载 `ctx.remote.settings`）、包 `@deepseek-ai/dsh-config-editor`（base 补丁 `:97-98`）。⑥ 技能侧：`04` §10 整章改写为派生模型并新增 §10.9 速查表，`01` / `02` / `05` / `07` / `08` / `10a` / `11` 同步；第二批断言 45 → **49 条**（新增 `U11`/`U12` 正向 + `X08`/`X09` 否定，护栏取 `class SettingsForms extends Service`）⑦ 🔴 **复核轮补记（2026-09-23 夜间）**：**A. 上游开始自带开发 skill 与官方模板** —— `dsh-agent-preset` 包内新增 `skills/`（3 个 skill / 15 文件，含 **`cordis-plugin-development`** ＋ `templates/{mcp,decoration}` ＋ `cordis-composition-reference` 的 501 行包清单；**旧基线完全没有该目录**），首轮六维度**整块漏检**（见下 B 的根因）→ 收录进 `02b` 末节；**B. 六维度存在结构性盲区**：没有任何一维覆盖「**包内新发布的非代码资源**」（`skills/` / `templates/`），包级 diff 与 `docs/` diff 都看不见 → 已登记进 SOP §9；**C. CLI 新增 `--dump-config-schema`**，且 dump 族由「两者互斥」改为「**三者互斥**」→ `06` / `08`；**D. 文档里的 `cordis_inspect what:"client"` 是旧简写**（实际工具只有 `cordis_inspect_list` / `_query` / `_self`，见 `packages/extensions/tool-cordis/src/index.ts:23,42`）→ `04` / `05` 修正；**E. 插槽抽取器 `extract_slots.py` 有三处漏抽**（只扫 `.ts`／键字符类不含连字符／用**非贪婪正则**截 `SlotMap` 正文，撞上嵌套对象即截断）→ 修好后计数为 **121 / 123 / 约 86**、delta 为**新增 17 / 移除 1**（此前公布的 96 / 99 / 约 81 与「净增 15」**均系低估**） | `bash scripts/dsh-version-diff.sh <repo> --baseline dsh-v0.1.6-alpha.2`；`git -C <repo> diff dsh-v0.1.6-alpha.2 dsh-v0.1.7-rc.1 -- packages/bundle/base/cordis.patch.yml packages/core/tools/src packages/core/session/src/types.ts packages/settings packages/client/ui-settings-plugins packages/client/ui-settings packages/api/settings-controller`；插槽增删 = 对两个 tag 的检出各跑一次 `scripts/extract_slots.py` 再取集合 diff；**插槽 delta 的权威口径**再加一条：两个 tag 各取 `slot-catalog.ts` 的 `^    key: '` 后 `comm`（`0.1.6-alpha.2` **70** → `0.1.7-rc.1` **86**，即**新增 17 / 移除 1**）；**新增 CLI 能力面** = diff `apps/cli/src/args.ts` 的 `.option(` 新增行（本轮只有 `--dump-config-schema`）；**官方自带 skill/模板** = `git ls-tree -r <tag> -- packages/preset/agent-preset/skills/`（旧 tag 空、新 tag 15 文件） |
 
+| **0.1.7-rc.1 → 0.1.7-rc.2**（346 个提交 / 1 个新 tag；无 `!:` 自报破坏性提交） | **无破坏性项** —— 会让已有插件代码/配置失效的项**一条都没有**。逐条实测（不是「没查到」）：<br>① **API 面零移除**：「服务名 / `defineTool` 工具名 / 事件名」三类各用**两条独立方法**扫两端全集，移除数**全为 0**；只有新增（服务 `schedule` / `shortcuts`、工具 `schedule_update`、事件 `deepseek-account/{model-sign-in-required,session-expired,signed-out}` + `schedule/changed`）<br>② **配置键无任何增删改名**（base 补丁的插件特有键集合两端相同）<br>③ **`SESSION_FORMAT_VERSION` 仍为 `4`** —— 未前进，已落盘 session 无需新的迁移<br>④ **官方包只增不减**：+5（`dsh-client-shortcuts`、`dsh-client-ui-shortcuts`、`dsh-llm-deepseek-account`、`dsh-llm-deepseek-api-key`、`dsh-util-code-language`），移除/改名 **0**<br>⑤ **插槽只增不减**：+3（见 `04` / `08`）<br>⑥ CLI **无新增选项**；`packages/*/{skills,templates,examples}/` 文件清单两端逐字相同<br><br>⚠️ **唯一需要「看一眼但不必改」的一条**：base 补丁 `id: llm-deepseek` 那一行的**实现包被换掉了** —— `@deepseek-ai/dsh-llm-deepseek` → **`@deepseek-ai/dsh-llm-deepseek-api-key`**。**但行的 `id` 没变**，所以按 `id` 定位的补丁覆盖（`patch` / `config` 覆写）**照样生效**；旧包 `packages/llm/llm-deepseek/` **在 rc.2 里依然存在**（`package.json` 的 `name` 仍是 `@deepseek-ai/dsh-llm-deepseek`）→ **不是改名、更不是移除**。只有「按**包名**（而非 id）去 grep/改写补丁」的人需要知道这件事。同批新增 `llm-deepseek-account` 行 | `bash scripts/dsh-version-diff.sh <repo> --baseline dsh-v0.1.7-rc.1`（只出 1 行真区间）；**API 面增删** = 对两个 tag 各跑一次「服务 / `defineTool` / 事件」三类抽取再取集合差（两条独立口径交叉核对）；**插槽 delta** = 两个 tag 各取 `slot-catalog.ts` 的 `^    key: '` 后 `comm`（`86 → 89`）；**旧包仍在** = `git -C <repo> show dsh-v0.1.7-rc.2:packages/llm/llm-deepseek/package.json`；**行 id 未变** = `git -C <repo> diff dsh-v0.1.7-rc.1 dsh-v0.1.7-rc.2 -- packages/bundle/base/cordis.patch.yml`（只有 `name:` 行变 + 一条 `- id:` 新增） |
+
 ---
 
 ## 2.5 作者自报的破坏性变更（`type(scope)!:` 标记）—— 便宜，但覆盖不全
@@ -155,7 +162,7 @@ DSH 用 Conventional Commits，**作者自己认为破坏性的提交会在标�
 git -C <repo> log --oneline --grep='!:' <旧tag>..<新tag>
 ```
 
-**基线前的 tag 链上只有这 7 条；`dsh-v0.1.5-rc.2 → dsh-v0.1.6-alpha.1` 再多 0 条；`0.1.6-alpha.2 → 0.1.7-rc.1` 再多 1 条：**
+**基线前的 tag 链上只有这 7 条；`dsh-v0.1.5-rc.2 → dsh-v0.1.6-alpha.1` 再多 0 条；`0.1.6-alpha.2 → 0.1.7-rc.1` 再多 1 条；最新的 `0.1.7-rc.1 → 0.1.7-rc.2`（346 个提交）再多 **0 条**：**
 
 | 区间 | commit | 提交标题 |
 |---|---|---|
@@ -170,7 +177,15 @@ git -C <repo> log --oneline --grep='!:' <旧tag>..<新tag>
 
 用 `--all` 会多出 14 条（分布在 tag 祖先链之外的 master 与其他分支上），例如 `d4ccfbd80f refactor(cli)!: complete app-owned profile startup`、`f32aa54aeb feat(cli)!: make dsh run the headless entrypoint`。**评估某个区间的影响时用 `<旧tag>..<新tag>`；`--all` 只适合看仓库全貌。**
 
-**本轮（0.1.6-alpha.2 → 0.1.7-rc.1，1617 个提交）的实测结果：非 merge 提交里带 `!:` 的 —— 1 条**（上表最后一行）。**而且这唯一一条还是个「空炮」**：它删的是 **activity 平面**，而 activity 在**基线端与新版端都不存在**（`git cat-file -e <tag>:packages/activity/activity-local/package.json` 两处均失败），它的父提交也不在基线之后 —— 即该提交来自**旁线**，删掉的是一个**从未进入本技能基线的世界**的东西。
+**本轮（0.1.7-rc.1 → 0.1.7-rc.2，346 个提交）的实测结果：非 merge 提交里带 `!:` 的 —— 0 条。**
+
+```bash
+git -C <repo> log --oneline --no-merges --grep='!:' dsh-v0.1.7-rc.1..dsh-v0.1.7-rc.2   # 输出为空
+```
+
+> 🔴 **它不是「没变更」，而是「变更没被标」**：同一区间确实动了 base 补丁里一条插件行的**实现包**（`llm-deepseek` 行 → `@deepseek-ai/dsh-llm-deepseek-api-key`），作者**没有**标 `!`。这再次印证下面的论点 —— 判定影响**只能回到两端文件内容的集合 diff**，`!` 只能当线索。
+
+**上一轮（0.1.6-alpha.2 → 0.1.7-rc.1，1617 个提交）的实测结果：非 merge 提交里带 `!:` 的 —— 1 条**（上表最后一行）。**而且这唯一一条还是个「空炮」**：它删的是 **activity 平面**，而 activity 在**基线端与新版端都不存在**（`git cat-file -e <tag>:packages/activity/activity-local/package.json` 两处均失败），它的父提交也不在基线之后 —— 即该提交来自**旁线**，删掉的是一个**从未进入本技能基线的世界**的东西。
 
 > 🔴 **这是 §2.5 论点的第三个面向**：前两个面向是「**同族改名可以不带 `!`**」（上一轮 `refactor(ptc):`）与「**带了 `!` 也可能与你无关**」（本轮）。合起来的操作含义是：
 > **`!:` 既不是充分条件、也不是必要条件，甚至不保证改动落在你的线上。** 它只能当「值得看一眼」的线索，判定影响必须回到**两端文件内容的集合 diff**。
@@ -273,7 +288,7 @@ git -C <repo> log --oneline --no-merges --grep='!:' dsh-v0.1.5-rc.2..dsh-v0.1.6-
 
 ### 3.4 会话/持久化数据格式版本
 
-**已发生的实例**：`SESSION_FORMAT_VERSION`：`0`（rc.7 ～ 0.1.2-rc.1）→ `2`（0.1.3-alpha.1）→ `3`（0.1.5-alpha.1 ～ 0.1.6-alpha.2）→ **`4`（0.1.7-alpha.1 起；现基线 `dsh-v0.1.7-rc.1`）**，配套迁移包 `dsh-session-format-v0-to-v1` / `-v1-to-v2` / `-v2-to-v3` / **`-v3-to-v4`**。
+**已发生的实例**：`SESSION_FORMAT_VERSION`：`0`（rc.7 ～ 0.1.2-rc.1）→ `2`（0.1.3-alpha.1）→ `3`（0.1.5-alpha.1 ～ 0.1.6-alpha.2）→ **`4`（0.1.7-alpha.1 起；现基线 `dsh-v0.1.7-rc.2`）**，配套迁移包 `dsh-session-format-v0-to-v1` / `-v1-to-v2` / `-v2-to-v3` / **`-v3-to-v4`**。
 
 **为什么重要**：这是**已落盘用户数据**的兼容性问题。官方会配套发布 `dsh-session-format-v0-to-v1` 之类的迁移包，但**格式版本一旦前进就不会回退**（官方原文：`Never lower it on the development trunk`）。
 
@@ -358,7 +373,7 @@ git -C <repo> log --oneline --no-merges --grep='!:' dsh-v0.1.5-rc.2..dsh-v0.1.6-
 ### 5.1 决策树
 
 ```
-你的目标 DSH 版本 = 本 skill 基线（dsh-v0.1.7-rc.1）？
+你的目标 DSH 版本 = 本 skill 基线（dsh-v0.1.7-rc.2）？
 ├─ 是 → 直接用本 skill 的模板与速查表，跑一次探针确认即可。
 └─ 否（更高、或你不确定）→ 走「拉源码 → 出差异 → 决定影响」
    ├─ 能联网 → 运行 scripts/dsh-sync.sh（见 5.3），把源码拉到 skill 目录内
@@ -399,7 +414,7 @@ bash ~/.workbuddy/skills/dsh-plugin-development/scripts/dsh-version-diff.sh
 1. 显式声明「以下 API 名未对当前版本核验」。
 2. S 级骨架照给；M/V 级符号单独列成「**需你确认**」清单，不要混在正文里。
 3. **禁止**把未核验事实写成肯定句。
-4. 交付物带一行基线注释：`// DSH 插件 · 依 dsh-api-probe.sh 对 46a7f68b09 核验通过`。
+4. 交付物带一行基线注释：`// DSH 插件 · 依 dsh-api-probe.sh 对 477b4f4205 核验通过`。
 5. **绝不允许编造 API 名填补空白**——查不到就说查不到。
 
 ### 5.5 目录约定

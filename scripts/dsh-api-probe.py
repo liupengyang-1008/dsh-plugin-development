@@ -38,8 +38,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-BASELINE_COMMIT = "46a7f68b09"
-BASELINE_VER = "0.1.7-rc.1"
+BASELINE_COMMIT = "477b4f4205"
+BASELINE_VER = "0.1.7-rc.2"
 
 # ── 断言表 ──────────────────────────────────────────────────────────────────
 # 格式：ID,等级,说明,模式,作用域
