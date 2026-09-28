@@ -4,7 +4,7 @@ slug: dsh-plugin-development
 displayName: DSH Plugin Development
 summary: Develop DSH (DeepSeek Harness) / Cordis plugins end to end — plugin forms, templates, an API cookbook, catalogued pitfalls, packaging and publishing, plus a mandatory version gate for the pre-stable upstream. Third-party fragments quoted here remain under their own licences (MIT / Apache-2.0 / BSD-3-Clause) — see the bundled LICENSE and NOTICE.
 description: A development-time skill for building plugins on DSH (DeepSeek Harness) / Cordis. It is not itself an installable DSH plugin; it is the tooling that guides a developer or AI agent through creating, debugging, packaging, and publishing one. This skill should be used when the user asks to develop a DSH plugin, write or modify a cordis plugin, add a tool, slash command, config schema, service, UI slot or HTTP route to DSH, run a periodic task inside a plugin, fix a plugin that fails to load or stays in PENDING, or package a plugin bundle for installation or distribution. It covers the plugin forms and official conventions, with 12 templates, 23 catalogued pitfalls, and copy-ready prompts for AI-agent pair development. Because DSH is pre-stable and ships breaking changes on a short cadence, it also ships a mandatory pre-coding version gate, a probe that re-verifies its own claims against a live source checkout, and a per-tag history of upstream breaking changes.
-version: 1.3.2
+version: 1.3.3
 license: MIT-0
 agent_created: true
 metadata:
@@ -33,7 +33,7 @@ metadata:
 
 ## 第 0 步（强制，不可跳过）· 版本闸门
 
-**references 是某一时刻的快照，会腐化。** DSH 处于 rc 阶段（基线 `dsh-v0.1.7-rc.2` / commit `477b4f4205`，2026-09-24），tag 间隔中位数约 1.1 天、出现过破坏性变更。**所以不要承诺「不过时」，要保证「过时会响」。**
+**references 是某一时刻的快照，会腐化。** DSH 处于 rc 阶段（基线 `dsh-v0.2.0-rc.1` / commit `4878cdabd8`，2026-09-28），tag 间隔中位数约 1.1 天、出现过破坏性变更。**所以不要承诺「不过时」，要保证「过时会响」。**
 
 **① 权威顺序（源码永远压过本技能）**
 
@@ -61,18 +61,25 @@ bash   <skill>/scripts/dsh-api-probe.sh <DSH 仓库路径>    # 备选：仅当 
 > **目标版本高于基线时**不要猜：`dsh-sync.sh` 拉源码（先经确认）→ 探针核验 → `dsh-version-diff.sh` 出差异。
 > 完整机制（腐化推导、三级全表、五种核验手段、网络不可达时的降级路径）见 `references/00-version-gate.md`。
 
-**基线 `dsh-v0.1.7-rc.2` 的硬变化（照抄旧资料前先对照）**
+**基线 `dsh-v0.2.0-rc.1` 的硬变化（照抄旧资料前先对照）**
 
 DSH 每次发版的破坏性变更集中在少数几类。
 
-**本轮（`0.1.7-rc.1` → `0.1.7-rc.2`；346 个提交、1 个新 tag）—— 🔴 本轮没有破坏性变更。** 手上是 rc.1 时代资料的人**不需要重读**，扫一眼下面 4 条增量即可（每条都实测过，不是「没查到」）：
+**本轮（`0.1.7-rc.2` → `0.2.0-rc.1`；261 个提交、1 个新 tag）—— 🔴 本轮没有破坏性变更。** 手上是 rc.2 时代资料的人**不需要重读**，扫一眼下面 4 条增量即可（每条都实测过，不是「没查到」）：
+
+1. **官方包 +4 / 移除改名 0**：`dsh-otel`（共享遥测传输，base 补丁新增 `otel` 行）、`dsh-client-product-analytics`、`dsh-client-ui-settings-session-log`、`dsh-experimental-schedule-bundle`。**服务面只增不减**：新增客户端遥测服务 `DesktopAnalytics`；宿主 `otel` 与 `session-telemetry-otel` 两行的 `inject` 都多了 `otel`。既有插件**不用改**。
+2. **未变项（逐条实测）**：`SESSION_FORMAT_VERSION` 仍 **4**；**插槽零变化**（维持声明侧 124 / 并集 126 / 公开约 89，客户端权威目录 `slot-catalog.ts` **89 → 89**）；参数 DSL 源文件 `packages/core/tools/src/schema.ts` 与 `…/index.ts` 的 blob hash **两端相同**（`defineTool` 契约无变动）；模型 ID 仍 `deepseek-flash`；CLI 无新增选项；base 补丁 `id:` 行集合两端相同（只多 `otel` 一行 + 一个**新增**键 `maxRequestBytes`）。`packages/core/session/src/repair.ts` 虽然 +114 / −80，但那是**包内重构**（把待决 tool-result 回收提成 `ToolCallRecovery` 类），**不动格式版本、不是对外契约**。
+3. 🔴 **唯一「结构性新增」又一次落在常规六维度之外**：上游自带的开发 skill 树由 **15 文件 / 3 个 skill** 长到 **17 文件 / 4 个 skill** —— ① 新增 skill **`agent-experience`**（怎么写**模型可见的工具定义**、技能与上下文加载）；② **`cordis-plugin-development` 新增了一份 `user-actions.md`**，正式写下「**一个操作，两个调用者**」：UI 动作与 agent 工具接到**同一个宿主服务方法**上（UI 侧走 `ctx.remote.commands.execute()`，两侧共享返回值与失败），**授权类动作（批准工具调用 / 回答 agent 提问 / 放松策略）只能给用户**。→ 见 `references/02b-official-templates.md` 末节。
+4. ⚠️ **本区间 `!:` 自报破坏性提交 = 0 条**，与「一个破坏性项都没有」的实测**方向一致** —— 但**不要把 0 当结论**：同样是 0 的 `0.1.6-alpha.1` 区间里躺着整族改名。**判影响只能靠两端文件内容的集合 diff，`!` 只配当线索。**
+
+**上一轮（`0.1.7-rc.1` → `0.1.7-rc.2`；346 个提交、1 个新 tag）—— 🔴 同样没有破坏性变更。** 手上是 rc.1 时代资料的人**不需要重读**，扫一眼下面 4 条增量即可（每条都实测过，不是「没查到」）：
 
 1. **base 补丁里 `llm-deepseek` 那一行的实现包被换了**：`@deepseek-ai/dsh-llm-deepseek` → **`@deepseek-ai/dsh-llm-deepseek-api-key`**。**行的 `id: llm-deepseek` 没变**，所以按 **id** 定位的补丁（`patch` / `config` 覆写）**照样生效**；旧包在仓库里**也还在**。只有「按**包名**去 grep / 改写补丁」的人需要跟上。同批新增 `llm-deepseek-account` 行。
 2. **插槽 +3 / −0**：`shell.quota-notice`（框架级配额提示链，`chain` / `scope: root`，host 在 Chat 面板之外，提示能活过面板切换）、`sidebar.session.row.leading` 与 `sidebar.session.row.hover`（会话行首区 / 悬停区，新宿主 `ui-schedule` 用它们挂定时任务标记）。权威全量由约 **86** 增至约 **89** 个公开键。见 `04-ui-and-slots.md` §9.4。
 3. **新增能力面全是加法**：服务 `schedule`（宿主侧定时任务域）与 `shortcuts`（客户端键盘快捷键注册表）；agent 工具 `schedule_update`；事件 `deepseek-account/{session-expired,model-sign-in-required,signed-out}` 与 `schedule/changed`。**未变**：`SESSION_FORMAT_VERSION` 仍 `4`、base 配置键无增删改名、CLI 无新增选项、包内 `skills/templates/examples` 清单两端逐字相同。官方包 **+5 / 移除改名 0**。
 4. ⚠️ **本区间 `!:` 自报破坏性提交 = 0 条**，而上面第 1 条（唯一真正有影响的那条）**恰恰没被标** —— 又一次印证：**判影响只能靠两端文件内容的集合 diff，`!` 只配当线索。**
 
-**上一轮（`0.1.6-alpha.2` → `0.1.7-rc.1`；1617 个提交、4 个新 tag —— 版本链 3 个台阶 `0.1.7-alpha.1` / `-alpha.2` / `-rc.1`，另 `dsh-v0.1.5-rc.3` 为旁线发布、在本区间被后合并进主线）的插件作者必读**：
+**上上轮（`0.1.6-alpha.2` → `0.1.7-rc.1`；1617 个提交、4 个新 tag —— 版本链 3 个台阶 `0.1.7-alpha.1` / `-alpha.2` / `-rc.1`，另 `dsh-v0.1.5-rc.3` 为旁线发布、在本区间被后合并进主线）的插件作者必读**：
 
 1. 🔴 **设置机制整套重做 —— 该轮最需要改认知的一条。** 旧路（`ctx.settings.installSection(...)` 注册命名空间 + 浏览器侧手写设置卡片）**已被整体移除**：`installSection`、`SettingsScope`、`settings.yaml`、客户端 `settingsScope` 服务与整个手写卡片族（−4608 / +73 行）**在新树源码里都不存在了**。新路：**表单由你的 `Config` schema 自动派生**（命名空间 = profile 条目 id），持久化改由**配置编辑器写 profile 的 Cordis patch**，写入带乐观并发（`expectedRevision` 不匹配抛 `SettingsConflictError`，`code = 'SETTINGS_CONFLICT'`）。**照抄旧的设置卡片教程会直接失败** → 见 `references/04-ui-and-slots.md` §10 与 §10.9 速查表。
 2. **会话格式版本 `3` → `4`**（`SESSION_FORMAT_VERSION`，`packages/core/session/src/types.ts:89`）。已落盘的 session 日志要经迁移链读（新增包 `dsh-session-format-v3-to-v4`）。**别在插件里写死 `3` 这个字面量**，用常量。
@@ -81,9 +88,9 @@ DSH 每次发版的破坏性变更集中在少数几类。
 5. **工具 DSL 新增两个可选契约**（`DefineToolOptions`）：`deferLoading?: true` 与 `projectContent?(exec, result)` —— 后者在 `tools/post-execute` 策略**之前**装入执行期内容，策略替换仍具权威性。**都是新增可选字段，不破坏既有插件**；旧代码不必改。
 6. **base 补丁新增** `config-editor` / `authorization` / `deepseek-account` 三行；base 内配置键 `maxInlineBytes` → **`maxInlineTokens`**（写死旧键的配置会失效）。
 7. **客户端插槽旁增**：`plugins.bundle.activation`、`plugins.detail.actions` / `.badge` / `.section`、`deliverables.file.actions`、`deliverables.review.file.actions`、`settings.launcher`、`shell.leading`、`settings.models.sign-in`、`sidebar.workspaces.session.menu.item`。
-8. 🔴 **上游开始自带插件开发技能与官方模板**：`dsh-agent-preset` 包内新增 `skills/` —— **`cordis-plugin-development`**（＝本技能的官方对应物，含 `templates/{mcp,decoration}`）＋ `cordis-composition-reference`（Loader YAML 方言 + 501 行可安装包清单）＋ `editing-cordis-compositions`。同批要认的两条 agent 侧能力面：**`plugin_manager` 工具**（8 个 action，agent 自己就能装插件，需 `danger-full-access` 权限）与 **`cordis_inspect_list` / `cordis_inspect_query`**（⚠️ **没有裸 `cordis_inspect`**，文档里的 `what:"client"` 是旧简写）。详见 `references/02b-official-templates.md` 末节。
+8. 🔴 **上游开始自带插件开发技能与官方模板**：`dsh-agent-preset` 包内新增 `skills/` —— **`cordis-plugin-development`**（＝本技能的官方对应物，含 `templates/{mcp,decoration}`）＋ `cordis-composition-reference`（Loader YAML 方言 + 501 行可安装包清单）＋ `editing-cordis-compositions`。同批要认的两条 agent 侧能力面：**`plugin_manager` 工具**（8 个 action，agent 自己就能装插件，需 `danger-full-access` 权限）与 **`cordis_inspect_list` / `cordis_inspect_query`**（⚠️ **没有裸 `cordis_inspect`**，文档里的 `what:"client"` 是旧简写）。详见 `references/02b-official-templates.md` 末节。（👉 **`0.2.0-rc.1` 又把它扩到 4 个 skill / 17 文件**，新增 `agent-experience` 与上游 `packages/preset/agent-preset/skills/cordis-plugin-development/references/user-actions.md` —— 见上文本轮第 3 条。）
 
-**上上轮（`dsh-v0.1.6-alpha.1` → `0.1.6-alpha.2`，887 个提交）** —— 手上是 alpha.1 时代资料的人仍要看这五条：
+**再上轮（`dsh-v0.1.6-alpha.1` → `0.1.6-alpha.2`，887 个提交）** —— 手上是 alpha.1 时代资料的人仍要看这五条：
 
 1. **插件配置插槽改名 + 换语义**：`settings.plugin.item`（`keyed`，key = 卡片所编辑的命名空间）→ **`plugins.item`**（`list`，用 `id` / `order` / `label`），宿主从 `ui-settings-plugins` 移到新包 `ui-plugin-manager`；同批新增 `plugins.bundle.config` / `plugins.row.config`。**不是别名关系**——旧名注册会抛「is not declared」。
 2. **官方包改名**：`@deepseek-ai/cordis-plugin-hmr` → **`@deepseek-ai/dsh-hmr`**（`hmr` 服务键 / `baseDir` / `config` / `hmr/change` / `hmr/reload` **都不变**）。同一 base 行的默认值也改了：`disabled: true` → `!ctx.get('profileContext')`、`root: ['.']` → `root: []`。

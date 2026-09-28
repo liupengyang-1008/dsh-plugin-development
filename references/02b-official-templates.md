@@ -3,7 +3,7 @@
 > **文件来源**：本文件由 `02-templates.md` 拆分而来，正文为原文的**逐行搬迁**，未做改写。
 > **本册性质**：**全部是上游一手素材原文** —— 性质不一：既有官方文档的**逐字摘录（属权威原文）**，也有调研期写下的**粗笔记（仅备查）**。**读某一段前，务必连带读该段开头的取材说明**，那是判断这段能信多少的依据。
 > **不要整读**：先 `grep -n '^#{1,2} '` 拿小节清单，再只读需要的那一节。本技能面向任务的整理稿见 `02-templates.md`。
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.1.7-rc.2` / commit `477b4f4205`，2026-09-24），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.0-rc.1` / commit `4878cdabd8`，2026-09-28），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 
@@ -13,7 +13,7 @@
 
 # E. 官方自带插件 —— 七类可复用模板（原始素材）
 
-> 来源：**DSH 上游检出**（完整克隆，commit `477b4f4205`，`0.1.7-rc.2`；本 skill 不附带该检出，核验方式见 `00-version-gate.md`）。
+> 来源：**DSH 上游检出**（完整克隆，commit `4878cdabd8`，`0.2.0-rc.1`；本 skill 不附带该检出，核验方式见 `00-version-gate.md`）。
 > 所有代码**逐字照抄**仓库原文，未改写。每个模板标注来源文件路径。
 > 面向《DSH 插件开发实战手册》补充篇，读者为零软件工程经验新手。
 
@@ -920,7 +920,7 @@ export function AppearanceRow({ t, setTheme, useStore }: AppearanceRowComponentP
 ## 附：官方 UI 插槽名（**节选 40 余个**，实测提取）
 
 > ⚠️ **这不是全清单。** 本表由 `grep -rhoE "slots\.(inject|register)\(\s*'[^']+'" packages/*/*/src` 提取，因此**天然抓不到内建键**（如 `root` 是用 `renderSlot('root')` 渲染的）。
-> 对 `dsh-v0.1.7-rc.2` 的声明侧复核结果：**124 个键**（并集 **126** 个；剔除 **37** 个测试专用键后**约 89 个公开可用**）—— 2026-09-23 修好抽取器两处漏抽后重抽、2026-09-25 随 rc.2 推进 **+3 / −0**（旧值 96/99/约81 系低估）。另有**客户端半侧的权威口径**：上游生成产物 `packages/extensions/cordis-client-runner/src/client/slot-catalog.ts` 现有 **89 个**，抽取器 A2 段与它自动交叉核对，**漏抽量须为 0**。完整清单与可复现的抽取命令见 `14-inbound-http-and-timers.md` 与 `scripts/extract_slots.py`；注册签名（组件是第二个参数）与「未声明 slot 报什么错」也记在那里。
+> 对 `dsh-v0.2.0-rc.1` 的声明侧复核结果：**124 个键**（并集 **126** 个；剔除 **37** 个测试专用键后**约 89 个公开可用**）—— 2026-09-23 修好抽取器两处漏抽后重抽、2026-09-25 随 rc.2 推进 **+3 / −0**（旧值 96/99/约81 系低估）。另有**客户端半侧的权威口径**：上游生成产物 `packages/extensions/cordis-client-runner/src/client/slot-catalog.ts` 现有 **89 个**，抽取器 A2 段与它自动交叉核对，**漏抽量须为 0**。完整清单与可复现的抽取命令见 `14-inbound-http-and-timers.md` 与 `scripts/extract_slots.py`；注册签名（组件是第二个参数）与「未声明 slot 报什么错」也记在那里。
 > 用法：`ctx.slots.inject('<插槽名>', () => ctx.slots.register({ name: '<插槽名>' }, 组件))`
 
 ### 会话 / 对话区（conversation.*）
@@ -1065,17 +1065,28 @@ my-plugin/
 
 ---
 
-## 附：🔴 上游**随产品自带**的开发 skill 与官方模板（`0.1.7-rc.1` 新增 —— 别错过）
+## 附：🔴 上游**随产品自带**的开发 skill 与官方模板（`0.1.7-rc.1` 新增、`0.2.0-rc.1` 扩员 —— 别错过）
 
 > 本节由 **2026-09-23 复核补入**：本轮首轮六维度差异**整块漏掉了它**。重要性与本册同级 —— **上游现在自己发布了一套插件开发技能与模板**，随 `dsh-agent-preset` 包装到用户机器上。
 
-**位置**：`packages/preset/agent-preset/skills/`（旧基线**完全没有**该目录；本区间由 `d1e22a7e24 feat(preset): declare Agent compositions in profile YAML (#4569)` 一次引入 15 个文件）
+**位置**：`packages/preset/agent-preset/skills/`（旧基线**完全没有**该目录；`0.1.7-rc.1` 由 `d1e22a7e24 feat(preset): declare Agent compositions in profile YAML (#4569)` 一次引入 15 个文件，`0.2.0-rc.1` 再增至 **17 个文件 / 4 个 skill**）
 
 | 官方 skill | 覆盖什么 | 规模 |
 |---|---|---|
-| **`cordis-plugin-development`** | **持久化插件 / MCP 连接的编写、安装、配置、调试** —— 本册的官方对应物。流程：先写进工作区 → 用 `plugin_manager` 装 → **拿插件本身当第一版预览**（首装前不得造预览 HTML / mock 外壳 / 截图脚本）→ 验证 → 同插件内修缺陷 | `SKILL.md` + `references/{host-plugin,mcp-bundle,practices,ui-plugin,verification}.md` + **`templates/{mcp,decoration}/`** |
+| **`cordis-plugin-development`** | **持久化插件 / MCP 连接的编写、安装、配置、调试** —— 本册的官方对应物。流程：先写进工作区 → 用 `plugin_manager` 装 → **拿插件本身当第一版预览**（首装前不得造预览 HTML / mock 外壳 / 截图脚本）→ 验证 → 同插件内修缺陷 | `SKILL.md` + `references/{host-plugin,mcp-bundle,practices,ui-plugin,verification,user-actions}.md` + **`templates/{mcp,decoration}/`**（`user-actions.md` 为 **`0.2.0-rc.1` 新增**） |
+| `agent-experience` | **怎么写「模型可见」的工具定义**：参数说明放参数上、每条事实只说一次、删掉模型能从调用结果学到的约束、优先有界输出（给 id / 路径让模型再取）、把可能的邻近上下文随结果一起给并**显式标注截断**；也讲技能与上下文加载、以及「省上下文只有不导致更多搜索/重复读才算赚」。**`0.2.0-rc.1` 新增** | `SKILL.md`(30 行) |
 | `cordis-composition-reference` | **Loader YAML 方言**（`insert` / 按 id `override` / `group` / `disabled` / `isolate` / `!!js`）+ **可安装包清单** | `SKILL.md`(29 行) + `packages/preset/agent-preset/skills/cordis-composition-reference/references/packages.md`(**501 行**) |
 | `editing-cordis-compositions` | agent preset 的改动流程 | `SKILL.md`(84 行) |
+
+### 🔴 `0.2.0-rc.1` 新增的官方约定：**一个操作，两个调用者**（`packages/preset/agent-preset/skills/cordis-plugin-development/references/user-actions.md`）
+
+上游第一次把「**插件 UI 的操作也该暴露给 agent**」写成正式约定。三条要点（原文要点，非逐字翻译）：
+
+1. **一次实现，两处调用**：把操作实现成**宿主服务方法**（返回结果或显式状态，失败带原因）→ UI 动作经客户端可调的宿主入口（如 session command，用 `ctx.remote.commands.execute()` 执行）调用它并显示失败 → **agent 工具用相同的参数与语义**调**同一个方法**，把结果原样作为工具结果返回。相关操作可共用一个工具，用 `action` 参数区分。
+2. **授权类动作只能给用户**：批准一次工具调用、回答 agent 提出的问题、放松某项策略 —— 这类「授予或确认权限」的动作**必须 user-only**，**agent 不得自行执行或授权**。
+3. **不要在 UI 路径和工具路径里各写一份逻辑**；两侧必须共用同一个服务方法。
+
+**怎么验**（原文的 Verification 段）：对两者都可用的操作，**只经工具**执行一遍，把状态变化、返回值、失败与 UI 动作**逐项对照**；对 user-only 的动作，**反过来验证 agent 确实无法执行或授权**。
 
 **官方模板** = 本册 `assets/minimal-*` 的官方对应物：`templates/mcp/`（`cordis.patch.yml` 8 行 + `package.json` 7 行）、`templates/decoration/`（`client.js` 22 + `cordis.patch.yml` 3 + `index.js` 2 + `package.json` 15）。
 

@@ -2,7 +2,7 @@
 
 > **本文件用途**：UI 插件与设置卡片的完整实现：两个半侧结构、三个登记点、slot 插槽机制、React/TSX 技术栈约束、样式打包、开发期调试、三层配置解析模型。
 > **合成来源**：DSH插件开发指导手册.md（第 9/10 章）
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.1.7-rc.2` / commit `477b4f4205`，2026-09-24），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.0-rc.1` / commit `4878cdabd8`，2026-09-28），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
@@ -207,7 +207,7 @@ root
 └─ shell.overlay
 ```
 
-> 🔴 **`dsh-v0.1.7-rc.2` 新增 3 个插槽（+3 / −0）** —— 上面这棵树是**节选**（权威全量约 **89** 个公开键，见 `08-cheatsheet.md` §3），本轮新增的三个都不在节选里，登记在此免遗漏：
+> 🔴 **`dsh-v0.1.7-rc.2` 那轮新增 3 个插槽（+3 / −0）**；**`0.2.0-rc.1` 这轮插槽零变化（+0 / −0）** —— 上面这棵树是**节选**（权威全量约 **89** 个公开键，见 `08-cheatsheet.md` §3），该轮新增的三个都不在节选里，登记在此免遗漏：
 > - **`shell.quota-notice`**（`chain` / `scope: root`）—— 框架级配额提示链。宿主 `ui-chat` 在 `shell.overlay` 里放了唯一的活体 host（`QuotaNoticeHost`），**第一个 selector 命中其 code 的 entry 接管该面**；全部 decline 时回落到 host 自带的通用 warning Toast。因为 host 在 Chat 面板之外，提示**能活过面板的切换/关闭**。声明：`packages/client/ui-chat/src/client/contract/slots.ts:329`（另有 `apply.ts:265`）。
 > - **`sidebar.session.row.leading`** 与 **`sidebar.session.row.hover`**（都是 `list`）—— 会话行的**行首区**与**悬停区**。新宿主 `ui-schedule`（定时任务）用它们挂任务标记与悬停卡片：`packages/client/ui-schedule/src/client/index.ts:231`（leading）/ `:238`（hover）。声明：`packages/client/ui-workspace/src/client/contract/slots.ts`。
 
