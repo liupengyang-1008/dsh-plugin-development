@@ -67,7 +67,7 @@
 | `terminalController` | 会话级终端进程的远程控制面（含 `webTerminals` 客户端侧） | `packages/api/terminal-controller/src/index.ts` |
 | `schedule` | 定时任务域（宿主侧）：任务表持久化（`ctx.storageDomain.open(scheduleDomain)`）、投递、会话恢复、保留策略（`deliveryHistoryDays` / `deliveryHistoryRecords`）。**`0.1.7-rc.2` 新增** | `packages/schedule/schedule/src/index.ts:121` |
 | `shortcuts` | 键盘快捷键注册表（**客户端侧**）：绑定 / 配置 / 持久化 + 目录（`catalog` / `fixedCatalog`）。**`0.1.7-rc.2` 新增**；desktop 运行时必须有 `dshDesktop.keyboard` 桥，缺了构造函数**直接抛** | `packages/client/shortcuts/src/client/index.ts:47` |
-| `otel` | 共享遥测传输 provider（宿主侧）：`createEventReporter(options)` / `createSessionLogReporter(options)` 各建**互相独立**的通道；**挂载本身不建队列、不建身份、不连网**，消费方自己负责排空与关闭截止。**`0.2.0-rc.1` 新增** | `packages/telemetry/otel/src/index.ts:13-14` |
+| `otel` | 共享遥测传输 provider（宿主侧）：`createEventReporter(options)` / `createSessionLogReporter(options)` 各建**互相独立**的通道；**挂载本身不建队列、不建身份、不连网**，消费方自己负责排空与关闭截止。**`0.2.0-rc.1` 新增** | `packages/telemetry/otel/src/index.ts:13`（类）/ `:22` / `:30`；调用点 `packages/host/product-telemetry-otel/src/index.ts:85`、`packages/session/session-telemetry-otel/src/index.ts:189` |
 | `productAnalytics` | 产品分析事件接收（**宿主侧 `ProductAnalytics` 与客户端侧 `DesktopAnalytics` 用同一个键名**）：`enabled()`、`watchPolicy(signal)`（`@Remote` 流式，随配置热更新）、`report(event)`。**禁用态不读身份、不接新事件**。**`0.2.0-rc.1` 新增** | `packages/client/product-analytics/src/index.ts:35`、`packages/client/product-analytics/src/client/index.ts:20` |
 
 > ⚠️ **服务名大小写敏感**（`sessionProjections` 不是 `session-projection`）。
