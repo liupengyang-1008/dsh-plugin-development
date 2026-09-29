@@ -55,7 +55,7 @@
 ### 坑 P1 · 装完毫无反应，但 `pnpm add` 成功了 ★★★
 
 - **现象**：`dsh plugin --profile web add <你的包>` 返回成功，`node_modules` 里也有你的包，但插件完全不起作用。
-- **你会看到这条警告**（逐字，来自源码 `packages/boot/plugin-manager/src/operations.ts:86`）：
+- **你会看到这条警告**（逐字，来自源码 `packages/boot/plugin-manager/src/operations.ts:102`）：
   ```
   dsh: warning: <你的包名> declares no dsh.bundle — installed as a plain dependency, not a profile layer
   ```

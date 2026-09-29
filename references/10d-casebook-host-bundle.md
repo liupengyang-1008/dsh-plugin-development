@@ -32,7 +32,7 @@
 | 真相 | 证据 |
 |---|---|
 | **组合包 = 一个 package.json + 一个 cordis.patch.yml + 一个 README，可以零行 JS 代码。** | `Q00_ouroboros/integrations/dsh-plugin/` 只有 3 个文件（`package.json` / `cordis.patch.yml` / `README.md`） |
-| `package.json` 里声明 `"dsh": { "bundle": { "patch": "./cordis.patch.yml" } }`，profile 合成器就认。 | 官方 `packages/boot/app-boot/src/profile.ts:780-792`：`const declared = bundleManifest.dsh?.bundle?.patch`；`if (declared === undefined) throw ... declares no dsh.bundle` |
+| `package.json` 里声明 `"dsh": { "bundle": { "patch": "./cordis.patch.yml" } }`，profile 合成器就认。 | 官方 `packages/boot/app-boot/src/profile.ts:669-672`：`const bundle = bundleManifest.dsh?.bundle`；`if (bundle === undefined) throw ... declares no dsh.bundle` |
 | patch 的相对路径 `name: ./xxx.mjs` **确实被锚到 patch 文件旁边**（官方文档口吻是「绝对路径」，源码实现允许相对）。 | 官方 `packages/boot/app-boot/src/index.ts` `anchorInsertedPluginNames()`：`const base = dirname(resolve(file))` → `entry.name = pathToFileURL(resolve(base, entry.name)).href` |
 | `!!js` 由 Loader 针对每个 entry 的注入就绪 context 求值，因此 `!!js` 里能读到 `process.env`、`ctx.loader.entries()`。 | 官方 `packages/boot/app-boot/src/index.ts:220-225` 注释：`!!js` scalars become expression nodes the Loader interpolates against each entry's injection-ready context |
 | 行顺序**不**决定加载顺序（激活由服务可用性驱动）；但**同一 patch 内 `!!js` 表达式的可见性**是「只看得见它之前的行」。 | `omdsh-dev_DSH-better-sidebar/cordis.patch.yml` 注释原文：`The loader evaluates it when this row is processed (entry-list order, only rows before this one are visible)` |

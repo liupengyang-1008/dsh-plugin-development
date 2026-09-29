@@ -151,7 +151,7 @@ export function apply(ctx) {
 
 ## 17.3 浏览器半侧的产物格式（lazy-CJS factory）
 
-官方（`docs/cookbook/adding-a-settings-card.zh.md:60`）；⚠️ 该文档本区间被**整篇改写**、由 102 行缩到 72 行，旧引 `:94` 已越界，**且原引文本身也不再逐字存在**：
+官方（`docs/cookbook/adding-a-settings-card.zh.md:60`）：
 
 > 构建出的 `./client` 文件必须是客户端模块系统的 **lazy-CJS factory** 格式：一段脚本，向页面的模块加载器登记包名和一个 `factory(require)`。
 

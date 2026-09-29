@@ -128,7 +128,7 @@ export default clientBundle('@deepseek-ai/dsh-client-ui-brand-official', ['lib/t
 
 ## 9.3 ⚠️ 再加 3 个登记点（漏一个就失败）
 
-官方（`packages/client/AGENTS.md:139`）：客户端插件除了正常的包登记，还**必须**：
+官方（`packages/client/AGENTS.md:143`）：客户端插件除了正常的包登记，还**必须**：
 
 1. 在 `tsconfig.client.json` 的 `references` 里加你的包
 2. 在 `packages/bundle/web-app/cordis.patch.yml` 里加一行
@@ -148,7 +148,7 @@ export default clientBundle('@deepseek-ai/dsh-client-ui-brand-official', ['lib/t
 
 > 功能插件**只**通过 `ctx.slots.register()` 贡献 UI，**绝不导入其他功能插件的组件**。
 
-**唯一的注册 API**（`packages/client/AGENTS.md:11`）：
+**唯一的注册 API**（用法见 `packages/client/AGENTS.md:11`；完整选项类型 `packages/client/ui-slots/src/index.ts:875` `interface ErasedOptions`）：
 
 ```ts
 ctx.slots.register({ name, id?, key?, order?, children?, store?, inject? }, Component)
@@ -211,7 +211,7 @@ root
 > - **`shell.quota-notice`**（`chain` / `scope: root`）—— 框架级配额提示链。宿主 `ui-chat` 在 `shell.overlay` 里放了唯一的活体 host（`QuotaNoticeHost`），**第一个 selector 命中其 code 的 entry 接管该面**；全部 decline 时回落到 host 自带的通用 warning Toast。因为 host 在 Chat 面板之外，提示**能活过面板的切换/关闭**。声明：`packages/client/ui-chat/src/client/contract/slots.ts:329`（另有 `apply.ts:265`）。
 > - **`sidebar.session.row.leading`** 与 **`sidebar.session.row.hover`**（都是 `list`）—— 会话行的**行首区**与**悬停区**。新宿主 `ui-schedule`（定时任务）用它们挂任务标记与悬停卡片：`packages/client/ui-schedule/src/client/index.ts:231`（leading）/ `:238`（hover）。声明：`packages/client/ui-workspace/src/client/contract/slots.ts`。
 
-💡 运行中的 DSH 用 `cordis_inspect_query`（先 `cordis_inspect_list` 拿 method）查**实时**插槽树。⚠️ 上游文档写作 `cordis_inspect what:"client"`（`docs/subsystems/slots.zh.md:189`），但**当前工具面没有裸 `cordis_inspect`** —— 实际只有族名 `cordis_inspect_list` / `cordis_inspect_query` / `cordis_inspect_self`（`packages/extensions/tool-cordis/src/index.ts:23,42`）；UI 侧具体查 `Slots.listSubTree`。**客户端插槽的静态权威**是生成产物 `slot-catalog.ts`（见 `scripts/extract_slots.py` 的 A2 段）。
+💡 运行中的 DSH 用 `cordis_inspect_query`（先 `cordis_inspect_list` 拿 method）查**实时**插槽树。⚠️ 上游文档写作 `cordis_inspect what:"client"`（`docs/subsystems/slots.zh.md:190`），但**当前工具面没有裸 `cordis_inspect`** —— 实际只有族名 `cordis_inspect_list` / `cordis_inspect_query` / `cordis_inspect_self`（`packages/extensions/tool-cordis/src/index.ts:23,42`）；UI 侧具体查 `Slots.listSubTree`。**客户端插槽的静态权威**是生成产物 `slot-catalog.ts`（见 `scripts/extract_slots.py` 的 A2 段）。
 
 ### 9.4.4 最小可用示例：往标题栏加一个按钮
 
@@ -361,7 +361,7 @@ UI 插件最容易出错，**强烈建议先让 Agent 做一次"抄范本 + 登�
 
 > 🔴 **本区间最需要改认知的一条**：`0.1.6-alpha.2` 及以前，你必须写一段 Host 半侧代码把插件**注册成设置命名空间**；**`0.1.7-rc.1` 起这条路没了** —— 表单由**你的 `Config` schema + profile 条目**自动派生，**你不写任何注册调用**。
 
-旧写法（**已失效，仅供识别老代码/老教程**；原骨架取自 `docs/cookbook/adding-a-settings-card.zh.md:13-44` 的旧版，该文档本区间已被整篇改写）：
+旧写法（**已失效，仅供识别老代码/老教程**；原骨架取自 `docs/cookbook/adding-a-settings-card.zh.md` 的**旧版**（该文档自 `0.1.7-rc.1` 起已整篇改写，**旧行号在新树不可核**））：
 
 ```ts
 // ⚠️ 已失效：installSection 在 0.1.7-rc.1 的新树源码里已无定义
@@ -517,7 +517,7 @@ openSettingsDocument(signal: AbortSignal): Promise<SettingsDocumentOpenValue>
 
 | 旧（`0.1.6-alpha.2` 及以前） | 新（`dsh-v0.1.7-rc.1`） | 判据 |
 |---|---|---|
-| Host 半侧 `ctx.settings.installSection(owner, ns, schema, entry, hooks)` | **移除**；表单从 `Config` schema 自动派生 | 新树源码中已无 `installSection` 定义（旧定义在 `packages/settings/settings/src/index.ts:472`） |
+| Host 半侧 `ctx.settings.installSection(owner, ns, schema, entry, hooks)` | **移除**；表单从 `Config` schema 自动派生 | 新树源码中已无 `installSection` 定义（旧定义在 `packages/settings/settings/src/index.ts`；该文件已随设置机制重写，**旧行号在新树不可核**） |
 | `interface SettingsScope<T>`（`getSnapshot` / `subscribe` / `update(patch)`） | **移除**；改 `SettingsForms` 的 `update` / `replace` / `mutate(ns, …, expectedRevision?)` | 旧定义在 `packages/settings/settings/src/index.ts:115`；新树全树仅存在于 `.agents/notes/archived/` |
 | 命名空间 = 插件自选字符串 | 命名空间 = **profile 条目本地 id** | `docs/subsystems/settings.zh.md:9` |
 | 用户层落在 `$DSH_HOME/settings.yaml`（热重载） | **移除**；改由**配置编辑器写 Cordis patch**；`settings.yaml` 只剩一次性迁移 `importLegacyDocument()`（成功后改名 `.imported`） | 新 `docs/subsystems/settings.zh.md:5`；`packages/settings/settings/src/index.ts` |

@@ -7,7 +7,7 @@
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
 
-> **本文件导航 —— 共 496 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
+> **本文件导航 —— 共 497 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
 > - **本文件全是整理稿**（无上游素材混杂），但它仍是基线快照——写代码前先过版本闸门。
 > - 常用检索：`grep -n '^## '`（小节清单）、`grep -n '^### '`（子节）
 
@@ -279,12 +279,13 @@ DSH 的一切交互，都通过这三个东西：
 
 ## 3.1 建目录
 
-在**仓库根目录**下创建开发目录（官方教程用的就是这个路径，`docs/user/develop/basic/index.zh.md:12`）：
+在**仓库根目录**下创建开发目录（官方教程用的就是这个路径，`docs/user/develop/basic/index.zh.md:9-12`）：
 
 ```sh
-cd deepseek-harness
 mkdir -p scratch-plugin/src
 ```
+
+> ℹ️ 官方教程此处**只有上面那一行**；`cd <你的 DSH 检出目录>` 是本节补的上下文。
 
 ## 3.2 写插件文件
 

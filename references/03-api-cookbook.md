@@ -181,7 +181,7 @@ output: {
 
 ### 输出是对象（真实生产级写法）
 
-来源：`packages/interaction/tool-ask-user/src/index.ts:58-79`
+来源：`packages/interaction/tool-ask-user/src/index.ts:57-79`
 
 ```ts
 output: {
@@ -564,7 +564,7 @@ type CommandResult =
 - 之后的**所有字节**（含分隔空白）都算 `rawInput`
 - 不符合语法或名称未知的行会被适配器**拒绝**，**而不是**变成模型提示词
 
-⚠️ **重要限制**（`docs/subsystems/commands.zh.md:12`）：**无 UI 的演示与 ACP 自动化不提供命令面** —— 命令只在交互式 UI（CLI / Web）里存在。
+⚠️ **重要限制**（`docs/subsystems/commands.zh.md:11`）：**无 UI 的演示与 ACP 自动化不提供命令面** —— 命令只在交互式 UI（CLI / Web）里存在。
 
 ## 6.4 真实范本：`/compact`
 
@@ -907,7 +907,7 @@ export function apply(ctx: Context) {
 
 > 尝试彻底移除 `./greeter.ts`：消费方会保持 PENDING，不输出任何内容，既不崩溃，也不会只运行一部分。处于 PENDING 的 fiber 也不会让 Node 的事件循环保持活跃，因此如果组合中没有其他运行项，进程会静默地以状态码 0 退出。
 
-**好消息：DSH 启动时会审计这件事。** 源码实证（`packages/boot/app-boot/src/index.ts:722-755`）：树 settle 后，对仍处于 PENDING 的条目会打印
+**好消息：DSH 启动时会审计这件事。** 源码实证（`packages/boot/app-boot/src/index.ts:881` 单条格式串、`:901` 分组汇总表）：树 settle 后，对仍处于 PENDING 的条目会打印
 
 ```
 <name>: pending (waiting for service: <缺失服务>)
@@ -969,7 +969,7 @@ export function apply(ctx: Context) {
 
 **这三个包正好演示了第 1 章讲的 capability seam 三角色**：Service Definition + Service Provider + Consumer。这是仓库里最标准的三角色范本。
 
-组合方式（`packages/terminal/tool-terminal/README.zh.md:37-41`，逐字）：
+组合方式（`packages/terminal/tool-terminal/README.zh.md:44-46`，逐字）：
 
 ```yaml
 - name: '@deepseek-ai/dsh-terminal'

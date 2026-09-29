@@ -54,7 +54,6 @@
 | `slots` | UI 插槽注册表（客户端） | `client/ui-brand-official` |
 | `locale` | 文案（客户端） | `client/ui-theme` |
 | `remote` | 宿主↔客户端转发 | `client/ui-theme` |
-| `settingsScope` | ~~客户端设置订阅~~ 🔴 **`0.1.7-rc.1` 起已移除，不要再 `inject`** —— 整套「手写设置卡片」机制被「`Config` schema 派生表单 + 配置编辑器写 profile 补丁」取代（见 `04-ui-and-slots.md` §10 / §10.9）。本节 2026-09-25 复核：rc.2 源码里 `settingsScope` **零命中** | ~~`client/ui-theme`~~ |
 | `approval` | 审批分发服务 | `docs/subsystems/approval.zh.md` |
 | `tokenMeter` | token 计量 | `docs/subsystems/compaction.zh.md` |
 | `toolResultPruner` | 工具结果裁剪 | `docs/subsystems/compaction.zh.md` |
@@ -72,6 +71,7 @@
 
 > ⚠️ **服务名大小写敏感**（`sessionProjections` 不是 `session-projection`）。
 > 💡 探测可选服务：`ctx.get('settings')`；**只有 `inject` 里声明过的**才能写 `ctx.settings`。
+> 🔴 **反例（不要照抄老教程）**：`inject: ['settingsScope']` 在 `0.1.7-rc.1` 起**必然失败** —— 该服务随「设置机制重做」整体移除，改用 `Config` schema 派生表单 + 配置编辑器写 profile 补丁；旧→新逐条对照见 `04-ui-and-slots.md` §10.9。
 
 ---
 

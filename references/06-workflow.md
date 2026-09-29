@@ -7,7 +7,7 @@
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
 
-> **本文件导航 —— 共 743 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
+> **本文件导航 —— 共 749 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
 > - **上游素材原文**：约 259 行（36%），起点：`G-install-and-cli.md`（文件开头）。**不是本技能重写的整理稿**；性质不一——**有的是官方文档逐字摘录（属权威原文），有的是调研期粗笔记（仅备查）**。读某一段前，务必连带读**该段开头的取材说明**。
 > - **其余部分 = 面向任务的整理稿**，可直接照做；但它同样是基线快照，写代码前先过版本闸门。
 > - 常用检索：`grep -n '^## '`（四部分）、`grep -n '^# G\.'`（档案起点）
@@ -154,12 +154,12 @@ C:\Users\<你的用户名>\.dsh
 
 逐字证据（**4 个不同包都这么写**，互为交叉印证）：
 
-> `packages/settings/settings-file/src/index.ts:25`
+> `packages/credentials/credentials-local/src/index.ts:67`
 > ```
 > /** Harness home used when `path` is omitted; defaults to `$DSH_HOME` or `~/.dsh`. */
 > ```
 
-> `packages/shell/shell-env/src/index.ts:29`
+> `packages/shell/shell-env/src/index.ts:31`
 > ```
 > /** DeepSeek Harness home directory exposed as `DSH_HOME`; defaults to `$DSH_HOME` or `~/.dsh`. */
 > ```
@@ -180,19 +180,25 @@ C:\Users\<你的用户名>\.dsh
 > * A profile is a directory under `$DSH_HOME/profiles/<name>` holding a
 > ```
 
-> 第 19 行：
+> 第 16-20 行：
 > ```
-> * bundles, while `$DSH_HOME/profiles/node_modules` supplies the installation
+> * Module resolution is two-anchor by construction: a bundle name resolves
+> first from the dsh installation (the launcher's own package), then from the
+> profile directory. Pnpm-managed entries in the profile's `node_modules`
+> resolve first. The runtime resolution supplies packages carried by the
+> installation and selected bundles to Node's ESM and CommonJS resolvers.
 > ```
 
-> 第 42 行：
+> 第 37 行：
 > ```ts
 > export const PROFILES_DIR = 'profiles'
 > ```
 
-> 第 537 行：
+> 第 226-229 行：
 > ```
-> * `$DSH_HOME/profiles/node_modules` mirrors the dsh installation dependency
+> // The hoisted linker gives out-of-tree plugins a flat node_modules whose
+> // missing peers (cordis and friends) use the runtime resolution, so every plugin shares the
+> // installation's single cordis instance instead of a duplicate. pnpm ≥10
 > ```
 
 **结论（目录布局）**：
@@ -209,7 +215,7 @@ C:\Users\<你的用户名>\.dsh
     └── acp/
 ```
 
-> 💡 **关键理解**：**profile = 一个"插件栈"**。官方原文（`apps/cli/src/args.ts:134`）：
+> 💡 **关键理解**：**profile = 一个"插件栈"**。官方原文（`apps/cli/src/args.ts:155`）：
 > ```
 > 'dsh: boot a DeepSeek Harness profile — an ordered stack of plugin-bundle patch layers under your own overrides.'
 > ```
@@ -219,7 +225,7 @@ C:\Users\<你的用户名>\.dsh
 
 ## 2. `dsh plugin` 命令 = pnpm 转发器（**装插件的唯一官方姿势**）
 
-### 2.1 帮助原文（逐字，`apps/cli/src/args.ts:78-87`）
+### 2.1 帮助原文（逐字，`apps/cli/src/args.ts:90-99`）
 
 ```
 Examples:
@@ -233,7 +239,7 @@ Examples:
   dsh plugin --profile tui add <package>     install a plugin into the tui profile
 ```
 
-### 2.2 `--profile` 是**必填**（逐字，`apps/cli/src/args.ts:190-199`）
+### 2.2 `--profile` 是**必填**（逐字，`apps/cli/src/args.ts:187-197`）
 
 ```ts
   const plugin = program.command('plugin').description('manage a profile\'s plugins by forwarding the remaining arguments to pnpm in the profile directory')
@@ -278,7 +284,7 @@ async function reconcile(before: ProfileManifest, dir: string, anchor: string, o
 >
 > 顺带新增的两条 CLI 诊断（`:19-23`）：`pnpm` 不在 PATH 时打印 `dsh: pnpm was not found`；走 `git+` / `github:` / `.git` 的依赖装失败时，直接提示把 pnpm 打印的键加到 profile 的 `pnpm-workspace.yaml` 的 `allowBuilds` 下（见 §4 的 git 安装一节）。
 
-### 2.4 装插件最常见的那个警告（逐字，`packages/boot/plugin-manager/src/operations.ts:85-88`）
+### 2.4 装插件最常见的那个警告（逐字，`packages/boot/plugin-manager/src/operations.ts:101-104`）
 
 ```ts
     if (metadata?.dsh?.bundle === undefined) {
@@ -537,7 +543,7 @@ dsh plugin --profile demo remove dsh-hello-plugin
 
 💡 **`--dump-config` 是你的验收工具**：能在输出里看到 `# == 你的包名` 这一层，就说明装对了。
 
-⚠️ **重要提醒**（`apps/cli/reference/README.zh.md:69`）：pnpm 会改磁盘上的 profile manifest 与 bundles 列表，但**正在运行的 profile 保留本次启动时的组合**。增删/更新组合包后**必须重启 profile**。
+⚠️ **重要提醒**（`apps/cli/reference/README.zh.md:95`）：pnpm 会改磁盘上的 profile manifest 与 bundles 列表，但**正在运行的 profile 保留本次启动时的组合**。增删/更新组合包后**必须重启 profile**。
 
 ## 11.7 三种分发方式对比
 
@@ -655,7 +661,7 @@ dsh --profile web --patch ./extra.yml --dump-config                      # 加�
 
 ## 12.2 第二招：看 PENDING 审计（插件没反应时第一件事）
 
-DSH 启动时会自动审计。源码实证（`packages/boot/app-boot/src/index.ts:722-755`）：对仍 PENDING 的条目打印
+DSH 启动时会自动审计。源码实证（`packages/boot/app-boot/src/index.ts:881` 单条格式串、`:901` 分组汇总表）：对仍 PENDING 的条目打印
 
 ```
 <name>: pending (waiting for service: <缺失服务>)
@@ -679,7 +685,7 @@ DSH 启动时会自动审计。源码实证（`packages/boot/app-boot/src/index.
 
 ## 12.4 第四招：开启 HMR（改代码不用重启）
 
-在你的 patch 里覆盖 base 的那一行（`packages/bundle/base/cordis.patch.yml:21-25`）：
+在你的 patch 里覆盖 base 的那一行（`packages/bundle/base/cordis.patch.yml:28-30`）：
 
 ```yaml
 - id: hmr
