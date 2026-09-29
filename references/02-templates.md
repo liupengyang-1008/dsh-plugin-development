@@ -6,7 +6,7 @@
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 
-> **本文件导航 —— 共 1,227 行，纯整理稿（已无上游素材混杂）。**
+> **本文件导航 —— 共 1,241 行，纯整理稿（已无上游素材混杂）。**
 > - 内容：T1~T12 十二个模板，按**难度从易到难**排列；每节自带「何时选它 / 完整代码 / 常见坑」。
 > - **不要整读**：先 `grep -n '^## T[0-9]'` 拿模板清单（12 条），再只读你要的那一个模板。
 > - 相关的上游原文分册：`02b-official-templates.md`（官方 7 类逐字源码）、`02c-community-bundle.md`（社区组合包范本）。
@@ -910,45 +910,59 @@ throw new TypeError(
 
 > `immediately: true` = **立刻加载**（不等别人按需触发）。设置类插件通常需要。
 
-### 9.2 宿主半侧：注册一个"设置命名空间"（逐字）
+### 9.2 宿主半侧：用 `Config` 声明你的设置（🔴 已按 `0.2.0-rc.2` 重写）
+
+> 🔴 **本小节在 `0.2.0-rc.2` 轮被重写**：旧版教的是 `ctx.get('settings')` + `settings.register(ns, Schema)`，
+> 这两个入口**在 `0.1.7-rc.1` 的设置机制重做里已被移除** —— 新的 `SettingsForms` 服务面只剩
+> `configure` / `prepareDocument` / `describe` / `update` / `replace` / `mutate`（逐条映射见 `04-ui-and-slots.md` §10.9）。
+> 新写法在下面：**设置项就是插件的 `Config` 字段**，用 `.volatile()` 标出「允许运行时热改」。
+> （来源：`packages/client/ui-theme/src/index.ts:22-44`，`dsh-v0.2.0-rc.2` 实测）
 
 ```ts
-function readSection(ctx: Context): { preference: ThemePreference; fontSize: number } {
-  const fallback = { preference: DEFAULT_PREFERENCE, fontSize: DEFAULT_FONT_SIZE }
-  const settings = ctx.get('settings')      // ← 探测可选服务，别写 ctx.settings
-  if (settings === undefined) return fallback
-  const section = settings.get(THEME_NAMESPACE) as ThemeSettings | undefined
-  if (section === undefined) return fallback
-  return section
+export interface Config {
+  preference: Volatile<ThemePreference>
+  fontSize: Volatile<number>
 }
 
-export function apply(ctx: Context): void {
-  // 等 settings 服务就绪后再注册（不要写成硬依赖）
-  ctx.inject(['settings'], (settingsCtx) => {
-    settingsCtx.settings.register(THEME_NAMESPACE, ThemeSettingsSchema)
+export const Config = z.object({
+  preference: z.union([...THEME_PREFERENCES]).default(DEFAULT_PREFERENCE).volatile(),
+  fontSize: z.number().step(1).min(FONT_SIZE_MIN).max(FONT_SIZE_MAX).default(DEFAULT_FONT_SIZE).volatile(),
+})
+
+export function apply(ctx: Context, config: Config): void {
+  // 只声明「本条目由我自己的表单承载」；**不再**手动 register 命名空间
+  ctx.inject(['settings'], (child) => {
+    child.effect(() => child.settings.configure({ auto: false }, ctx.fiber))
   })
   // 往页面 HTML 注入首屏数据，避免闪烁
   ctx.on('webserver/index-inject', (table) => {
-    const section = readSection(ctx)
-    table.push(bootThemeInjection(section.preference, section.fontSize))
-  })
+    table.push(...bootThemeInjections(config.preference.get(), config.fontSize.get()))
+  }, { prepend: true })
 }
 ```
 
 | API | 用法 |
 |---|---|
-| `ctx.get('settings')` | **探测**可选服务是否存在（不阻塞加载） |
-| `ctx.inject(['settings'], cb)` | 等服务就绪后再执行 `cb` |
-| `settings.register(命名空间, Schema)` | 注册一个持久化的设置段 |
+| `Config` 里的 `.volatile()` 字段 | **热改**：运行时写入后立刻生效，不必重启插件 |
+| `ctx.inject(['settings'], cb)` | 等服务就绪后再执行 `cb`（**这条仍然需要**，别写成硬依赖） |
+| `ctx.settings.configure({ auto }, fiber)` | 声明本条目由**自己的**表单承载（`auto: false`） |
 | `ctx.on('webserver/index-inject', ...)` | 往页面 HTML 注入行（首屏生效） |
 
-### 9.3 客户端半侧：注册到设置插槽（逐字，关键部分）
+（`SettingsForms` 的公共方法面：`packages/settings/settings/src/index.ts:266`（`configure`）/ `:296`（`prepareDocument`）/ `:302`（`describe`）/ `:347`（`update`）/ `:357`（`replace`）/ `:367`（`mutate`））
+
+### 9.3 客户端半侧：注册到设置插槽（关键部分，已按 `0.2.0-rc.2` 更新）
+
+> 🔴 **两处改动**（旧写法照抄会直接报「服务不存在」）：`inject` 里的客户端服务名
+> **`settingsScope` → `configForms`**；取表单的那一句 **`ctx.settingsScope.bind<T>({ namespace: ns })` → `ctx.configForms.get<T>(ns)`**。
+> 返回的 `ConfigForm<T>` 提供 `getSnapshot()` / `subscribe()` / `set(field, value)` / `unset(field)` / `mutate(ops, expectedRevision?)`
+> （`packages/client/ui-settings/src/client/config-form-types.ts:39-77`）。
+> 下面是当前上游的原文（`packages/client/ui-theme/src/client/index.ts:421,431`，`dsh-v0.2.0-rc.2` 实测）：
 
 ```ts
-export const inject = ['slots', 'locale', 'remote', 'settingsScope']
+export const inject = ['slots', 'locale', 'remote', 'configForms']
 
 export function apply(ctx: ClientContext): void {
-  const host = ctx.settingsScope.bind<ThemeSettings>({ namespace: THEME_SETTINGS_NAMESPACE })
+  const host = ctx.configForms.get<ThemeSettings>(THEME_SETTINGS_NAMESPACE)
   const theme = new ThemeRuntime(ctx, host)
   ctx.provide('theme', theme)
 

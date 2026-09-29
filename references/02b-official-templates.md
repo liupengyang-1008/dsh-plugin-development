@@ -668,6 +668,12 @@ export function resolveConfig(config: PlanModeConfig): PlanModeConfig {
 
 ## 模板 6 · 设置卡片插件（在设置界面加一张卡）
 
+> 🔴 **本节的代码是 `0.1.7-rc.1` 之前的上游形态，别照抄**（本册是**逐行搬迁的素材原文**，为保留历史原样**不做改写**）。
+> 具体失效点：客户端服务 **`ctx.settingsScope` 已移除**（新树全树 0 命中）→ 改为 **`ctx.configForms.get<T>(ns)`**；
+> 宿主侧 **`settings.register(ns, Schema)` / `settings.get(ns)` 已移除** → 改为**由插件自己的 `Config` schema 派生表单** + `ctx.settings.configure(...)`。
+> **当前可用写法见 `02-templates.md` 的 T9（§9.2 / §9.3，已按 `0.2.0-rc.2` 重写）与 `04-ui-and-slots.md` §10.9 的逐条映射表。**
+> 下面 6.2 / 6.3 两段保留原文，仅作「旧机制长什么样」的对照。
+
 **学习点**：UI 插件往 `settings.general.item` 这类插槽塞一个 React 组件，并通过宿主 settings 服务持久化。
 
 **来源**：`packages/client/ui-theme`

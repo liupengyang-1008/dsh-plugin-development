@@ -524,7 +524,7 @@ openSettingsDocument(signal: AbortSignal): Promise<SettingsDocumentOpenValue>
 | 用户层落在 `$DSH_HOME/settings.yaml`（热重载） | **移除**；改由**配置编辑器写 Cordis patch**；`settings.yaml` 只剩一次性迁移 `importLegacyDocument()`（成功后改名 `.imported`） | 新 `docs/subsystems/settings.zh.md:5`；`packages/settings/settings/src/index.ts` |
 | 写入无并发保护 | **乐观并发**：`expectedRevision` 不匹配抛 `SettingsConflictError`（`code = 'SETTINGS_CONFLICT'`） | 新 `SettingsForms` 源码 |
 | 客户端手写卡片族（`card-form.ts` / `fields.tsx` / `*-card-controller.ts` / `BashCard` / `SubagentCard` …） | **整体删除**（−4608 / +73 行）；官方配置页拆为**每插件一个伴生包** | `packages/client/ui-settings-plugins/src/client/` 现只剩 4 个文件 |
-| 客户端服务 `settingsScope` + `settings-contract.ts` | **移除**；改 `ctx.remote.settings`（Host `ctx.settingsController`） | `packages/client/ui-settings/src/client/settings-contract.ts` 已删 |
+| 客户端服务 `settingsScope` + `settings-contract.ts` | **移除**；**取表单改 `ctx.configForms.get<T>(entryId)`**（客户端服务名 `configForms`；`ConfigForms extends Service`），`inject` 里写 `'configForms'`；它底下走 `ctx.remote.settings`（Host `ctx.settingsController`）。方法面基本同名：`getSnapshot()` / `subscribe()` 照旧，旧的 `update(patch)` → **`set(field, value)`** / `unset(field)` / `mutate(ops, expectedRevision?)` | `packages/client/ui-settings/src/client/config-form.ts:241,266,293` + `config-form-types.ts:42-84`；`settings-contract.ts` 已删；用法实证 `packages/client/ui-theme/src/client/index.ts:421,431` |
 | （无） | **新增事件** `settings/document-updated`（emit） | `docs/subsystems/settings.zh.md:139-151` |
 | （无） | **新增包** `@deepseek-ai/dsh-config-editor`（base 补丁新增 `config-editor` 行） | `packages/boot/config-editor/package.json`；`packages/bundle/base/cordis.patch.yml:97-98` |
 
