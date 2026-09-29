@@ -4,7 +4,7 @@ slug: dsh-plugin-development
 displayName: DSH Plugin Development
 summary: Develop DSH (DeepSeek Harness) / Cordis plugins end to end — plugin forms, templates, an API cookbook, catalogued pitfalls, packaging and publishing, plus a mandatory version gate for the pre-stable upstream. Third-party fragments quoted here remain under their own licences (MIT / Apache-2.0 / BSD-3-Clause) — see the bundled LICENSE and NOTICE.
 description: A development-time skill for building plugins on DSH (DeepSeek Harness) / Cordis. It is not itself an installable DSH plugin; it is the tooling that guides a developer or AI agent through creating, debugging, packaging, and publishing one. This skill should be used when the user asks to develop a DSH plugin, write or modify a cordis plugin, add a tool, slash command, config schema, service, UI slot or HTTP route to DSH, run a periodic task inside a plugin, fix a plugin that fails to load or stays in PENDING, or package a plugin bundle for installation or distribution. It covers the plugin forms and official conventions, with 12 templates, 23 catalogued pitfalls, and copy-ready prompts for AI-agent pair development. Because DSH is pre-stable and ships breaking changes on a short cadence, it also ships a mandatory pre-coding version gate, a probe that re-verifies its own claims against a live source checkout, and a per-tag history of upstream breaking changes.
-version: 1.3.4
+version: 1.3.5
 license: MIT-0
 agent_created: true
 metadata:
@@ -33,7 +33,7 @@ metadata:
 
 ## 第 0 步（强制，不可跳过）· 版本闸门
 
-**references 是某一时刻的快照，会腐化。** DSH 处于 rc 阶段（基线 `dsh-v0.2.0-rc.1` / commit `4878cdabd8`，2026-09-28），tag 间隔中位数约 1.1 天、出现过破坏性变更。**所以不要承诺「不过时」，要保证「过时会响」。**
+**references 是某一时刻的快照，会腐化。** DSH 处于 rc 阶段（基线 `dsh-v0.2.0-rc.2` / commit `639ed01539`，2026-09-29），tag 间隔中位数约 1.1 天、出现过破坏性变更。**所以不要承诺「不过时」，要保证「过时会响」。**
 
 **① 权威顺序（源码永远压过本技能）**
 
@@ -61,25 +61,32 @@ bash   <skill>/scripts/dsh-api-probe.sh <DSH 仓库路径>    # 备选：仅当 
 > **目标版本高于基线时**不要猜：`dsh-sync.sh` 拉源码（先经确认）→ 探针核验 → `dsh-version-diff.sh` 出差异。
 > 完整机制（腐化推导、三级全表、五种核验手段、网络不可达时的降级路径）见 `references/00-version-gate.md`。
 
-**基线 `dsh-v0.2.0-rc.1` 的硬变化（照抄旧资料前先对照）**
+**基线 `dsh-v0.2.0-rc.2` 的硬变化（照抄旧资料前先对照）**
 
-DSH 每次发版的破坏性变更集中在少数几类。
+DSH 每次发版的破坏性变更集中在少数几类。**下面按「新 → 旧」排列，标题就是区间本身**（不再用「上一轮 / 上上轮」这类会随轮次漂移的说法）。
 
-**本轮（`0.1.7-rc.2` → `0.2.0-rc.1`；261 个提交、1 个新 tag）—— 🔴 本轮没有破坏性变更。** 手上是 rc.2 时代资料的人**不需要重读**，扫一眼下面 4 条增量即可（每条都实测过，不是「没查到」）：
+**`0.2.0-rc.1` → `0.2.0-rc.2`（187 个提交、1 个新 tag）—— 🔴 没有破坏性变更。** 手上是 rc.1 时代资料的人**不需要重读**，扫一眼下面 4 条增量即可（每条都实测过，不是「没查到」）：
+
+1. **官方包 0 增 0 减**：`packages/**/package.json` 计数 **325 → 325**，包名集合两端逐字相同；base 补丁（`id:` 行集合 + 全部配置键）**零改动**（blob `9c35ebf5` 两端相同）。→ 本区间**没有任何官方包被改名或移除**。
+2. **插槽 +1 / −0**：新增 **`sidebar.right.tab.files.actions`**（`kind: 'list'` / `scope: 'session'`，宿主 `ui-sidebar-files`，owner 属性 `absolutePath`；`packages/client/ui-sidebar-files/src/client/index.ts:34`）—— 位置是**文件树「重新加载」控件之后的目录动作位**。计数由 **124 / 126 / 约 89** 改为 **125 / 127 / 约 90**，客户端权威目录 `slot-catalog.ts` **89 → 90**（抽取器「漏抽量 = 0」护栏照旧）。同目录里 `conversation.chat.node` 的**已占用 key 表**多了 `question-reply`（`ui-user-questions` 的 `QuestionReplyView`）—— 那是 chat-node 的 **key**，**不是插槽**，别当插槽名用。
+3. **未变项（逐条实测，不是没查）**：`SESSION_FORMAT_VERSION` 仍 **4**；参数 DSL（`packages/core/tools/src/schema.ts`，`5aea4f4f`）与 `defineTool` 契约（`…/index.ts`，`ca89f370`）的 blob hash **两端相同**；模型 ID 仍 `deepseek-flash`；服务名 **126 → 126**、事件名 **109 → 109**、`defineTool` 工具名 **55 → 55**（三类各用独立抽取交叉核对，**移除数全为 0**）；CLI **无新增 `.option(`**；包内 `{skills,templates,examples}/` 文件清单 **18 → 18 两端逐字相同**。
+4. ⚠️ **两条「有内容但不动契约」的改动**（本区间唯一值得看一眼的）：① **`tool-ask-user` 首次带上 `Config`** —— 新增 `mode: 'legacy' / 'timed'`（默认 `legacy`，即行为不变）与 `timeout`（默认 `120` 秒，`-1` 不限；`packages/interaction/tool-ask-user/src/index.ts:16-25`）。`timed` 模式改注册 `…/src/timed.ts:103` 的 `registerTimedAskUser`，走 `ctx.userQuestions.askTimed(request, callId, timeout * 1000)`（`:197`）：前台等满即返回带 **`pending: true`** 的结果（问题仍可作答，**不是「跳过」**）；非法 `timeout` 由 `validateTimeout` 抛 `timeout must be -1 or a positive integer up to 2147483 seconds`（`:12-16`）。**工具名 `ask_user_question` 不变**，`timed` 下仅**多一个可选参数 `timeout`**（`TIMED_WAIT_PARAMETER`，`packages/interaction/user-questions/src/projection.ts:36`）→ 纯加法，默认 `legacy` 模式下完全不出现 → 非破坏性。② **`cordis_inspect_*` 的客户端查询有了超时与「网关无存活页面」预检** —— `cordis-host-runner` 新增配置键 **`clientInspectTimeoutMs`**（默认 `10000` ms，`1 ~ 2147483647`），超时报「timed out after Nms」并附首次失败诊断。🔴 **这两条都落在六维度「配置键变动」之外** —— 那一维**只扫 base 补丁**，而这里是**包内 `Config`**（全树扫出「新增键 3 / 移除键 0」，见 `13-version-history.md` §2 新行）。
+
+**`0.1.7-rc.2` → `0.2.0-rc.1`（261 个提交、1 个新 tag）—— 🔴 没有破坏性变更。** 手上是 rc.2 时代资料的人**不需要重读**，扫一眼下面 4 条增量即可（每条都实测过，不是「没查到」）：
 
 1. **官方包 +4 / 移除改名 0**：`dsh-otel`（共享遥测传输，base 补丁新增 `otel` 行）、`dsh-client-product-analytics`、`dsh-client-ui-settings-session-log`、`dsh-experimental-schedule-bundle`。**服务面只增不减**：新增客户端遥测服务 `DesktopAnalytics`；宿主 `otel` 与 `session-telemetry-otel` 两行的 `inject` 都多了 `otel`。既有插件**不用改**。
 2. **未变项（逐条实测）**：`SESSION_FORMAT_VERSION` 仍 **4**；**插槽零变化**（维持声明侧 124 / 并集 126 / 公开约 89，客户端权威目录 `slot-catalog.ts` **89 → 89**）；参数 DSL 源文件 `packages/core/tools/src/schema.ts` 与 `…/index.ts` 的 blob hash **两端相同**（`defineTool` 契约无变动）；模型 ID 仍 `deepseek-flash`；CLI 无新增选项；base 补丁 `id:` 行集合两端相同（只多 `otel` 一行 + 一个**新增**键 `maxRequestBytes`）。`packages/core/session/src/repair.ts` 虽然 +114 / −80，但那是**包内重构**（把待决 tool-result 回收提成 `ToolCallRecovery` 类），**不动格式版本、不是对外契约**。
 3. 🔴 **唯一「结构性新增」又一次落在常规六维度之外**：上游自带的开发 skill 树由 **15 文件 / 3 个 skill** 长到 **17 文件 / 4 个 skill** —— ① 新增 skill **`agent-experience`**（怎么写**模型可见的工具定义**、技能与上下文加载）；② **`cordis-plugin-development` 新增了一份 `user-actions.md`**，正式写下「**一个操作，两个调用者**」：UI 动作与 agent 工具接到**同一个宿主服务方法**上（UI 侧走 `ctx.remote.commands.execute()`，两侧共享返回值与失败），**授权类动作（批准工具调用 / 回答 agent 提问 / 放松策略）只能给用户**。→ 见 `references/02b-official-templates.md` 末节。
 4. ⚠️ **本区间 `!:` 自报破坏性提交 = 0 条**，与「一个破坏性项都没有」的实测**方向一致** —— 但**不要把 0 当结论**：同样是 0 的 `0.1.6-alpha.1` 区间里躺着整族改名。**判影响只能靠两端文件内容的集合 diff，`!` 只配当线索。**
 
-**上一轮（`0.1.7-rc.1` → `0.1.7-rc.2`；346 个提交、1 个新 tag）—— 🔴 同样没有破坏性变更。** 手上是 rc.1 时代资料的人**不需要重读**，扫一眼下面 4 条增量即可（每条都实测过，不是「没查到」）：
+**`0.1.7-rc.1` → `0.1.7-rc.2`（346 个提交、1 个新 tag）—— 🔴 没有破坏性变更。** 手上是 rc.1 时代资料的人**不需要重读**，扫一眼下面 4 条增量即可（每条都实测过，不是「没查到」）：
 
 1. **base 补丁里 `llm-deepseek` 那一行的实现包被换了**：`@deepseek-ai/dsh-llm-deepseek` → **`@deepseek-ai/dsh-llm-deepseek-api-key`**。**行的 `id: llm-deepseek` 没变**，所以按 **id** 定位的补丁（`patch` / `config` 覆写）**照样生效**；旧包在仓库里**也还在**。只有「按**包名**去 grep / 改写补丁」的人需要跟上。同批新增 `llm-deepseek-account` 行。
 2. **插槽 +3 / −0**：`shell.quota-notice`（框架级配额提示链，`chain` / `scope: root`，host 在 Chat 面板之外，提示能活过面板切换）、`sidebar.session.row.leading` 与 `sidebar.session.row.hover`（会话行首区 / 悬停区，新宿主 `ui-schedule` 用它们挂定时任务标记）。权威全量由约 **86** 增至约 **89** 个公开键。见 `04-ui-and-slots.md` §9.4。
 3. **新增能力面全是加法**：服务 `schedule`（宿主侧定时任务域）与 `shortcuts`（客户端键盘快捷键注册表）；agent 工具 `schedule_update`；事件 `deepseek-account/{session-expired,model-sign-in-required,signed-out}` 与 `schedule/changed`。**未变**：`SESSION_FORMAT_VERSION` 仍 `4`、base 配置键无增删改名、CLI 无新增选项、包内 `skills/templates/examples` 清单两端逐字相同。官方包 **+5 / 移除改名 0**。
 4. ⚠️ **本区间 `!:` 自报破坏性提交 = 0 条**，而上面第 1 条（唯一真正有影响的那条）**恰恰没被标** —— 又一次印证：**判影响只能靠两端文件内容的集合 diff，`!` 只配当线索。**
 
-**上上轮（`0.1.6-alpha.2` → `0.1.7-rc.1`；1617 个提交、4 个新 tag —— 版本链 3 个台阶 `0.1.7-alpha.1` / `-alpha.2` / `-rc.1`，另 `dsh-v0.1.5-rc.3` 为旁线发布、在本区间被后合并进主线）的插件作者必读**：
+**`0.1.6-alpha.2` → `0.1.7-rc.1`（1617 个提交、4 个新 tag —— 版本链 3 个台阶 `0.1.7-alpha.1` / `-alpha.2` / `-rc.1`，另 `dsh-v0.1.5-rc.3` 为旁线发布、在本区间被后合并进主线）的插件作者必读**：
 
 1. 🔴 **设置机制整套重做 —— 该轮最需要改认知的一条。** 旧路（`ctx.settings.installSection(...)` 注册命名空间 + 浏览器侧手写设置卡片）**已被整体移除**：`installSection`、`SettingsScope`、`settings.yaml`、客户端 `settingsScope` 服务与整个手写卡片族（−4608 / +73 行）**在新树源码里都不存在了**。新路：**表单由你的 `Config` schema 自动派生**（命名空间 = profile 条目 id），持久化改由**配置编辑器写 profile 的 Cordis patch**，写入带乐观并发（`expectedRevision` 不匹配抛 `SettingsConflictError`，`code = 'SETTINGS_CONFLICT'`）。**照抄旧的设置卡片教程会直接失败** → 见 `references/04-ui-and-slots.md` §10 与 §10.9 速查表。
 2. **会话格式版本 `3` → `4`**（`SESSION_FORMAT_VERSION`，`packages/core/session/src/types.ts:89`）。已落盘的 session 日志要经迁移链读（新增包 `dsh-session-format-v3-to-v4`）。**别在插件里写死 `3` 这个字面量**，用常量。
@@ -88,9 +95,9 @@ DSH 每次发版的破坏性变更集中在少数几类。
 5. **工具 DSL 新增两个可选契约**（`DefineToolOptions`）：`deferLoading?: true` 与 `projectContent?(exec, result)` —— 后者在 `tools/post-execute` 策略**之前**装入执行期内容，策略替换仍具权威性。**都是新增可选字段，不破坏既有插件**；旧代码不必改。
 6. **base 补丁新增** `config-editor` / `authorization` / `deepseek-account` 三行；base 内配置键 `maxInlineBytes` → **`maxInlineTokens`**（写死旧键的配置会失效）。
 7. **客户端插槽旁增**：`plugins.bundle.activation`、`plugins.detail.actions` / `.badge` / `.section`、`deliverables.file.actions`、`deliverables.review.file.actions`、`settings.launcher`、`shell.leading`、`settings.models.sign-in`、`sidebar.workspaces.session.menu.item`。
-8. 🔴 **上游开始自带插件开发技能与官方模板**：`dsh-agent-preset` 包内新增 `skills/` —— **`cordis-plugin-development`**（＝本技能的官方对应物，含 `templates/{mcp,decoration}`）＋ `cordis-composition-reference`（Loader YAML 方言 + 501 行可安装包清单）＋ `editing-cordis-compositions`。同批要认的两条 agent 侧能力面：**`plugin_manager` 工具**（8 个 action，agent 自己就能装插件，需 `danger-full-access` 权限）与 **`cordis_inspect_list` / `cordis_inspect_query`**（⚠️ **没有裸 `cordis_inspect`**，文档里的 `what:"client"` 是旧简写）。详见 `references/02b-official-templates.md` 末节。（👉 **`0.2.0-rc.1` 又把它扩到 4 个 skill / 17 文件**，新增 `agent-experience` 与上游 `packages/preset/agent-preset/skills/cordis-plugin-development/references/user-actions.md` —— 见上文本轮第 3 条。）
+8. 🔴 **上游开始自带插件开发技能与官方模板**：`dsh-agent-preset` 包内新增 `skills/` —— **`cordis-plugin-development`**（＝本技能的官方对应物，含 `templates/{mcp,decoration}`）＋ `cordis-composition-reference`（Loader YAML 方言 + 501 行可安装包清单）＋ `editing-cordis-compositions`。同批要认的两条 agent 侧能力面：**`plugin_manager` 工具**（8 个 action，agent 自己就能装插件，需 `danger-full-access` 权限）与 **`cordis_inspect_list` / `cordis_inspect_query`**（⚠️ **没有裸 `cordis_inspect`**，文档里的 `what:"client"` 是旧简写）。详见 `references/02b-official-templates.md` 末节。（👉 **`0.2.0-rc.1` 又把它扩到 4 个 skill / 17 文件**，新增 `agent-experience` 与上游 `packages/preset/agent-preset/skills/cordis-plugin-development/references/user-actions.md` —— 见上文 `0.1.7-rc.2` → `0.2.0-rc.1` 那段第 3 条；`0.2.0-rc.1` → `0.2.0-rc.2` 区间**未再变动**，18 → 18 文件逐字相同。）
 
-**再上轮（`dsh-v0.1.6-alpha.1` → `0.1.6-alpha.2`，887 个提交）** —— 手上是 alpha.1 时代资料的人仍要看这五条：
+**`0.1.6-alpha.1` → `0.1.6-alpha.2`（887 个提交）** —— 手上是 alpha.1 时代资料的人仍要看这五条：
 
 1. **插件配置插槽改名 + 换语义**：`settings.plugin.item`（`keyed`，key = 卡片所编辑的命名空间）→ **`plugins.item`**（`list`，用 `id` / `order` / `label`），宿主从 `ui-settings-plugins` 移到新包 `ui-plugin-manager`；同批新增 `plugins.bundle.config` / `plugins.row.config`。**不是别名关系**——旧名注册会抛「is not declared」。
 2. **官方包改名**：`@deepseek-ai/cordis-plugin-hmr` → **`@deepseek-ai/dsh-hmr`**（`hmr` 服务键 / `baseDir` / `config` / `hmr/change` / `hmr/reload` **都不变**）。同一 base 行的默认值也改了：`disabled: true` → `!ctx.get('profileContext')`、`root: ['.']` → `root: []`。
@@ -98,7 +105,7 @@ DSH 每次发版的破坏性变更集中在少数几类。
 4. **客户端产物契约扩展**：banner 从常量改为**按 chunk 生成**的函数，非入口分块多带 `chunk: "<fileName>",` 字段；分块名固定 `client.<name>.js`；包内动态 import 编译成 `require.async()`。**入口 chunk 的 banner 与旧版逐字相同**——只发单个 `client.js` 的插件不受影响。
 5. **base 补丁新增** `tool-plugin-manager` / `plugin-manager` 两行。
 
-**更早一轮（`dsh-v0.1.5-rc.2` → `0.1.6-alpha.1`，800 个提交）** —— 手上是 `0.1.5-rc.2` 时代资料的人还要看这六条：
+**`dsh-v0.1.5-rc.2` → `0.1.6-alpha.1`（800 个提交）** —— 手上是 `0.1.5-rc.2` 时代资料的人还要看这六条：
 
 1. **执行能力整族改名**：服务 `ctx.codeRuntime` → **`ctx.ptcRuntime`**；包族 `dsh-code-runtime*` → `dsh-ptc-runtime*`；类型 `CodeRuntime` / `CodeSdkLanguage` / `CodeRun*` → 对应 `Ptc*`。**不留别名**。（`run_code` 工具名与其 `code` 参数**没变**。）
 2. **E2B 执行后端整体移除**，改由新增的 **POSIX SSH 家族**（`dsh-ssh` / `dsh-fs-ssh` / `dsh-subprocess-ssh` / `dsh-sandbox-ssh`，服务 `ctx.ssh`）承担远程执行。
@@ -108,7 +115,7 @@ DSH 每次发版的破坏性变更集中在少数几类。
 6. **新增能力面**：服务 `ctx.browserUse` / `ctx.computerUse` / `ctx.mcpResources` / `ctx.terminalController`；事件 `compaction/summary-error`；`sessions.registerMessageProjection()`；`workspaceRegistry.unarchiveSession()`。
 
 **判据**：三条来源都要看 —— 探针（`M33`~`M37` / `N06`~`N08` / `P06`~`P07` / `V01` / `X07` / `U11`~`U12` / `X08`~`X09` 就是这几批）、`dsh-version-diff.sh` 的六维度、以及 `.agents/notes/` 的决策记录。
-**⚠️ 别指望 `!:`**：四个区间（800 + 887 + 1617 + 346 个提交）里，非 merge 提交带 `!:` 的**分别是 0 / 0 / 1 / 0 条**，而最狠的那些改名（`code-runtime` → `ptc-runtime`、`settings.plugin.item` → `plugins.item`）**一条都没标**。0.1.7-rc.1 区间那唯一一条标了的，删的还是**旁线上一个从未到达基线的子系统**（activity 平面）；本轮（346 个提交）**0 条**，而唯一真正有影响的改动（`llm-deepseek` 行的实现包换名）**恰恰没被标**。**`!` 既非充分也非必要。**
+**⚠️ 别指望 `!:`**：六个区间（800 + 887 + 1617 + 346 + 261 + 187 个提交）里，非 merge 提交带 `!:` 的**分别是 0 / 0 / 1 / 0 / 0 / 0 条**（实测命令：`git -C <repo> log --no-merges --oneline --grep='!:' <旧tag>..<新tag>`），而最狠的那些改名（`code-runtime` → `ptc-runtime`、`settings.plugin.item` → `plugins.item`）**一条都没标**。`0.1.6-alpha.2` → `0.1.7-rc.1` 那唯一一条标了的，删的还是**旁线上一个从未到达基线的子系统**（activity 平面）；最近三个区间（346 + 261 + 187 个提交）**全是 0 条**，而各自唯一真正有影响的改动（`llm-deepseek` 行的实现包换名、`tool-ask-user` 新增 `Config`、`cordis-host-runner` 新增 `clientInspectTimeoutMs`）**恰恰都没被标**。**`!` 既非充分也非必要。**
 
 
 ## 三条基础纪律
@@ -305,7 +312,7 @@ DSH 里最常见的「我明明装了啊」有五种成因，全部落在这 5 �
 
 ### 加载纪律（三条，先读再看表）
 
-1. **不要为「保险」通读 `references/`。** 全量约 **18.7 万词**，通读既装不下也不必要——这是本技能最贵的误用方式。
+1. **不要为「保险」通读 `references/`。** 全量 **1.7 万行 / 29 篇 `.md`**（口径：本 `SKILL.md` ＋ references 目录下全部 `.md`；中文字符 **14.4 万** + 英文及数字词 **8.0 万**），通读既装不下也不必要——这是本技能最贵的误用方式。
 2. **按「读法」列执行，只有三种**：
    - **整读** —— 文件不大，直接整份读；
    - **定点读** —— 先 `grep -n '<锚点>' <文件>` 拿行号，再只读那一节（`Read` 带 `offset` / `limit`）；

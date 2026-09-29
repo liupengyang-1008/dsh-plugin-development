@@ -442,7 +442,7 @@ DSH 处于 pre-stable / rc 阶段，**tag 间隔中位数约 1.1 天**，并且�
 
 | 项 | 值 |
 |---|---|
-| DSH 基线 | tag `dsh-v0.2.0-rc.1` / commit `4878cdabd8` / 2026-09-28 |
+| DSH 基线 | tag `dsh-v0.2.0-rc.2` / commit `639ed01539` / 2026-09-29 |
 | 上游仓库 | [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) |
 | 技能版本 | 见 `SKILL.md` frontmatter 的 `version`（**唯一落点**） |
 | 版本 ↔ 基线对照 | `references/13-version-history.md` §1.5 |
