@@ -915,7 +915,11 @@ export function AppearanceRow({ t, setTheme, useStore }: AppearanceRowComponentP
 | `slots` | UI 插槽注册表 | `ui-brand-official`、`ui-theme` |
 | `locale` | 文案 | `ui-theme` |
 | `remote` | 宿主↔客户端转发 | `ui-theme` |
-| `settingsScope` | 客户端设置订阅 | `ui-theme` |
+| `configForms` | 客户端设置表单的读 / 写面（`get<T>(entryId)` → `getSnapshot` / `subscribe` / `set` / `unset` / `mutate`） | `ui-theme` |
+
+> 🔴 **本表最后一行 2026-09-30 更正**：原先记的是 **`settingsScope`** —— 该客户端服务随 `0.1.7-rc.1` 的「设置机制重做」**已被移除**（新树全树 **0 命中**），继任者是 **`configForms`**。
+> 实测依据：`packages/client/ui-theme/src/client/index.ts:421` 的 `inject = ['slots', 'locale', 'remote', 'configForms']`、`:431` 的 `ctx.configForms.get<ThemeSettings>(ns)`。
+> 其余各行经同轮复核**仍然有效**。
 
 **宿主事件名（`ctx.on` 实证）**：`webserver/index-inject`（注入页面 HTML）、`theme/change`（自定义事件示例）。
 

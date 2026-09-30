@@ -1068,7 +1068,7 @@ packages/dsh-session-id/vitest.config.ts
 | `"exports"["./client"]` | 浏览器半区入口（**条件对象**，含 `types` + 运行时） | dsh-web 笔记 `2026-08-26-dsh-perf-client-export.md` 专讲这个（坑 B1/B2） |
 | `"exports"["./invariant"]` | 可选 | `packages/AGENTS.md` 逐字 |
 | `"exports"["./src/*"]` | 测试引用的源码直出 | `packages/AGENTS.md` 逐字："`./src/*` 用于测试引用" |
-| `"engines"."node"` | `"^22.19 || >=24"` | `packages/AGENTS.md` 逐字 |
+| `"engines"."node"` | `"^22.19 \|\| >=24"` | `packages/AGENTS.md` 逐字 |
 | `"peerDependencies"` | 运行时注入的服务 | `packages/AGENTS.md` 逐字："peerDependencies 声明运行时注入的服务" |
 | `"files"` | **未找到** | 三个仓库都读不到（dsh-web 的 AGENTS.md 未提 `files` 字段） |
 

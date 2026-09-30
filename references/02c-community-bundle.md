@@ -200,7 +200,7 @@
 | 1 | 补丁文件**只写注释 + 一个 `- insert:` 列表**，注释可以写得很长（它就是这个插件的"文档"） | 整个文件 |
 | 2 | 插一行就能给模型加 35 个工具（靠 `@deepseek-ai/dsh-mcp-client`） | 文件头注释：`so every dsh agent gets tools named mcp__ouroboros__ouroboros_interview, mcp__ouroboros__ouroboros_auto, and 33 others` |
 | 3 | **`!!js` 可以写在 `config:` 内部**（`env:` 里就用了），与官方复盘 0002 一致 | `env:` 段落 |
-| 4 | 🔥 **子进程环境会被"清洗"**：`@deepseek-ai/dsh-subprocess` 会把**凭据形状的名字**（正则 `/KEY\|PASSWORD\|SECRET\|TOKEN/i`）**和所有 `DSH_*`** 从父环境里删掉。**你要传的凭据必须显式列在 `env:` 里** | 注释原文：`hands mcp-client a scrubbed parent env with every credential-shaped name (/KEY|PASSWORD|SECRET|TOKEN/i) and every DSH_* name removed` |
+| 4 | 🔥 **子进程环境会被"清洗"**：`@deepseek-ai/dsh-subprocess` 会把**凭据形状的名字**（正则 `/KEY\|PASSWORD\|SECRET\|TOKEN/i`）**和所有 `DSH_*`** 从父环境里删掉。**你要传的凭据必须显式列在 `env:` 里** | 注释原文：`hands mcp-client a scrubbed parent env with every credential-shaped name (/KEY\|PASSWORD\|SECRET\|TOKEN/i) and every DSH_* name removed` |
 | 5 | 🔥 **后面的层"替换"整段 `config`，不做深合并** —— 所以覆盖时必须**把整个 config 重述一遍** | 注释原文：`restating the whole config, since a later layer replaces a row's config rather than deep-merging it` |
 | 6 | 用 `?? ''` 保持"值的类型是字符串"（该行的 schema 是 string dict），用 `\|\|` 提供真值回退 | 注释原文：`` `?? ''` keeps every value a string (the row's schema is a string dict) `` |
 | 7 | 长任务要**显式加大超时**（默认 mcp-client 60s → 这里 1800000ms = 30 分钟） | 注释原文：`give it real headroom instead of dsh's 60s mcp-client default` |

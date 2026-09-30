@@ -7,7 +7,7 @@
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
 
-> **本文件导航 —— 共 634 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
+> **本文件导航 —— 共 636 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
 > - **上游素材原文**：约 200 行（32%），起点：`F-official-pitfalls.md`（文件末尾）。**不是本技能重写的整理稿**；性质不一——**有的是官方文档逐字摘录（属权威原文），有的是调研期粗笔记（仅备查）**。读某一段前，务必连带读**该段开头的取材说明**。
 > - **其余部分 = 面向任务的整理稿**，可直接照做；但它同样是基线快照，写代码前先过版本闸门。
 > - 常用检索：`grep -n '^### 坑 P'`（按编号定位单条坑）、`grep -n '^# F\.'`（档案起点）
@@ -230,8 +230,10 @@
 - **注册类 API 一般自带 disposer**，直接用返回值即可，不必再包：
   ```ts
   ctx.slots.register({ name: '...' }, Comp)   // 返回 () => void
-  settings.register(ns, Schema)               // 返回 disposer
+  ctx.locale.register(NS, { zh, en })         // 返回 () => void（幂等）
   ```
+  > ⚠️ **2026-09-30 更正**：本例第二行原写 `settings.register(ns, Schema)` —— 该 **Host 侧**入口随 `0.1.7-rc.1` 的设置机制重做**已被移除**（新树全树 0 命中），换成同一文件里仍有效的 `ctx.locale.register(...)`
+  > （`packages/client/locale/src/client/index.ts:389,399` 的两个重载均返回 `() => void`）。**「注册类 API 自带 disposer」这条通用规则不变。**
 - **来源**：官方 `packages/client/ui-theme/src/client/index.ts`。
 
 ### 坑 P11 · 裸注册 → 热重载报 `duplicate` ★★
