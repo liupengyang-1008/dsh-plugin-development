@@ -3,7 +3,7 @@
 > **文件来源**：本文件由 `02-templates.md` 拆分而来，正文为原文的**逐行搬迁**，未做改写。
 > **本册性质**：**全部是上游一手素材原文** —— 性质不一：既有官方文档的**逐字摘录（属权威原文）**，也有调研期写下的**粗笔记（仅备查）**。**读某一段前，务必连带读该段开头的取材说明**，那是判断这段能信多少的依据。
 > **不要整读**：先 `grep -n '^#{1,2} '` 拿小节清单，再只读需要的那一节。本技能面向任务的整理稿见 `02-templates.md`。
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.0-rc.2` / commit `639ed01539`，2026-09-29），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-alpha.1` / commit `5badb15009`，2026-10-03），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 
@@ -13,7 +13,7 @@
 
 # E. 官方自带插件 —— 七类可复用模板（原始素材）
 
-> 来源：**DSH 上游检出**（完整克隆，commit `639ed01539`，`0.2.0-rc.2`；本 skill 不附带该检出，核验方式见 `00-version-gate.md`）。
+> 来源：**DSH 上游检出**（完整克隆，commit `5badb15009`，`0.2.1-alpha.1`；本 skill 不附带该检出，核验方式见 `00-version-gate.md`）。
 > 所有代码**逐字照抄**仓库原文，未改写。每个模板标注来源文件路径。
 > 面向《DSH 插件开发实战手册》补充篇，读者为零软件工程经验新手。
 
@@ -930,7 +930,7 @@ export function AppearanceRow({ t, setTheme, useStore }: AppearanceRowComponentP
 ## 附：官方 UI 插槽名（**节选 40 余个**，实测提取）
 
 > ⚠️ **这不是全清单。** 本表由 `grep -rhoE "slots\.(inject|register)\(\s*'[^']+'" packages/*/*/src` 提取，因此**天然抓不到内建键**（如 `root` 是用 `renderSlot('root')` 渲染的）。
-> 对 `dsh-v0.2.0-rc.2` 的声明侧复核结果：**125 个键**（并集 **127** 个；剔除 **37** 个测试专用键后**约 90 个公开可用**）—— 2026-09-23 修好抽取器两处漏抽后重抽、2026-09-25 随 rc.2 推进 **+3 / −0**、2026-09-29 随 0.2.0-rc.1 推进 **+0 / −0**、2026-09-30 随 0.2.0-rc.2 推进 **+1 / −0**（旧值 96/99/约81 系低估）。另有**客户端半侧的权威口径**：上游生成产物 `packages/extensions/cordis-client-runner/src/client/slot-catalog.ts` 现有 **90 个**，抽取器 A2 段与它自动交叉核对，**漏抽量须为 0**。完整清单与可复现的抽取命令见 `14-inbound-http-and-timers.md` 与 `scripts/extract_slots.py`；注册签名（组件是第二个参数）与「未声明 slot 报什么错」也记在那里。
+> 对 `dsh-v0.2.1-alpha.1` 的声明侧复核结果：**127 个键**（并集 **129** 个；剔除 **37** 个测试专用键后**约 92 个公开可用**）—— 2026-09-23 修好抽取器两处漏抽后重抽、2026-09-25 随 rc.2 推进 **+3 / −0**、2026-09-29 随 0.2.0-rc.1 推进 **+0 / −0**、2026-09-30 随 0.2.0-rc.2 推进 **+1 / −0**、**2026-10-04 随 0.2.1-alpha.1 推进 +2 / −0**（旧值 96/99/约81 系低估）。另有**客户端半侧的权威口径**：上游生成产物 `packages/extensions/cordis-client-runner/src/client/slot-catalog.ts` 现有 **92 个**，抽取器 A2 段与它自动交叉核对，**漏抽量须为 0**。完整清单与可复现的抽取命令见 `14-inbound-http-and-timers.md` 与 `scripts/extract_slots.py`；注册签名（组件是第二个参数）与「未声明 slot 报什么错」也记在那里。
 > 用法：`ctx.slots.inject('<插槽名>', () => ctx.slots.register({ name: '<插槽名>' }, 组件))`
 
 ### 会话 / 对话区（conversation.*）
@@ -1012,7 +1012,9 @@ export function AppearanceRow({ t, setTheme, useStore }: AppearanceRowComponentP
 
 ## 附：官方 `packages/AGENTS.md` 对写插件的硬约束（原文摘录）
 
-**来源**：`deepseek-harness/packages/AGENTS.md`（26 行，官方对"包/插件"的强制约定）。
+**来源**：`deepseek-harness/packages/AGENTS.md`（27 行，官方对"包/插件"的强制约定）。
+
+> 🔴 **`0.2.1-alpha.1` 变更（blob `f0c49d55` → `8c071dac`，28 → 27 行）**：① 原「**Publish `./invariant` only for diverging observations.** …」**整条已删除**；② 「**Package tsconfig**」规则里 `references runtime-diagnostics/invariants only when the package publishes ./invariant` 子句也已去掉。→ **新写插件不必再考虑 `./invariant` 这套发布约定**（历史素材里出现的 `exports["./invariant"]` 只适用于仓库内既有包，别照抄）。
 
 ### 前 3 条是新手必读（逐字）
 
@@ -1075,15 +1077,15 @@ my-plugin/
 
 ---
 
-## 附：🔴 上游**随产品自带**的开发 skill 与官方模板（`0.1.7-rc.1` 新增、`0.2.0-rc.1` 扩员 —— 别错过）
+## 附：🔴 上游**随产品自带**的开发 skill 与官方模板（`0.1.7-rc.1` 新增，`0.2.0-rc.1` / `0.2.1-alpha.1` 两次扩员 —— 别错过）
 
 > 本节由 **2026-09-23 复核补入**：本轮首轮六维度差异**整块漏掉了它**。重要性与本册同级 —— **上游现在自己发布了一套插件开发技能与模板**，随 `dsh-agent-preset` 包装到用户机器上。
 
-**位置**：`packages/preset/agent-preset/skills/`（旧基线**完全没有**该目录；`0.1.7-rc.1` 由 `d1e22a7e24 feat(preset): declare Agent compositions in profile YAML (#4569)` 一次引入 15 个文件，`0.2.0-rc.1` 再增至 **17 个文件 / 4 个 skill**）
+**位置**：`packages/preset/agent-preset/skills/`（旧基线**完全没有**该目录；`0.1.7-rc.1` 由 `d1e22a7e24 feat(preset): declare Agent compositions in profile YAML (#4569)` 一次引入 15 个文件，`0.2.0-rc.1` 再增至 17 个文件，`0.2.1-alpha.1` 再增至 **21 个文件 / 4 个 skill**）
 
 | 官方 skill | 覆盖什么 | 规模 |
 |---|---|---|
-| **`cordis-plugin-development`** | **持久化插件 / MCP 连接的编写、安装、配置、调试** —— 本册的官方对应物。流程：先写进工作区 → 用 `plugin_manager` 装 → **拿插件本身当第一版预览**（首装前不得造预览 HTML / mock 外壳 / 截图脚本）→ 验证 → 同插件内修缺陷 | `SKILL.md` + `references/{host-plugin,mcp-bundle,practices,ui-plugin,verification,user-actions}.md` + **`templates/{mcp,decoration}/`**（`user-actions.md` 为 **`0.2.0-rc.1` 新增**） |
+| **`cordis-plugin-development`** | **持久化插件 / MCP 连接的编写、安装、配置、调试** —— 本册的官方对应物。流程：先写进工作区 → 用 `plugin_manager` 装 → **拿插件本身当第一版预览**（首装前不得造预览 HTML / mock 外壳 / 截图脚本）→ 验证 → 同插件内修缺陷 | `SKILL.md` + `references/{host-plugin,mcp-bundle,practices,ui-plugin,verification,user-actions}.md` + **`templates/{mcp,decoration}/`**（`user-actions.md` 为 **`0.2.0-rc.1` 新增**；**`0.2.1-alpha.1` 起两个模板各补 `icon.svg` + `locale/en.json`**） |
 | `agent-experience` | **怎么写「模型可见」的工具定义**：参数说明放参数上、每条事实只说一次、删掉模型能从调用结果学到的约束、优先有界输出（给 id / 路径让模型再取）、把可能的邻近上下文随结果一起给并**显式标注截断**；也讲技能与上下文加载、以及「省上下文只有不导致更多搜索/重复读才算赚」。**`0.2.0-rc.1` 新增** | `SKILL.md`(30 行) |
 | `cordis-composition-reference` | **Loader YAML 方言**（`insert` / 按 id `override` / `group` / `disabled` / `isolate` / `!!js`）+ **可安装包清单** | `SKILL.md`(29 行) + `packages/preset/agent-preset/skills/cordis-composition-reference/references/packages.md`(**501 行**) |
 | `editing-cordis-compositions` | agent preset 的改动流程 | `SKILL.md`(84 行) |
@@ -1098,7 +1100,20 @@ my-plugin/
 
 **怎么验**（原文的 Verification 段）：对两者都可用的操作，**只经工具**执行一遍，把状态变化、返回值、失败与 UI 动作**逐项对照**；对 user-only 的动作，**反过来验证 agent 确实无法执行或授权**。
 
-**官方模板** = 本册 `assets/minimal-*` 的官方对应物：`templates/mcp/`（`cordis.patch.yml` 8 行 + `package.json` 7 行）、`templates/decoration/`（`client.js` 22 + `cordis.patch.yml` 3 + `index.js` 2 + `package.json` 15）。
+### 🔴 `0.2.1-alpha.1` 新增的官方约定：**显示元数据与图标**（上游 `packages/preset/agent-preset/skills/cordis-plugin-development/references/host-plugin.md` 的 §*Display metadata and icon*）
+
+上游第一次把「**插件该长什么样**」写成安装前必须完成的检查清单 —— 依据是 **Plugin Manager 与 Settings 会在不激活插件的前提下**直接读 `locale/*.json` 里的 `meta.title` / `meta.description` 与 `./icon`。四条要点（原文要点，非逐字翻译）：
+
+1. **i18n 标题与描述必须真实**：在 `locale/en.json` 的 `meta.title` / `meta.description` 写**可辨识的标题 + 能说明能力的描述**；给用户语言及其他支持语言补同样的字段（如 `locale/zh.json`）。**不得留下与最终插件无关的模板文案。**
+2. **图标必须原创或可再分发**：自己画，或用许可允许再分发的美术资源，**保留要求的署名**。
+3. **导出 + `files` 白名单同步扩**：导出 `./locale/*.json` 与 `./icon`（**保留既有运行时导出**），并把 patch、locales、icon、每个运行时文件都列进 `files`；**新增模块或资源时必须更新它**。打包/发布的包要核对**实际打包清单**；本地目录安装是链接 checkout、`files` **不过滤**链接目录，要看真实文件。
+4. **图标必须真能渲染**：校验格式合法、路径与**大小 ≤ 256 KiB**、留在包内（绝对路径、URL、指向包外的符号链接一律拒绝）。**文件名合法 ≠ 字节可渲染。** 支持 SVG / PNG / JPEG / WebP。
+
+> **包根插件 vs 子路径插件**：包根插件可在 `package.json` 顶层声明 `icon`（**优先于 `./icon`**，路径相对 manifest 目录）；子路径插件（如 `my-plugins/search`）**不是包**、从不读 `package.json`，要导出 `./search/locale/*.json` 与 `./search/icon`。包根插件缺字段回落到 `package.json` 的 `name` / `description`，缺图用面板默认美术；元数据畸形会产出诊断并保留合法文本。
+
+**怎么验**（原文的 Verification 段）：装完后在**包详情与插件行**核对标题/描述与**渲染出的图标**（含用户语言）；查元数据诊断与非预期回落。**没有浏览器控制时，只能检查已安装资源并如实报告「渲染未核验」—— 不得仅凭安装成功就宣称视觉通过。**
+
+**官方模板** = 本册 `assets/minimal-*` 的官方对应物，`0.2.1-alpha.1` 起两个模板都带显示资源：`templates/mcp/`（`cordis.patch.yml` 8 行 + `package.json` **9** 行 + `icon.svg` 5 + `locale/en.json` 6）、`templates/decoration/`（`client.js` 22 + `cordis.patch.yml` 3 + `index.js` 2 + `package.json` **21** + `icon.svg` 3 + `locale/en.json` 6）。
 
 > 🔴 **用法的硬约束**（官方 `SKILL.md` 原文）：这些文件在 **Desktop 里位于 `app.asar` 内**，只有 Host 自身的文件读取能打开 —— `ls` / `cat` / `cp` / `cmp`、glob、原生 ripgrep、`node`、pnpm **全部失败**。必须先**用文件读写工具把模板复制进工作区**再装，**绝不就地安装或就地做语法检查**。
 

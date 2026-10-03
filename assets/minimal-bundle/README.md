@@ -18,6 +18,16 @@
 4. **`id` 全局唯一。** ⚠️ 0.1.6-alpha.1 起重复 `id` **不再报错**，而是同 id 两行互相覆盖（后者胜，静默生效）；`--dump-config` 里两行都在，但只有一行真的起作用。
 5. **`config` 是整段替换，不是深合并。** 后续层覆盖某一行时，必须把整个 `config` 重述一遍。
 
+## 显示元数据与图标（`0.2.1-alpha.1` 起的官方检查清单）
+
+Plugin Manager 与 Settings 会**在不激活插件的前提下**直接读 `locale/*.json` 里的 `meta.title` / `meta.description` 与 `./icon`。零代码组合包**同样适用**（官方 `SKILL.md`：「This applies to Host-only and configuration-only bundles too」）。缺字段会**优雅回落**到 `package.json` 的 `name` / `description`、缺图用面板默认美术 —— 这不是硬报错，但**要让插件在列表里可辨识、好看，就得补上**：
+
+1. 建 `locale/en.json`（以及用户语言的 `locale/zh.json`）：`{"meta":{"title":"…","description":"…"}}`，**别留与本插件无关的模板文案**。
+2. 放一枚图标：原创，或许可允许再分发的素材并保留署名；格式 SVG / PNG / JPEG / WebP，**≤ 256 KiB**，且必须留在包内。
+3. `exports` 补 `"./locale/*.json"` 与 `"./icon"`；`files` 是**白名单**，新增模块或资源**必须同步补进去**，否则不进包。
+
+完整清单与「怎么验」（含无浏览器控制时**不得声称视觉通过**）：`references/02b-official-templates.md` §「显示元数据与图标」。
+
 ## 安全使用（含 MCP 示例，必读）
 
 `cordis.patch.yml` 里的 MCP 示例会**在 DSH 启动时下载并执行外部包** —— 这是这份骨架里唯一有真实安全含义的地方。三条硬要求：

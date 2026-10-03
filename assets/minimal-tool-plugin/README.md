@@ -54,6 +54,16 @@ dsh plugin --profile <profile 名> add dsh-tool-greet
 3. **构建产物必须叫 `index.js` 且在包根**——`main` 与 `exports['.']` 指向的就是它。
 4. ⚠️ **不要把 `@deepseek-ai/*` 写进 `dependencies`**（DSH profile 已提供）。独立工程里 `tsc` 可能因此报「找不到模块」，那是**类型解析**问题不是运行期问题；别用「声明一个假依赖」去消掉它。
 
+## 显示元数据与图标（`0.2.1-alpha.1` 起的官方检查清单）
+
+即便是**纯工具插件**（没有 UI），Plugin Manager 也会在**不激活它**的前提下读 `locale/*.json` 的 `meta.title` / `meta.description` 与 `./icon` 来渲染插件行。缺字段**优雅回落**到 `package.json` 的 `name` / `description`、缺图用默认美术 —— 非硬报错，但要让插件可辨识就该补：
+
+1. `locale/en.json`：`{"meta":{"title":"…","description":"…"}}`（再给 `locale/zh.json`）。
+2. 一枚图标：SVG / PNG / JPEG / WebP，**≤ 256 KiB**，原创或许可允许再分发，留在包内。
+3. `exports` 补 `"./locale/*.json"` 与 `"./icon"`，并同步进 `files` 白名单。
+
+完整清单与验证方法：`references/02b-official-templates.md` §「显示元数据与图标」。
+
 ## 四条必须遵守的规则
 
 1. **不要写 `export default`。** 函数式插件用命名导出 `name` / `inject` / `apply`；有 default 会被当成服务类解析，命名空间被丢弃。

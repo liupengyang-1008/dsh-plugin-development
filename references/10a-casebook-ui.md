@@ -3,7 +3,7 @@
 > **文件来源**：本文件由 `10-community-casebook.md` 拆分而来，正文为原文的**逐行搬迁**，未做改写。
 > **本册性质**：**全部是上游一手素材原文** —— 性质不一：既有官方文档的**逐字摘录（属权威原文）**，也有调研期写下的**粗笔记（仅备查）**。**读某一段前，务必连带读该段开头的取材说明**，那是判断这段能信多少的依据。
 > **不要整读**：先 `grep -n '^#{1,2} '` 拿小节清单，再只读需要的那一节。总索引见 `10-community-casebook.md`。
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.0-rc.2` / commit `639ed01539`，2026-09-29），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-alpha.1` / commit `5badb15009`，2026-10-03），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 
@@ -1053,7 +1053,7 @@ packages/dsh-session-id/vitest.config.ts
 
 - 一个完整插件**必须有**：`package.json`、`cordis.patch.yml`、`src/index.ts`（host 半区，**可以为空函数**）、`tsconfig.json` + `tsconfig.build.json`、`tsdown.config.ts`、`vitest.config.ts`、`README.md` + `README.zh.md` + `README.i18n.yaml`（双语三件套）、`AGENTS.md`（包级规则）、`.gitignore`、`LICENSE`。
 - 浏览器半区**全部**放 `src/client/`：入口 `index.ts`、组件 `*.tsx`、i18n `locales.ts`、语义属性 `semantic.ts`、遥测 `telemetry.ts`、CSS Modules `*.module.css`、以及 **`css-modules.d.ts`**（CSS Modules 的类型声明——没有它 TS 会报找不到 `*.module.css` 模块）。
-- **`src/invariant.ts`**：本包特有的"不变量"声明（供 `exports["./invariant"]` 用；AGENTS.md 说"必要时"才提供）。
+- **`src/invariant.ts`**：本包特有的"不变量"声明（供 `exports["./invariant"]` 用）。⚠️ 这是**仓库内既有包的现状**，不是对新插件的要求 —— `0.2.1-alpha.1` 起 `packages/AGENTS.md` 已**删除**这条约定。
 - 测试放 `tests/`，且是 `.spec.tsx`（用 vitest + 组件挂载）。
 
 **`package.json` 全文：未找到（blob 不可用）。** 只能给出**必须包含的字段清单**，以及每个字段的**形状依据**：
@@ -1066,7 +1066,7 @@ packages/dsh-session-id/vitest.config.ts
 | `"dsh"."client"."inject"` | 服务名数组 | 见 §二.2.3 与坑 D1 的车祸现场（`remote.agentPresets` 就在这个数组里） |
 | `"exports"."."` | host 半区入口 | `packages/AGENTS.md` 逐字 |
 | `"exports"["./client"]` | 浏览器半区入口（**条件对象**，含 `types` + 运行时） | dsh-web 笔记 `2026-08-26-dsh-perf-client-export.md` 专讲这个（坑 B1/B2） |
-| `"exports"["./invariant"]` | 可选 | `packages/AGENTS.md` 逐字 |
+| `"exports"["./invariant"]` | 可选（**`0.2.1-alpha.1` 起 `packages/AGENTS.md` 已删除该约定**，仅仓库内既有包在用；**新插件不必提供**） | ~~`packages/AGENTS.md` 逐字~~ **依据已失效**（见 `02b-official-templates.md` §附） |
 | `"exports"["./src/*"]` | 测试引用的源码直出 | `packages/AGENTS.md` 逐字："`./src/*` 用于测试引用" |
 | `"engines"."node"` | `"^22.19 \|\| >=24"` | `packages/AGENTS.md` 逐字 |
 | `"peerDependencies"` | 运行时注入的服务 | `packages/AGENTS.md` 逐字："peerDependencies 声明运行时注入的服务" |

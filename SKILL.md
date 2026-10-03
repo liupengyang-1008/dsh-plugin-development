@@ -4,7 +4,7 @@ slug: dsh-plugin-development
 displayName: DSH Plugin Development
 summary: Develop DSH (DeepSeek Harness) / Cordis plugins end to end — plugin forms, templates, an API cookbook, catalogued pitfalls, packaging and publishing, plus a mandatory version gate for the pre-stable upstream. Third-party fragments quoted here remain under their own licences (MIT / Apache-2.0 / BSD-3-Clause) — see the bundled LICENSE and NOTICE.
 description: A development-time skill for building plugins on DSH (DeepSeek Harness) / Cordis. It is not itself an installable DSH plugin; it is the tooling that guides a developer or AI agent through creating, debugging, packaging, and publishing one. This skill should be used when the user asks to develop a DSH plugin, write or modify a cordis plugin, add a tool, slash command, config schema, service, UI slot or HTTP route to DSH, run a periodic task inside a plugin, fix a plugin that fails to load or stays in PENDING, or package a plugin bundle for installation or distribution. It covers the plugin forms and official conventions, with 12 templates, 23 catalogued pitfalls, and copy-ready prompts for AI-agent pair development. Because DSH is pre-stable and ships breaking changes on a short cadence, it also ships a mandatory pre-coding version gate, a probe that re-verifies its own claims against a live source checkout, and a per-tag history of upstream breaking changes.
-version: 1.3.7
+version: 1.3.8
 license: MIT-0
 agent_created: true
 metadata:
@@ -33,7 +33,7 @@ metadata:
 
 ## 第 0 步（强制，不可跳过）· 版本闸门
 
-**references 是某一时刻的快照，会腐化。** DSH 处于 rc 阶段（基线 `dsh-v0.2.0-rc.2` / commit `639ed01539`，2026-09-29），tag 间隔中位数约 1.1 天、出现过破坏性变更。**所以不要承诺「不过时」，要保证「过时会响」。**
+**references 是某一时刻的快照，会腐化。** DSH 处于 rc 阶段（基线 `dsh-v0.2.1-alpha.1` / commit `5badb15009`，2026-10-03），tag 间隔中位数约 1.1 天、出现过破坏性变更。**所以不要承诺「不过时」，要保证「过时会响」。**
 
 **① 权威顺序（源码永远压过本技能）**
 
@@ -61,9 +61,16 @@ bash   <skill>/scripts/dsh-api-probe.sh <DSH 仓库路径>    # 备选：仅当 
 > **目标版本高于基线时**不要猜：`dsh-sync.sh` 拉源码（先经确认）→ 探针核验 → `dsh-version-diff.sh` 出差异。
 > 完整机制（腐化推导、三级全表、五种核验手段、网络不可达时的降级路径）见 `references/00-version-gate.md`。
 
-**基线 `dsh-v0.2.0-rc.2` 的硬变化（照抄旧资料前先对照）**
+**基线 `dsh-v0.2.1-alpha.1` 的硬变化（照抄旧资料前先对照）**
 
 DSH 每次发版的破坏性变更集中在少数几类。**下面按「新 → 旧」排列，标题就是区间本身**（不再用「上一轮 / 上上轮」这类会随轮次漂移的说法）。
+
+**`0.2.0-rc.2` → `0.2.1-alpha.1`（266 个提交、1 个新 tag）—— 🔴 没有破坏性变更。** 手上是 rc.2 时代资料的人**不需要重读**，扫一眼下面 4 条增量即可（每条都实测过，不是「没查到」）：
+
+1. **官方包 +5 / 移除改名 2**：新增 `dsh-experimental-claude-code-mods`（把 Claude Code 的 hook 模块桥接到 DSH 扩展点）、`dsh-experimental-client-ui-claude-code-mods`、`dsh-experimental-inspector-profile`、`dsh-experimental-session-inspector`、**`dsh-tool-schedule`**；移除 `dsh-experimental-schedule-bundle`（实验 bundle）与 `dsh-invariants`（内部 lint 包）。**`schedule` 宿主服务包仍在**（`@deepseek-ai/dsh-schedule`）—— `schedule_*` 那四个工具是**搬家**（`packages/schedule/schedule/src/tools.ts` → `packages/schedule/tool-schedule/src/index.ts`），不是新增也不是删除（`defineTool` 工具名两端 **86 → 86**）。`packages/**/package.json` 计数 **325 → 328**。**第三方插件从不声明 `@deepseek-ai/*` 依赖（合同不变量 5，由 profile 提供），故官方内部包的拆分与改名不构成破坏性变更。**
+2. **插槽 +2 / −0**：新增 **`plugins.add.actions`**（`kind: 'list'` / `scope: 'root'`，声明在 `@deepseek-ai/dsh-client-ui-plugin-manager`，`packages/client/ui-plugin-manager/src/client/slot-contract.ts:84` —— 即插件页**安装完成后追加的动作行**）与 **`shell.bottom`**（`kind: 'single'` / `scope: 'root'`，**声明宿主是 `ui-layout`**，`packages/client/ui-layout/src/client/index.ts:94` —— 横跨三列下方的**整行底部面板**位，首个占用方是 `experimental-inspector`，`packages/experimental/inspector/src/client/bottom/page.tsx:63,91`）—— 两键在旧树上**零命中**。计数由 **125 / 127 / 约 90** 改为 **127 / 129 / 约 92**，客户端权威目录 `slot-catalog.ts` **90 → 92**（两个新键就是全部 delta，「漏抽量 = 0」护栏照旧）。
+3. **未变项（逐条实测，不是没查）**：`SESSION_FORMAT_VERSION` 仍 **4**；参数 DSL（`packages/core/tools/src/schema.ts`，`5aea4f4f`）与 `defineTool` 契约（`…/index.ts`，`ca89f370`）的 blob hash **两端相同**；模型 ID 仍 `deepseek-flash`；CLI **无新增 `.option(`**；base 补丁 blob `9c35ebf5` **两端逐字相同**（`id:` 行与全部配置键零变动）。服务面**只增不减**：`super(ctx, 'name')` 新增 `claudeCodeMods` / `collectorSpawner` / `unboundFixture`，移除的 `invariants` / `invariantProbe` 是随 `dsh-invariants` 包一起走掉的**仓库内部 lint 服务**（第三方插件不会 `inject` 它）。
+4. ⚠️ **三条「有内容但不动契约」的改动**（本区间值得看一眼的全部内容）：① **包内 `Config` 键 +7 / −0**（🔴 **落在六维度之外**，那一维只扫 base 补丁）—— 新包 `claude-code-mods` 首次带 `Config`（`hookTimeoutMs` / `catchTimeoutMs` / `processTimeoutMs` / `toolAliases` / `bandColumns` / `bandRows`），`bundle/web-app` 新增 **`publicUrl`**（对外播报的规范 HTTP(S) 根，缺省仍用 loopback URL —— 纯加法）。② **官方 `packages/AGENTS.md` 删掉一条约定**：`Publish ./invariant only for diverging observations` 及其 tsconfig 引用（28 → 27 行）—— 与 `dsh-invariants` 包移除同源；**只影响仓库内开发，不影响第三方插件**。③ **上游 `cordis-plugin-development` skill 新增「显示元数据与图标」检查清单**：插件要在包内 `locale/` 目录的 `en.json` 写 `meta.title` / `meta.description`、导出 `./icon`、并把 locale 资源与图标一并列进 `files`（上游模板 `templates/{decoration,mcp}` 各新增 `icon.svg` + 一个 `en.json`，该 skill 树 **17 → 21 文件 / 仍是 4 个 skill**）—— 见 `references/02b-official-templates.md` 末节。
 
 **`0.2.0-rc.1` → `0.2.0-rc.2`（187 个提交、1 个新 tag）—— 🔴 没有破坏性变更。** 手上是 rc.1 时代资料的人**不需要重读**，扫一眼下面 4 条增量即可（每条都实测过，不是「没查到」）：
 
@@ -95,7 +102,7 @@ DSH 每次发版的破坏性变更集中在少数几类。**下面按「新 → 
 5. **工具 DSL 新增两个可选契约**（`DefineToolOptions`）：`deferLoading?: true` 与 `projectContent?(exec, result)` —— 后者在 `tools/post-execute` 策略**之前**装入执行期内容，策略替换仍具权威性。**都是新增可选字段，不破坏既有插件**；旧代码不必改。
 6. **base 补丁新增** `config-editor` / `authorization` / `deepseek-account` 三行；base 内配置键 `maxInlineBytes` → **`maxInlineTokens`**（写死旧键的配置会失效）。
 7. **客户端插槽旁增**：`plugins.bundle.activation`、`plugins.detail.actions` / `.badge` / `.section`、`deliverables.file.actions`、`deliverables.review.file.actions`、`settings.launcher`、`shell.leading`、`settings.models.sign-in`、`sidebar.workspaces.session.menu.item`。
-8. 🔴 **上游开始自带插件开发技能与官方模板**：`dsh-agent-preset` 包内新增 `skills/` —— **`cordis-plugin-development`**（＝本技能的官方对应物，含 `templates/{mcp,decoration}`）＋ `cordis-composition-reference`（Loader YAML 方言 + 501 行可安装包清单）＋ `editing-cordis-compositions`。同批要认的两条 agent 侧能力面：**`plugin_manager` 工具**（8 个 action，agent 自己就能装插件，需 `danger-full-access` 权限）与 **`cordis_inspect_list` / `cordis_inspect_query`**（⚠️ **没有裸 `cordis_inspect`**，文档里的 `what:"client"` 是旧简写）。详见 `references/02b-official-templates.md` 末节。（👉 **`0.2.0-rc.1` 又把它扩到 4 个 skill / 17 文件**，新增 `agent-experience` 与上游 `packages/preset/agent-preset/skills/cordis-plugin-development/references/user-actions.md` —— 见上文 `0.1.7-rc.2` → `0.2.0-rc.1` 那段第 3 条；`0.2.0-rc.1` → `0.2.0-rc.2` 区间**未再变动**，18 → 18 文件逐字相同。）
+8. 🔴 **上游开始自带插件开发技能与官方模板**：`dsh-agent-preset` 包内新增 `skills/` —— **`cordis-plugin-development`**（＝本技能的官方对应物，含 `templates/{mcp,decoration}`）＋ `cordis-composition-reference`（Loader YAML 方言 + 501 行可安装包清单）＋ `editing-cordis-compositions`。同批要认的两条 agent 侧能力面：**`plugin_manager` 工具**（8 个 action，agent 自己就能装插件，需 `danger-full-access` 权限）与 **`cordis_inspect_list` / `cordis_inspect_query`**（⚠️ **没有裸 `cordis_inspect`**，文档里的 `what:"client"` 是旧简写）。详见 `references/02b-official-templates.md` 末节。（👉 **`0.2.0-rc.1` 又把它扩到 4 个 skill / 17 文件**，新增 `agent-experience` 与上游 `packages/preset/agent-preset/skills/cordis-plugin-development/references/user-actions.md`；**`0.2.1-alpha.1` 再增至 21 文件**（`templates/{decoration,mcp}` 各补 `icon.svg` + 包内 `locale/` 的 `en.json`）并新增「**显示元数据与图标**」检查清单 —— 见上文 `0.2.0-rc.2` → `0.2.1-alpha.1` 那段第 4 条。）
 
 **`0.1.6-alpha.1` → `0.1.6-alpha.2`（887 个提交）** —— 手上是 alpha.1 时代资料的人仍要看这五条：
 
@@ -115,7 +122,7 @@ DSH 每次发版的破坏性变更集中在少数几类。**下面按「新 → 
 6. **新增能力面**：服务 `ctx.browserUse` / `ctx.computerUse` / `ctx.mcpResources` / `ctx.terminalController`；事件 `compaction/summary-error`；`sessions.registerMessageProjection()`；`workspaceRegistry.unarchiveSession()`。
 
 **判据**：三条来源都要看 —— 探针（`M33`~`M37` / `N06`~`N08` / `P06`~`P07` / `V01` / `X07` / `U11`~`U12` / `X08`~`X09` 就是这几批）、`dsh-version-diff.sh` 的六维度、以及 `.agents/notes/` 的决策记录。
-**⚠️ 别指望 `!:`**：六个区间（800 + 887 + 1617 + 346 + 261 + 187 个提交）里，非 merge 提交带 `!:` 的**分别是 0 / 0 / 1 / 0 / 0 / 0 条**（实测命令：`git -C <repo> log --no-merges --oneline --grep='!:' <旧tag>..<新tag>`），而最狠的那些改名（`code-runtime` → `ptc-runtime`、`settings.plugin.item` → `plugins.item`）**一条都没标**。`0.1.6-alpha.2` → `0.1.7-rc.1` 那唯一一条标了的，删的还是**旁线上一个从未到达基线的子系统**（activity 平面）；最近三个区间（346 + 261 + 187 个提交）**全是 0 条**，而各自唯一真正有影响的改动（`llm-deepseek` 行的实现包换名、`tool-ask-user` 新增 `Config`、`cordis-host-runner` 新增 `clientInspectTimeoutMs`）**恰恰都没被标**。**`!` 既非充分也非必要。**
+**⚠️ 别指望 `!:`**：七个区间（800 + 887 + 1617 + 346 + 261 + 187 + 266 个提交）里，非 merge 提交带 `!:` 的**分别是 0 / 0 / 1 / 0 / 0 / 0 / 0 条**（实测命令：`git -C <repo> log --no-merges --oneline --grep='!:' <旧tag>..<新tag>`），而最狠的那些改名（`code-runtime` → `ptc-runtime`、`settings.plugin.item` → `plugins.item`）**一条都没标**。`0.1.6-alpha.2` → `0.1.7-rc.1` 那唯一一条标了的，删的还是**旁线上一个从未到达基线的子系统**（activity 平面）；最近四个区间（346 + 261 + 187 + 266 个提交）**全是 0 条**，而各自真正有影响的改动（`llm-deepseek` 行的实现包换名、`tool-ask-user` 新增 `Config`、`cordis-host-runner` 新增 `clientInspectTimeoutMs`、`0.2.1-alpha.1` 的 **2 个新插槽** + `AGENTS.md` 删 `./invariant` 约定）**恰恰都没被标**。**`!` 既非充分也非必要。**
 
 
 ## 三条基础纪律
