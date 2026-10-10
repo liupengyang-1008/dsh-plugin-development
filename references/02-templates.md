@@ -2,7 +2,7 @@
 
 > **本文件用途**：由易到难的 12 个可直接复制的插件模板（T1~T12），覆盖零代码组合包、补丁语法、工具、命令、配置、服务、UI、设置卡片、流程拦截、外部集成、工程骨架。**官方七类模板的逐字源码**已拆到 `02b-official-templates.md`，**社区零代码组合包全文**已拆到 `02c-community-bundle.md`。T3/T5/T6 与 `02b` 的模板 3/4/5 是同一件事的两种粒度：本文件给讲解与坑，`02b` 给可逐字照抄的完整源码——**冲突时以 `02b` 的官方源码为准**。
 > **合成来源**：DSH插件开发实战补充-模板与踩坑.md（第二篇）
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-alpha.1` / commit `5badb15009`，2026-10-03），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-alpha.2` / commit `d743267388`，2026-10-09），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 
@@ -837,7 +837,7 @@ export function apply(ctx: ClientContext): void {
 | `settings.general.item` | 通用设置里加一行/一项 |
 | `conversation.view` | 替换对话主视图（最激进） |
 
-> ⚠️ 基线时本手册说这里有「40 个官方插槽名」——**那是低估**。对 `dsh-v0.2.1-alpha.1` 重新抽取：声明侧 **127 个键**、并集 **129** 个，剔除 **37** 个测试专用键后**约 92 个公开可用**（**2026-09-23 修好抽取器两处漏抽后重抽**；**2026-09-25 随 rc.2 推进 +3 / −0**；**2026-09-29 随 0.2.0-rc.1 推进 +0 / −0**；**2026-09-30 随 0.2.0-rc.2 推进 +1 / −0**；**2026-10-04 随 0.2.1-alpha.1 推进 +2 / −0**；此前公布的 96/99/约81 系低估）。
+> ⚠️ 基线时本手册说这里有「40 个官方插槽名」——**那是低估**。对 `dsh-v0.2.1-alpha.2` 重新抽取：声明侧 **129 个键**、并集 **131** 个，剔除 **37** 个测试专用键后**约 94 个公开可用**（**2026-09-23 修好抽取器两处漏抽后重抽**；**2026-09-25 随 rc.2 推进 +3 / −0**；**2026-09-29 随 0.2.0-rc.1 推进 +0 / −0**；**2026-09-30 随 0.2.0-rc.2 推进 +1 / −0**；**2026-10-04 随 0.2.1-alpha.1 推进 +2 / −0**；**2026-10-09 随 0.2.1-alpha.2 推进 +2 / −0**；此前公布的 96/99/约81 系低估）。
 > 完整清单与可复现命令：`<skill>/scripts/extract_slots.py <DSH仓库路径> <skill目录>`；签名与报错见 `14-inbound-http-and-timers.md` §17.4，那份是权威。
 
 ### 8.6 🔴 UI 插件的三条硬约束
@@ -916,7 +916,7 @@ throw new TypeError(
 > 这两个入口**在 `0.1.7-rc.1` 的设置机制重做里已被移除** —— 新的 `SettingsForms` 服务面只剩
 > `configure` / `prepareDocument` / `describe` / `update` / `replace` / `mutate`（逐条映射见 `04-ui-and-slots.md` §10.9）。
 > 新写法在下面：**设置项就是插件的 `Config` 字段**，用 `.volatile()` 标出「允许运行时热改」。
-> （来源：`packages/client/ui-theme/src/index.ts:22-44`，`dsh-v0.2.1-alpha.1` 实测）
+> （来源：`packages/client/ui-theme/src/index.ts:20-46`，`dsh-v0.2.1-alpha.2` 实测；下方为**节选**，真实 `Config` 界面另有 5 个字体族字段）
 
 ```ts
 export interface Config {
@@ -956,7 +956,7 @@ export function apply(ctx: Context, config: Config): void {
 > **`settingsScope` → `configForms`**；取表单的那一句 **`ctx.settingsScope.bind<T>({ namespace: ns })` → `ctx.configForms.get<T>(ns)`**。
 > 返回的 `ConfigForm<T>` 提供 `getSnapshot()` / `subscribe()` / `set(field, value)` / `unset(field)` / `mutate(ops, expectedRevision?)`
 > （`packages/client/ui-settings/src/client/config-form-types.ts:39-77`）。
-> 下面是当前上游的原文（`packages/client/ui-theme/src/client/index.ts:421,431`，`dsh-v0.2.1-alpha.1` 实测）：
+> 下面是当前上游的原文（`packages/client/ui-theme/src/client/index.ts:478,488`，`dsh-v0.2.1-alpha.2` 实测）：
 
 ```ts
 export const inject = ['slots', 'locale', 'remote', 'configForms']

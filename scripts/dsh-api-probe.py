@@ -38,8 +38,19 @@ import subprocess
 import sys
 from pathlib import Path
 
-BASELINE_COMMIT = "5badb15009"
-BASELINE_VER = "0.2.1-alpha.1"
+# 🔴 2026-10-10（1.4.0 轮实测）：本脚本会往 stdout 打印 ✅ / ⚠️ / ❌ 等符号，而 stdout 一旦是
+#    **管道**（W8 真机核验、CI、`| grep` 都属于这种），Windows 上的 Python 会按 ANSI 代码页
+#    （本机 cp936/GBK）编码，遇到 ✅（U+2705）直接抛 UnicodeEncodeError。外部表现是
+#    「退出码 1 且没有 SUMMARY 行」—— 极易被误读成「有 STALE」（1 与「有 STALE」同码）。
+#    这里强制 UTF-8，并把不可编码字符降级为替换字符，使重定向场景下的读数可信。
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace")   # Python 3.7+
+    except Exception:                                            # pragma: no cover
+        pass
+
+BASELINE_COMMIT = "d743267388"
+BASELINE_VER = "0.2.1-alpha.2"
 
 # ── 断言表 ──────────────────────────────────────────────────────────────────
 # 格式：ID,等级,说明,模式,作用域

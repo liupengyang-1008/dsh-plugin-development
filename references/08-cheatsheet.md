@@ -2,7 +2,7 @@
 
 > **本文件用途**：速查卡，三部分：① 三种插件形态对照表（最容易搞混，放最前）② 完整 API 速查——服务名（inject 字符串）、事件名（含 waterfall 全套）、UI 插槽名、官方斜杠命令、CLI 命令、目录与路径、工具参数 DSL 类型（全部由源码 grep 提取，带实证来源列）③ 主手册的插件骨架、四类注册、真实范本清单、判断口诀，以及带 core/seam/bundle 角色的 ctx 键速查表。写代码时随手查这一份就够。
 > **合成来源**：DSH插件开发实战补充-模板与踩坑.md（仅第六篇 6.5） + I-quickref.md + DSH插件开发指导手册.md（附录 A/B/C）
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-alpha.1` / commit `5badb15009`，2026-10-03），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-alpha.2` / commit `d743267388`，2026-10-09），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
@@ -35,7 +35,7 @@
 
 # I. 速查表 —— 服务 / 事件 / 插槽 / 命令 / 扩展点（全部实测）
 
-> 来源：`deepseek-harness`（commit `5badb15009`）。全部由源码 grep 提取，**不是文档复述**。
+> 来源：`deepseek-harness`（commit `d743267388`）。全部由源码 grep 提取，**不是文档复述**。
 > 使用方法：写插件时先在这张表里找"我要挂到哪"。
 
 ---
@@ -58,7 +58,7 @@
 | `tokenMeter` | token 计量 | `docs/subsystems/compaction.zh.md` |
 | `toolResultPruner` | 工具结果裁剪 | `docs/subsystems/compaction.zh.md` |
 | `sessionQuery` | 会话全文检索 | `docs/subsystems/core.zh.md` |
-| `ptcRuntime` | PTC 执行后端注册表（**0.1.6-alpha.1 起，原名 `codeRuntime`，无兼容别名**） | `packages/ptc-runtime/ptc-runtime/src/index.ts` |
+| `ptcRuntime` | PTC 执行后端注册表（**0.1.6-alpha.1 起，原名 `codeRuntime`，无兼容别名**；⚠️ **`0.2.1-alpha.2` 起 `ptc` 模式下带 Agent 的 `run_code` 还需 `ctx.workingDirectory` 在册**，缺失即抛 `dsh-tools: run_code with an Agent requires workingDirectory` —— 官方 base 补丁已补该行，自建组合须自查） | `packages/ptc-runtime/ptc-runtime/src/index.ts` |
 | `ssh` | POSIX SSH 执行后端（0.1.6-alpha.1 新增，替代被移除的 `e2b`） | `packages/ssh/ssh/src/index.ts` |
 | `browserUse` | 浏览器自动化后端注册（**只登记名字与 disposer**，不含浏览器对象/操作方法；同名二次注册必失败） | `packages/browser-use/browser-use/src/index.ts` |
 | `computerUse` | 桌面自动化后端注册（同上，独立于 `browserUse`） | `packages/computer-use/computer-use/src/index.ts` |
@@ -156,7 +156,7 @@
 
 ---
 
-## 3. UI 插槽名（**最常用的几个**；权威全量约 **92** 个公开键 —— 对基线 `dsh-v0.2.1-alpha.1` 抽取：声明侧 **127**、并集 **129**、剔除 **37** 个测试专用键后约 92 个公开可用。用 `scripts/extract_slots.py` 复现（**2026-09-23 修好抽取器两处漏抽后重抽**；**2026-09-25 随 rc.2 推进 +3 / −0**；**2026-09-29 随 0.2.0-rc.1 推进 +0 / −0**；**2026-09-30 随 0.2.0-rc.2 推进 +1 / −0**（客户端权威目录 `slot-catalog.ts` **89 → 90**；新增键 = `sidebar.right.tab.files.actions`）；**2026-10-04 随 0.2.1-alpha.1 推进 +2 / −0**（`slot-catalog.ts` **90 → 92**；新增键 = `plugins.add.actions` / `shell.bottom`，另见 `04-ui-and-slots.md` 的登记）；此前公布的 96/99/约81 系低估））
+## 3. UI 插槽名（**最常用的几个**；权威全量约 **94** 个公开键 —— 对基线 `dsh-v0.2.1-alpha.2` 抽取：声明侧 **129**、并集 **131**、剔除 **37** 个测试专用键后约 94 个公开可用。用 `scripts/extract_slots.py` 复现（**2026-09-23 修好抽取器两处漏抽后重抽**；**2026-09-25 随 rc.2 推进 +3 / −0**；**2026-09-29 随 0.2.0-rc.1 推进 +0 / −0**；**2026-09-30 随 0.2.0-rc.2 推进 +1 / −0**（客户端权威目录 `slot-catalog.ts` **89 → 90**；新增键 = `sidebar.right.tab.files.actions`）；**2026-10-04 随 0.2.1-alpha.1 推进 +2 / −0**（`slot-catalog.ts` **90 → 92**；新增键 = `plugins.add.actions` / `shell.bottom`）；**2026-10-09 随 0.2.1-alpha.2 推进 +2 / −0**（`slot-catalog.ts` **92 → 94**；新增键 = `conversation.chat.flow` / `conversation.chat.reasoning.body`，另见 `04-ui-and-slots.md` 的登记）；此前公布的 96/99/约81 系低估））
 
 **最常用的三个**：
 
@@ -313,7 +313,7 @@ ctx.slots.inject('插槽名', () => ctx.slots.register({ name: '插槽名', id, 
 
 # 附录 B 真实范本清单（照着抄最快）
 
-> 全部路径相对于仓库根。主文件行数为主 `src/index.ts` 的行数，「src 总量」为该包 `src/` 下所有 `.ts/.tsx` 行数之和。
+> 全部路径相对于仓库根。主文件行数为主 `src/index.ts` 的行数，「src 总量」为该包 `src/` 下所有 `.ts/.tsx` 行数之和。（行数对基线 `dsh-v0.2.1-alpha.2` 逐个实测。）
 
 ## B.1 最小可运行（学习包骨架）
 
@@ -321,7 +321,7 @@ ctx.slots.inject('插槽名', () => ctx.slots.register({ name: '插槽名', id, 
 |---|---|---|---|---|
 | `@deepseek-ai/dsh-brand` | `packages/util/brand` | 39 | 39 | 最小非 UI 包 |
 | `@deepseek-ai/dsh-client-ui-brand-official` | `packages/client/ui-brand-official` | 7 | **49** | **最小 UI 插件**（首选范本） |
-| `@deepseek-ai/dsh-subagent-spawn-in-process` | `packages/subagent/subagent-spawn-in-process` | 70 | 70 | 最小能力 Provider |
+| `@deepseek-ai/dsh-subagent-spawn-in-process` | `packages/subagent/subagent-spawn-in-process` | 61 | 61 | 最小能力 Provider（⚠️ `0.2.1-alpha.2` 的 subagent 重构使其由 70 缩到 **61**） |
 | `@deepseek-ai/dsh-agent-tool-presentation` | `packages/core/agent-tool-presentation` | 72 | 72 | 最小 `apply` + config |
 
 ## B.2 工具插件
@@ -415,7 +415,7 @@ ctx.slots.inject('插槽名', () => ctx.slots.register({ name: '插槽名', id, 
 | `ctx.sessionProjections` | core | 会话投影单元 |
 | `ctx.compaction` | **seam** | 压缩 |
 | `ctx.skills` | **seam** | Skill 提供方注册表 |
-| `ctx.subagents` | **seam** | Subagent 提供方与延续服务 |
+| `ctx.subagents` | **seam** | Subagent 提供方与延续服务（⚠️ **`0.2.1-alpha.2` 起方法名收窄**：`startActivation()` 取代 `start()` / `startContinuable()`；`drainChildren()` / `drainDescendants()` 取代 `drainContinuable*`；新增 `waitForChildren()`，6 个 `Continuable*` / `*Descriptor*` 类型删除 —— 详见 `13-version-history.md` §2） |
 | `ctx.userQuestions` | **seam** | 人类问答 |
 | `ctx.workflowEngine` | **seam** | 工作流脚本引擎 |
 

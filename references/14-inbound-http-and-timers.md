@@ -1,7 +1,7 @@
 <!--
 本文件是**手工维护**的 curated 参考，不由 scripts/build_dsh_skill.sh 生成。
 （生成器只产出 01~13 号文件；本文件已在脚本的 KEEP 白名单内，重跑不会被删。）
-所有断言均对 DSH `dsh-v0.2.1-alpha.1` / commit `5badb15009`（2026-10-03）逐条源码核验，
+所有断言均对 DSH `dsh-v0.2.1-alpha.2` / commit `d743267388`（2026-10-09）逐条源码核验，
 复现脚本：`scripts/verify_absorbed_claims.py <DSH 仓库路径>`。
 -->
 
@@ -157,7 +157,7 @@ export function apply(ctx) {
 
 同段还写明：生成它的 `clientBundle` tsdown 预设位于 `packages/client/tsdown.client.ts`，**而不在任何已发布的包里**，因此仓库之外的包要自己复刻这一步构建（本手册 `04` §9.6 已就此展开）。
 
-**格式契约**（源码 `packages/client/tsdown.client.ts:618-624`，逐字）：
+**格式契约**（源码 `packages/client/tsdown.client.ts:617-623`，逐字）：
 
 ```js
 banner: (chunk) => {

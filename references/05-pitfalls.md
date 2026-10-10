@@ -2,7 +2,7 @@
 
 > **本文件用途**：按症状检索的踩坑百科：23 条编号坑点（P1~P22b）+ 症状速查表 + 报错信息/界面现象对照表 + 官方 4 篇事故复盘全文摘录与八条红线。插件出问题时第一站。
 > **合成来源**：DSH插件开发实战补充-模板与踩坑.md（第三篇，略去与官方复盘重复的红线摘要） + DSH插件开发指导手册.md（附录 E 报错对照表） + F-official-pitfalls.md
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-alpha.1` / commit `5badb15009`，2026-10-03），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-alpha.2` / commit `d743267388`，2026-10-09），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
@@ -164,7 +164,7 @@
 - **现象**：`cannot get property "sessionPersistence" without inject` —— 但从**顶层测试**读同一个服务却没问题。
 - **根因**：`ctx.<name>` 是**可追踪代理**，解析时**只向祖先方向**遍历 fiber；而该服务在一个**兄弟**分支上。从插件 fiber 内部经 shadow 到达时必崩。测试从顶层调用时走的是提前绕过的全局查找（`if (!ctx.fiber.runtime) return ctx.reflect.get(prop, false)`），所以能过。
 - **怎么修**：**读可选服务一律用 `ctx.get('name')`**（拓扑无关，且默认严格模式）。声明过的注入才用 `ctx.name`。
-- **来源**：`docs/postmortem/0001-...zh.md` 根因 #2。
+- **来源**：`docs/postmortem/0001-acp-default-export-drops-inject.zh.md` 根因 #2。
 
 ---
 
@@ -256,7 +256,7 @@
   > 生产指南要求重新构建产物，并在刷新后验证既有 URL。开发指南说明 HMR 接收端始终开启；**同一源码检出目录中的 `pnpm run dev:web` 会重新构建客户端插件 bundle，实现免刷新的重载，而 Web shell 和普通包的改动仍然需要刷新页面**。
   - **改 `cordis.patch.yml` / `package.json` / bundle 层 → 必须重启**
   - 只改被按需服务的 `lib/client.js` → 刷新页面可能够
-- **来源**：`docs/postmortem/0003-...zh.md`。
+- **来源**：`docs/postmortem/0003-web-agent-gui-feedback-loop.zh.md`。
 
 ---
 
@@ -280,7 +280,7 @@
 - **根因**（官方原文）：
   > 裸 Vite 返回 HTTP 200，使错误的启动路径看似合理。`window.__DSH_BOOT__` **只由完整宿主注入**，因此**传输层就绪不代表应用已就绪**。
 - **怎么修**：用完整的 `dsh web` 启动，不要只跑裸 Vite；验收必须指向**用户原本打开的那个 URL**。
-- **来源**：`docs/postmortem/0003-...zh.md`。
+- **来源**：`docs/postmortem/0003-web-agent-gui-feedback-loop.zh.md`。
 
 ### 坑 P15 · `missed the module table`（浏览器半侧引入了非法依赖）★★
 
@@ -438,7 +438,7 @@
 
 # F. 官方事故复盘（postmortem）—— 官方自己踩过的坑（原始素材）
 
-> 来源：`deepseek-harness/docs/postmortem/`（commit `5badb15009`）。共 **4 篇**，全部有中文版。
+> 来源：`deepseek-harness/docs/postmortem/`（commit `d743267388`）。共 **4 篇**，全部有中文版。
 > 这是**一手的一手材料**：官方自己写的「事故 → 根因 → 防护措施 → 教训」。
 > 引用一律逐字，标注来源文件。
 

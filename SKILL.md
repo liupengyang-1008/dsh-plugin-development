@@ -4,7 +4,7 @@ slug: dsh-plugin-development
 displayName: DSH Plugin Development
 summary: Develop DSH (DeepSeek Harness) / Cordis plugins end to end — plugin forms, templates, an API cookbook, catalogued pitfalls, packaging and publishing, plus a mandatory version gate for the pre-stable upstream. Third-party fragments quoted here remain under their own licences (MIT / Apache-2.0 / BSD-3-Clause) — see the bundled LICENSE and NOTICE.
 description: A development-time skill for building plugins on DSH (DeepSeek Harness) / Cordis. It is not itself an installable DSH plugin; it is the tooling that guides a developer or AI agent through creating, debugging, packaging, and publishing one. This skill should be used when the user asks to develop a DSH plugin, write or modify a cordis plugin, add a tool, slash command, config schema, service, UI slot or HTTP route to DSH, run a periodic task inside a plugin, fix a plugin that fails to load or stays in PENDING, or package a plugin bundle for installation or distribution. It covers the plugin forms and official conventions, with 12 templates, 23 catalogued pitfalls, and copy-ready prompts for AI-agent pair development. Because DSH is pre-stable and ships breaking changes on a short cadence, it also ships a mandatory pre-coding version gate, a probe that re-verifies its own claims against a live source checkout, and a per-tag history of upstream breaking changes.
-version: 1.3.8
+version: 1.4.0
 license: MIT-0
 agent_created: true
 metadata:
@@ -33,7 +33,7 @@ metadata:
 
 ## 第 0 步（强制，不可跳过）· 版本闸门
 
-**references 是某一时刻的快照，会腐化。** DSH 处于 rc 阶段（基线 `dsh-v0.2.1-alpha.1` / commit `5badb15009`，2026-10-03），tag 间隔中位数约 1.1 天、出现过破坏性变更。**所以不要承诺「不过时」，要保证「过时会响」。**
+**references 是某一时刻的快照，会腐化。** DSH 处于 rc 阶段（基线 `dsh-v0.2.1-alpha.2` / commit `d743267388`，2026-10-09），tag 间隔中位数约 1.1 天、出现过破坏性变更。**所以不要承诺「不过时」，要保证「过时会响」。**
 
 **① 权威顺序（源码永远压过本技能）**
 
@@ -61,9 +61,18 @@ bash   <skill>/scripts/dsh-api-probe.sh <DSH 仓库路径>    # 备选：仅当 
 > **目标版本高于基线时**不要猜：`dsh-sync.sh` 拉源码（先经确认）→ 探针核验 → `dsh-version-diff.sh` 出差异。
 > 完整机制（腐化推导、三级全表、五种核验手段、网络不可达时的降级路径）见 `references/00-version-gate.md`。
 
-**基线 `dsh-v0.2.1-alpha.1` 的硬变化（照抄旧资料前先对照）**
+**基线 `dsh-v0.2.1-alpha.2` 的硬变化（照抄旧资料前先对照）**
 
 DSH 每次发版的破坏性变更集中在少数几类。**下面按「新 → 旧」排列，标题就是区间本身**（不再用「上一轮 / 上上轮」这类会随轮次漂移的说法）。
+
+**`0.2.1-alpha.1` → `0.2.1-alpha.2`（669 个提交、1 个新 tag）—— 🔴 有破坏性变更，手上是 alpha.1 时代资料的人必须看完下面 6 条。**
+
+1. 🔴 **工具呈现模式去掉 `'both'`**：`ToolPresentationMode` 由 `'native' | 'ptc' | 'both'` 收窄为 **`'native' | 'ptc'`**（`packages/core/tools/src/index.ts:672`；同包 `Config.mode` 的 zod union 也由 `['native','ptc','both'] as const` 改为 `['native','ptc'] as const`，`:812`；`packages/core/agent-tool-presentation/src/index.ts:51` 同步）。**任何 `mode: 'both'` 的补丁 / 配置会被校验拒绝**；官方描述由「PTC mode, native, or both」改为「PTC mode or native tool calls」。本技能正文与 `assets/` **零处引用**该值（已 grep 确认），但**它是对外契约的收窄**，不是内部实现细节。
+2. 🔴 **`ctx.subagents` 服务方法收窄**：`start(name, request)` 与 `startContinuable(spec)` 被 **`startActivation(spec)`（两个重载）** 取代；`drainContinuableChildren` / `drainContinuableDescendants` 改名为 **`drainChildren` / `drainDescendants`**，并新增 `waitForChildren`。类型 `ContinuableStart` / `ContinuableStartSpec` / `ContinuableSubagentDescriptorData` / `OneShotSubagentDescriptorData` / `SubagentDescriptorData` / `TeamMessageId` **被删除**；`SubagentProvider.start` 由必选改为**可选**（`start?(...)`）。调 `ctx.subagents.start(...)` 或 `startContinuable(...)` 的插件**会直接失败**。
+3. ⚠️ **`presentationMeta` / `ToolResult.meta` 的投影面从「只顶层」扩到「嵌套也算」**：`DefineToolOptions.output.presentationMeta`（`packages/core/tools/src/schema.ts:496-497`）与 `ToolOutputDefinition.presentationMeta`（`packages/core/tools/src/index.ts:219-220`）的文档由「direct top-level calls」改为「**native and nested calls**」，运行时守卫 `if (exec.parent === undefined && tool.output.presentationMeta !== undefined)` **去掉 `exec.parent === undefined` 前缀**（`packages/core/tools/src/index.ts:1851`），`ToolResult.meta` 的落点由「`tool/result`」扩为「**`tool/result` 或 `tool/ptc-dispatch`**」（`:310`）—— 来源提交 `c7e62c1062 fix(tools): retain nested PTC presentation metadata for historical locations`。**纯加法**（改前嵌套调用根本不产生 `meta`），但**声明了 `presentationMeta` 的插件，其钩子在嵌套 PTC 派发时也会被调用** —— 若你的实现假定「只在顶层被调」（例如内部计数、一次性初始化），需复核。
+4. ⚠️ **`ptc` 模式 + Agent 的 `run_code` 新增硬前提 `ctx.workingDirectory`**：`ToolRuntime.requirePtcTransport()` 给 `createRunCodeTool` 传了 `resolveWorkingDirectory` —— `exec.agent === undefined` 时返回 `undefined`（原生注册表与无主程序**不需要**目录状态），否则 `this.ctx.get('workingDirectory')` 缺失即抛 **`dsh-tools: run_code with an Agent requires workingDirectory`**（`packages/core/tools/src/index.ts:947-952`）—— 来源提交 `79bd3d8da7 feat(session): centralize working directories and directory context`。**官方 base 补丁同批新增 `working-directory` / `tool-working-directory` 两行，标准部署不受影响**；**自建 PTC 组合**（或不装该服务的 profile）在 `ptc` 模式下会**直接抛错**。
+5. **其余全是加法**：官方包 **+13 / −1** —— 新增 `dsh-experimental-{badge-skill-bundle, client-ui-cot-translation, cot-translation-bundle, ralph-bundle, session-search, session-titles-bundle, terminal-bundle, tool-worktree, translator, worktree}`、`dsh-ssh-helper-runtime`、`dsh-tool-working-directory`、`dsh-working-directory`（13 个）；移除 `dsh-subagent-in-process-driver`（全树 0 命中、无替代）。另有 10 个包**只是搬进 `experimental/`**（包名未变，第三方插件不声明 `@deepseek-ai/*` 依赖故无感）。插槽 **+2 / −0**：新增 `conversation.chat.flow`（`packages/client/ui-chat/src/client/contract/slots.ts:365-371`）与 `conversation.chat.reasoning.body`（`:402`）；计数由 **127 / 129 / 约 92** 改为 **129 / 131 / 约 94**，客户端权威目录 `slot-catalog.ts` **92 → 94**（漏抽量 = 0 护栏照旧）。
+6. **未变项（逐条实测，不是没查）**：`SESSION_FORMAT_VERSION` 仍 **4**；模型 ID 仍 `deepseek-flash`（只有显示名由 `DeepSeek-V41-Flash` 改成 `DeepSeek-V4.1-Flash`）；CLI **无新增 `.option(`**；`docs/postmortem/` 仍 4 篇；上游 skill 树 **22 文件 / 4 个 skill 两端相同**。⚠️ **但「参数 DSL」这一维本轮*不是*未变项**：`dsh-version-diff.sh` 已报出 `packages/core/tools/src/schema.ts` **`5aea4f4f` → `2cc6f0cb`** 与 `packages/core/tools/src/index.ts` **`ca89f370` → `e506d99d`**；逐行核对后，两份文件的改动**全部**由上面前 4 条解释（`presentationMeta` 嵌套投影、`run_code` 的 `workingDirectory`、`'both'` 收窄、`import type` 与注释），**`defineTool` 的参数 DSL 契约本身（`ParameterSchemaSpec` / `DefineToolOptions` 的字段与签名）未变** —— 这是本轮最容易被「blob 变了就以为没变」放过去的一处。⚠️ **三条「有内容但不动契约」的改动**：① base 补丁 blob `9c35ebf5` → **`9e3f03ee`**：+`working-directory` / +`tool-working-directory` 两行、−`skill-badge` / −整条 `tool-ralph`（**两者原本 `disabled: true`，默认行为不变**）、`tool-subagent` / `tool-subagent-fork` 去掉 `config.backgroundMode`、会话标题 `maxOutputTokens` **64 → 4096**（`packages/AGENTS.md` 同批删掉 `./invariant` 约定，28 → 27 行，只影响仓库内开发）。② 包内 `Config` 键 **+19 / −4**（🔴 **落在常规六维度之外**，那一维只扫 base 补丁，详见 `13-version-history.md` §2 与本轮区间行）。③ 包内非代码资源 **41 → 43**（新增实验包 `webhook-github/examples/github-review/`）。
 
 **`0.2.0-rc.2` → `0.2.1-alpha.1`（266 个提交、1 个新 tag）—— 🔴 没有破坏性变更。** 手上是 rc.2 时代资料的人**不需要重读**，扫一眼下面 4 条增量即可（每条都实测过，不是「没查到」）：
 
@@ -122,7 +131,7 @@ DSH 每次发版的破坏性变更集中在少数几类。**下面按「新 → 
 6. **新增能力面**：服务 `ctx.browserUse` / `ctx.computerUse` / `ctx.mcpResources` / `ctx.terminalController`；事件 `compaction/summary-error`；`sessions.registerMessageProjection()`；`workspaceRegistry.unarchiveSession()`。
 
 **判据**：三条来源都要看 —— 探针（`M33`~`M37` / `N06`~`N08` / `P06`~`P07` / `V01` / `X07` / `U11`~`U12` / `X08`~`X09` 就是这几批）、`dsh-version-diff.sh` 的六维度、以及 `.agents/notes/` 的决策记录。
-**⚠️ 别指望 `!:`**：七个区间（800 + 887 + 1617 + 346 + 261 + 187 + 266 个提交）里，非 merge 提交带 `!:` 的**分别是 0 / 0 / 1 / 0 / 0 / 0 / 0 条**（实测命令：`git -C <repo> log --no-merges --oneline --grep='!:' <旧tag>..<新tag>`），而最狠的那些改名（`code-runtime` → `ptc-runtime`、`settings.plugin.item` → `plugins.item`）**一条都没标**。`0.1.6-alpha.2` → `0.1.7-rc.1` 那唯一一条标了的，删的还是**旁线上一个从未到达基线的子系统**（activity 平面）；最近四个区间（346 + 261 + 187 + 266 个提交）**全是 0 条**，而各自真正有影响的改动（`llm-deepseek` 行的实现包换名、`tool-ask-user` 新增 `Config`、`cordis-host-runner` 新增 `clientInspectTimeoutMs`、`0.2.1-alpha.1` 的 **2 个新插槽** + `AGENTS.md` 删 `./invariant` 约定）**恰恰都没被标**。**`!` 既非充分也非必要。**
+**⚠️ 别指望 `!:`**：八个区间（800 + 887 + 1617 + 346 + 261 + 187 + 266 + 669 个提交）里，非 merge 提交带 `!:` 的**分别是 0 / 0 / 1 / 0 / 0 / 0 / 0 / 1 条**（实测命令：`git -C <repo> log --no-merges --oneline --grep='!:' <旧tag>..<新tag>`），而最狠的那些改名（`code-runtime` → `ptc-runtime`、`settings.plugin.item` → `plugins.item`）**一条都没标**。`0.1.6-alpha.2` → `0.1.7-rc.1` 那唯一一条标了的，删的还是**旁线上一个从未到达基线的子系统**（activity 平面）；其前四个区间（346 + 261 + 187 + 266 个提交）**全是 0 条**，而各自真正有影响的改动（`llm-deepseek` 行的实现包换名、`tool-ask-user` 新增 `Config`、`cordis-host-runner` 新增 `clientInspectTimeoutMs`、`0.2.1-alpha.1` 的 **2 个新插槽** + `AGENTS.md` 删 `./invariant` 约定）**恰恰都没被标**。**最新区间 `0.2.1-alpha.1` → `0.2.1-alpha.2`（669 个提交）终于有 1 条非 merge 的 `!:`（`b48384223a refactor(experimental)!: …`），但它标的是「把可选包归类、把原型搬走」这类**包整理**，而本轮真正动契约的两处（`ToolPresentationMode` 去掉 `'both'`、`ctx.subagents` 方法收窄）**一处都没标**——呈现模式那处只在一条 **merge 提交标题**里带 `!`（`36f12b6f6e refactor(tools)!: …`），`--no-merges` 口径压根统计不到。**`!` 既非充分也非必要。**
 
 
 ## 三条基础纪律
@@ -319,7 +328,7 @@ DSH 里最常见的「我明明装了啊」有五种成因，全部落在这 5 �
 
 ### 加载纪律（三条，先读再看表）
 
-1. **不要为「保险」通读 `references/`。** 全量 **1.7 万行 / 29 篇 `.md`**（口径：本 `SKILL.md` ＋ references 目录下全部 `.md`；中文字符 **14.4 万** + 英文及数字词 **8.0 万**），通读既装不下也不必要——这是本技能最贵的误用方式。
+1. **不要为「保险」通读 `references/`。** 全量 **1.6 万行 / 24 篇 `.md`**（口径：本 `SKILL.md` ＋ `references/` 下全部 `.md`，实测 **15,973 行 / 24 篇**；中文字符 **14.4 万** + 英文及数字词 **8.0 万**，后者 = 剥离 CJK 后的 `[^\W_]+` 词数；**整个技能目录**含 README 与 `assets/` 则为 29 篇 / 1.7 万行），通读既装不下也不必要——这是本技能最贵的误用方式。
 2. **按「读法」列执行，只有三种**：
    - **整读** —— 文件不大，直接整份读；
    - **定点读** —— 先 `grep -n '<锚点>' <文件>` 拿行号，再只读那一节（`Read` 带 `offset` / `limit`）；

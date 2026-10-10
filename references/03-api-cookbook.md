@@ -2,12 +2,12 @@
 
 > **本文件用途**：工具插件（defineTool 与裸 register 两条路径）、可配置插件（Config 与 Schema DSL）、斜杠命令、事件五种分发模式与 waterfall 拦截、服务插件、终端家族。写具体功能时按需查。
 > **合成来源**：DSH插件开发指导手册.md（第 4~8 章）
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-alpha.1` / commit `5badb15009`，2026-10-03），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-alpha.2` / commit `d743267388`，2026-10-09），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
 
-> **本文件导航 —— 共 1,094 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
+> **本文件导航 —— 共 1,100 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
 > - **本文件全是整理稿**（无上游素材混杂），但它仍是基线快照——写代码前先过版本闸门。
 > - 常用检索：`grep -n '^## '`（API 面分类）、`grep -n 'ctx\.'`（按 API 名查）
 
@@ -88,7 +88,7 @@ export interface DefineToolOptions<S extends ParameterSchemaSpec, O extends Valu
     readonly schema: O
     /** Pure Native/model rendering of one validated canonical value. */
     render(args: InferArgs<S>, value: InferValue<NoInfer<O>>): ContentBlock[]
-    /** Pure replayable presentation metadata for direct top-level calls. */
+    /** Pure replayable presentation metadata for native and nested calls. */
     presentationMeta?(args: InferArgs<S>, value: InferValue<NoInfer<O>>): JsonValue
   }
   /** Optional positive cooperative timeout budget in milliseconds. */
@@ -100,6 +100,8 @@ export interface DefineToolOptions<S extends ParameterSchemaSpec, O extends Valu
   presentResult?(args: InferArgs<S>, result: ToolResult): ToolResultView | undefined
 }
 ```
+
+> ⚠️ **`0.2.1-alpha.2` 变更（`c7e62c1062`）**：`output.presentationMeta` 的注释由「direct top-level calls」改为「**native and nested calls**」，运行时守卫也去掉了 `exec.parent === undefined` 前缀 —— **嵌套 PTC 派发现在同样会投影**（`ToolResult.meta` 随之落到 `tool/result` **或** `tool/ptc-dispatch`）。上方摘录已同步为新签名。**纯加法**（改前嵌套调用根本不产生 `meta`），但**声明了该钩子的插件在嵌套派发时也会被调用** —— 若实现里假定「只在顶层被调」，需复核（`packages/core/tools/src/schema.ts:496-497`、`packages/core/tools/src/index.ts:219-220`、`:310`、`:1851`）。
 
 **按重要性分三档**：
 
@@ -115,7 +117,7 @@ export interface DefineToolOptions<S extends ParameterSchemaSpec, O extends Valu
 | 可选 | `isConcurrencySafe(args)` | 返回 `true` 才允许与其他工具**并行**跑 |
 | 可选 | `presentCall` / `presentResult` | UI 卡片呈现（见第 8 章） |
 | 可选 | `finalizeContent` | 模型可见内容的最后一道变换 |
-| 可选 | `presentationMeta` | 供 UI 回放的元数据 |
+| 可选 | `presentationMeta` | 供 UI 回放的元数据（**`0.2.1-alpha.2` 起嵌套调用也投影**） |
 
 ## 4.4 参数怎么写（Schema DSL）
 
@@ -843,7 +845,7 @@ export function apply(ctx: Context) {
 
 ### ⚠️ 可选依赖必须用 `ctx.get()`，不要用 `ctx.<name>`
 
-这是官方事故复盘里的根因之一（`docs/postmortem/0001-...zh.md`），也是 `packages/AGENTS.md:6` 的硬规则（逐字）：
+这是官方事故复盘里的根因之一（`docs/postmortem/0001-acp-default-export-drops-inject.zh.md`），也是 `packages/AGENTS.md:6` 的硬规则（逐字）：
 
 > **Optional services use `ctx.get(name)`.** Reserve `ctx.<name>` for declared injections; the property proxy is topology-sensitive, while strict `ctx.get` reads the global service store.
 
@@ -907,7 +909,7 @@ export function apply(ctx: Context) {
 
 > 尝试彻底移除 `./greeter.ts`：消费方会保持 PENDING，不输出任何内容，既不崩溃，也不会只运行一部分。处于 PENDING 的 fiber 也不会让 Node 的事件循环保持活跃，因此如果组合中没有其他运行项，进程会静默地以状态码 0 退出。
 
-**好消息：DSH 启动时会审计这件事。** 源码实证（`packages/boot/app-boot/src/index.ts:881` 单条格式串、`:901` 分组汇总表）：树 settle 后，对仍处于 PENDING 的条目会打印
+**好消息：DSH 启动时会审计这件事。** 源码实证（`packages/boot/app-boot/src/index.ts:884` 单条格式串、`:904` 分组汇总表）：树 settle 后，对仍处于 PENDING 的条目会打印
 
 ```
 <name>: pending (waiting for service: <缺失服务>)
@@ -959,7 +961,7 @@ export function apply(ctx: Context) {
 
 ## 8.2 终端能力由三个包组成
 
-来源：`packages/terminal/README.zh.md:26-30`
+来源：`packages/terminal/README.zh.md:27-30`（⚠️ `0.2.1-alpha.2` 起该家族只剩 `terminal/` 与 `terminal-bash/` 两行 —— `tool-terminal/` 已搬到 `packages/experimental/tool-terminal/`，**包名 `@deepseek-ai/dsh-tool-terminal` 不变**）
 
 | 包 | 角色 | ctx 键 |
 |---|---|---|
@@ -967,9 +969,11 @@ export function apply(ctx: Context) {
 | `terminal-bash/`（`@deepseek-ai/dsh-terminal-bash`） | **shell 后端**：在共享沙箱策略下启动交互式 bash 或 pwsh | 注册后端到 `ctx.terminals` |
 | `tool-terminal/`（`@deepseek-ai/dsh-tool-terminal`） | **6 个面向模型的工具** | 注册到 `ctx.tools` |
 
+> ⚠️ **`0.2.1-alpha.2` 起 `tool-terminal/` 不在 `packages/terminal/` 下了** —— 它搬到 `packages/experimental/tool-terminal/`（**包名不变**），故下方两处引用均指向新路径；`packages/terminal/` 只剩 `terminal/`（会话服务）与 `terminal-bash/`（shell 后端）。
+
 **这三个包正好演示了第 1 章讲的 capability seam 三角色**：Service Definition + Service Provider + Consumer。这是仓库里最标准的三角色范本。
 
-组合方式（`packages/terminal/tool-terminal/README.zh.md:44-46`，逐字）：
+组合方式（`packages/experimental/tool-terminal/README.zh.md:46-48`，逐字）：
 
 ```yaml
 - name: '@deepseek-ai/dsh-terminal'
@@ -988,13 +992,13 @@ export function apply(ctx: Context) {
 | `terminal_close` | 关闭会话 |
 | `terminal_list` | 列出会话 |
 
-来源：`packages/terminal/tool-terminal/README.zh.md:26-33`
+来源：`packages/experimental/tool-terminal/README.zh.md:34-41`（新位置含「作用 / 结果」两列）
 
 **这六个工具就是普通的 `defineTool`**，和第 4 章你学的完全同构。它们本身不渲染任何东西——**呈现交给各 UI 的适配器**。
 
 ## 8.4 带 Config 的终端工具（示范"数值范围校验"）
 
-来源：`packages/terminal/tool-terminal/src/index.ts:21-46`（逐字）
+来源：`packages/experimental/tool-terminal/src/index.ts:37-49`（逐字）
 
 ```ts
 /** Model-facing terminal tool configuration. */
@@ -1013,6 +1017,8 @@ export const Config: z<Config> = z.object({
 ```
 
 💡 **这段是「第 5 章 Config」的最佳实战范本**：注意它用了 `.min()` / `.max()` / `.step()` 做范围约束——这就是官方说的"配置错误要响亮"。
+
+> ⚠️ **`0.2.1-alpha.2` 变更**：上面这段 Config 本身**逐字未变**，但同文件的 `inject` 多了 **`workingDirectory`**（`['terminals','tools','systemPrompt','workingDirectory']`，`:30`），且 `terminal_open` 的 **`cwd` 语义改了** —— 由「缺省用部署工作区根」改为**「相对 Session 当前目录解析，非绝对路径即按 Session 目录展开」**（`:171` 的描述串 + `:187-192` 用 `ctx.workingDirectory.ensure(owner, exec.signal)` 取值再 `resolve(cwd, args.cwd)`）。**写这类工具的插件若要「跟着会话换目录」，需照抄这个 `inject` + `ensure()` 模式。**
 
 ## 8.5 工具卡片：让工具在界面上好看
 
