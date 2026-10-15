@@ -7,7 +7,7 @@
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
 
-> **本文件导航 —— 共 441 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
+> **本文件导航 —— 共 442 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
 > - **上游素材原文**：约 192 行（46%），起点：`I-quickref.md`（文件开头）。**不是本技能重写的整理稿**；性质不一——**有的是官方文档逐字摘录（属权威原文），有的是调研期粗笔记（仅备查）**。读某一段前，务必连带读**该段开头的取材说明**。
 > - **其余部分 = 面向任务的整理稿**，可直接照做；但它同样是基线快照，写代码前先过版本闸门。
 > - 常用检索：`grep -n '^## '`、`grep -n '^# I\.'`（档案起点）
@@ -54,6 +54,7 @@
 | `slots` | UI 插槽注册表（客户端） | `client/ui-brand-official` |
 | `locale` | 文案（客户端） | `client/ui-theme` |
 | `remote` | 宿主↔客户端转发 | `client/ui-theme` |
+| `configForms` | 客户端设置表单的读 / 写面（`get<T>(entryId)` → `getSnapshot` / `subscribe` / `set` / `unset` / `mutate`；自 `0.1.7-rc.1` 起取代已移除的 `settingsScope`） | `client/ui-theme/src/client/index.ts:536`（`inject`）、`:548`（`ctx.configForms.get<T>(ns)`） |
 | `approval` | 审批分发服务 | `docs/subsystems/approval.zh.md` |
 | `tokenMeter` | token 计量 | `docs/subsystems/compaction.zh.md` |
 | `toolResultPruner` | 工具结果裁剪 | `docs/subsystems/compaction.zh.md` |

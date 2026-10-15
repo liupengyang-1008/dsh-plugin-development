@@ -12,7 +12,7 @@
 | DSH 处于 pre-stable / alpha 阶段 | 版本号 `0.2.1-alpha.3` |
 | 发布节奏 | tag 间隔中位数约 1.1 天 |
 | 是否发生过破坏性变更 | 是（仓库用标题里的 `!` 标记破坏性提交；但该标记**既非充分也非必要**，见 `13-version-history.md` §2.5） |
-| 本 skill 的事实基线 | 官方 tag `dsh-v0.2.1-alpha.3` / commit `2fbf4359b8` / 2026-10-14；对应**技能版本 `1.5.0`**（完整对照表：`13-version-history.md` §1.5） |
+| 本 skill 的事实基线 | 官方 tag `dsh-v0.2.1-alpha.3` / commit `2fbf4359b8` / 2026-10-14；对应**技能版本 `1.5.1`**（完整对照表：`13-version-history.md` §1.5） |
 | 本 skill 的 references | **冻结在基线那一刻的快照**，随基线一起推进 |
 
 **推导**：只要「把可变事实写进文档」这个动作存在，文档就会腐化。这是结构性的，不是谁疏忽。
@@ -204,23 +204,7 @@ bash <skill>/scripts/dsh-version-diff.sh <DSH 仓库路径>
 
 ## 8. 版本落后于基线时：拉源码 → 出差异 → 刷新快照
 
-**触发条件**：你要开发的 DSH 版本高于本 skill 基线（`dsh-v0.2.1-alpha.3` / `2fbf4359b8`），或你不确定目标版本。
-
-**不要做的事**：不要凭记忆推断「新版本大概改了什么」；也不要靠版本号推理——DSH 的版本号**不连续**（没有 `0.1.4`，`0.1.3-alpha.2` 之后直接是 `0.1.5-alpha.1`）。
-
-### 三个命令
-
-```bash
-# 1) 拉取 / 增量更新源码到 <skill>/vendor/dsh-src/
-#    首次约 200 MB，必须先经开发者确认（--yes 才跳过）
-bash <skill>/scripts/dsh-sync.sh
-
-# 2) 核验本 skill 的 56 条断言（48 正向 + 8 反向）是否仍成立
-bash <skill>/scripts/dsh-api-probe.sh <skill>/vendor/dsh-src
-
-# 3) 出「基线 → 最新」差异（输出可直接贴进 13-version-history.md 的表格片段）
-bash <skill>/scripts/dsh-version-diff.sh
-```
+**标准流程见 `13-version-history.md` §5** —— 同一件事的四段：决策树（§5.1）、两条硬规则（§5.2）、四条命令（§5.3，比本节多一条 `verify_absorbed_claims.py`）、离线降级（§5.4）、目录约定（§5.5）。下面只留 **§5 没有的两块**：同步脚本的开关表，以及网络不可达时的可操作路径。
 
 `dsh-sync.sh` 的开关：
 
@@ -232,21 +216,6 @@ bash <skill>/scripts/dsh-version-diff.sh
 | `--mirror <前缀>` | 走镜像，如 `--mirror https://ghfast.top/` |
 | `--repo <URL>` | 自定义仓库地址 |
 | `--yes` | 跳过确认（**只在自动化里用**） |
-
-### 三条纪律
-
-1. **拉取前必须经开发者确认。** 首次克隆约 200 MB（`.git` 约 190 MB + 工作树）。脚本会打印目标路径、预计体积、来源 URL 后等待确认；后续更新是增量 `git fetch`，不会重下。
-2. **拉下来的是「引用源」，不是「依赖」。** 只用于核验 API 与查变更历史。**绝不在 skill 目录执行 `pnpm install` / `npm install`**，也不要在插件工程里 `import` 它。
-3. **拉不到源码时走第 6 节的降级规则**，不要凭印象补 API 名。
-
-### 目录约定
-
-```
-<skill>/vendor/
-├── dsh-src/         ← git 仓库，可增量 fetch（主路径）
-├── dsh-snapshot/    ← tarball 模式的源码快照（无历史）
-└── dsh-state.json   ← 同步状态：时间 / commit / tag 数 / 最新 tag / 基线
-```
 
 ### 网络不可达时
 
