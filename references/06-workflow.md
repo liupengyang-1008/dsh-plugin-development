@@ -2,7 +2,7 @@
 
 > **本文件用途**：插件开发的完整工作流，四部分顺序阅读：① 环境准备（版本对照、从源码跑起来、三个环境坑、验收清单）② CLI 与安装机制逐字实证（DSH_HOME 默认值、profile 目录布局、dsh plugin 的 pnpm 转发逻辑、declares no dsh.bundle 警告的判定代码）③ 打包与分发（文件结构、package.json 逐字、patch 引用、三种分发方式对比）④ 调试与排错五招 + 五步排错法。注意：DSH_HOME 与 profile 在 ① 和 ② 都出现，以 ② 的源码实证为准。
 > **合成来源**：DSH插件开发指导手册.md（第 2/11/12 章） + G-install-and-cli.md
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-alpha.2` / commit `d743267388`，2026-10-09），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-alpha.3` / commit `2fbf4359b8`，2026-10-14），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
@@ -143,7 +143,7 @@ C:\Users\<你的用户名>\.dsh
 
 # G. 安装 / 运行 / CLI 机制 —— 逐字实证（原始素材）
 
-> 来源：`deepseek-harness`（commit `d743267388`）。全部结论附**源码路径或命令原文**。
+> 来源：`deepseek-harness`（commit `2fbf4359b8`）。全部结论附**源码路径或命令原文**。
 > 这份笔记解决新手最容易搞错的三个问题：**插件装到哪、怎么装、装完为什么没生效**。
 
 ---
@@ -661,7 +661,7 @@ dsh --profile web --patch ./extra.yml --dump-config                      # 加�
 
 ## 12.2 第二招：看 PENDING 审计（插件没反应时第一件事）
 
-DSH 启动时会自动审计。源码实证（`packages/boot/app-boot/src/index.ts:884` 单条格式串、`:904` 分组汇总表）：对仍 PENDING 的条目打印
+DSH 启动时会自动审计。源码实证（`packages/boot/app-boot/src/index.ts:1109` 单条格式串、`:1129` 分组汇总表）：对仍 PENDING 的条目打印
 
 ```
 <name>: pending (waiting for service: <缺失服务>)

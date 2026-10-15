@@ -2,12 +2,12 @@
 
 > **本文件用途**：速查卡，三部分：① 三种插件形态对照表（最容易搞混，放最前）② 完整 API 速查——服务名（inject 字符串）、事件名（含 waterfall 全套）、UI 插槽名、官方斜杠命令、CLI 命令、目录与路径、工具参数 DSL 类型（全部由源码 grep 提取，带实证来源列）③ 主手册的插件骨架、四类注册、真实范本清单、判断口诀，以及带 core/seam/bundle 角色的 ctx 键速查表。写代码时随手查这一份就够。
 > **合成来源**：DSH插件开发实战补充-模板与踩坑.md（仅第六篇 6.5） + I-quickref.md + DSH插件开发指导手册.md（附录 A/B/C）
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-alpha.2` / commit `d743267388`，2026-10-09），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-alpha.3` / commit `2fbf4359b8`，2026-10-14），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
 
-> **本文件导航 —— 共 440 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
+> **本文件导航 —— 共 441 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
 > - **上游素材原文**：约 192 行（46%），起点：`I-quickref.md`（文件开头）。**不是本技能重写的整理稿**；性质不一——**有的是官方文档逐字摘录（属权威原文），有的是调研期粗笔记（仅备查）**。读某一段前，务必连带读**该段开头的取材说明**。
 > - **其余部分 = 面向任务的整理稿**，可直接照做；但它同样是基线快照，写代码前先过版本闸门。
 > - 常用检索：`grep -n '^## '`、`grep -n '^# I\.'`（档案起点）
@@ -35,7 +35,7 @@
 
 # I. 速查表 —— 服务 / 事件 / 插槽 / 命令 / 扩展点（全部实测）
 
-> 来源：`deepseek-harness`（commit `d743267388`）。全部由源码 grep 提取，**不是文档复述**。
+> 来源：`deepseek-harness`（commit `2fbf4359b8`）。全部由源码 grep 提取，**不是文档复述**。
 > 使用方法：写插件时先在这张表里找"我要挂到哪"。
 
 ---
@@ -156,7 +156,7 @@
 
 ---
 
-## 3. UI 插槽名（**最常用的几个**；权威全量约 **94** 个公开键 —— 对基线 `dsh-v0.2.1-alpha.2` 抽取：声明侧 **129**、并集 **131**、剔除 **37** 个测试专用键后约 94 个公开可用。用 `scripts/extract_slots.py` 复现（**2026-09-23 修好抽取器两处漏抽后重抽**；**2026-09-25 随 rc.2 推进 +3 / −0**；**2026-09-29 随 0.2.0-rc.1 推进 +0 / −0**；**2026-09-30 随 0.2.0-rc.2 推进 +1 / −0**（客户端权威目录 `slot-catalog.ts` **89 → 90**；新增键 = `sidebar.right.tab.files.actions`）；**2026-10-04 随 0.2.1-alpha.1 推进 +2 / −0**（`slot-catalog.ts` **90 → 92**；新增键 = `plugins.add.actions` / `shell.bottom`）；**2026-10-09 随 0.2.1-alpha.2 推进 +2 / −0**（`slot-catalog.ts` **92 → 94**；新增键 = `conversation.chat.flow` / `conversation.chat.reasoning.body`，另见 `04-ui-and-slots.md` 的登记）；此前公布的 96/99/约81 系低估））
+## 3. UI 插槽名（**最常用的几个**；权威全量约 **98** 个公开键 —— 对基线 `dsh-v0.2.1-alpha.3` 抽取：声明侧 **139**、并集 **141**、剔除 **43** 个测试专用键后约 98 个公开可用。用 `scripts/extract_slots.py` 复现（**2026-09-23 修好抽取器两处漏抽后重抽**；**2026-09-25 随 rc.2 推进 +3 / −0**；**2026-09-29 随 0.2.0-rc.1 推进 +0 / −0**；**2026-09-30 随 0.2.0-rc.2 推进 +1 / −0**（客户端权威目录 `slot-catalog.ts` **89 → 90**；新增键 = `sidebar.right.tab.files.actions`）；**2026-10-04 随 0.2.1-alpha.1 推进 +2 / −0**（`slot-catalog.ts` **90 → 92**；新增键 = `plugins.add.actions` / `shell.bottom`）；**2026-10-09 随 0.2.1-alpha.2 推进 +2 / −0**（`slot-catalog.ts` **92 → 94**；新增键 = `conversation.chat.flow` / `conversation.chat.reasoning.body`，另见 `04-ui-and-slots.md` 的登记）；**2026-10-15 随 0.2.1-alpha.3 推进 +5 / −1**（`slot-catalog.ts` **94 → 98**；新增键 = `conversation.chat.message.images` / `conversation.chat.user.images` / `conversation.hero.options` / `conversation.user.text.node` / `workspace.toast`，**移除键 = `conversation.message.images`**）；此前公布的 96/99/约81 系低估））
 
 **最常用的三个**：
 
@@ -313,7 +313,7 @@ ctx.slots.inject('插槽名', () => ctx.slots.register({ name: '插槽名', id, 
 
 # 附录 B 真实范本清单（照着抄最快）
 
-> 全部路径相对于仓库根。主文件行数为主 `src/index.ts` 的行数，「src 总量」为该包 `src/` 下所有 `.ts/.tsx` 行数之和。（行数对基线 `dsh-v0.2.1-alpha.2` 逐个实测。）
+> 全部路径相对于仓库根。主文件行数为主 `src/index.ts` 的行数，「src 总量」为该包 `src/` 下所有 `.ts/.tsx` 行数之和。（行数对基线 `dsh-v0.2.1-alpha.3` 逐个实测。）
 
 ## B.1 最小可运行（学习包骨架）
 
@@ -430,6 +430,7 @@ ctx.slots.inject('插槽名', () => ctx.slots.register({ name: '插槽名', id, 
 | `ctx.credentials` | **seam** | 凭据 |
 | `ctx.attachments` | **seam** | 持久二进制附件存储 |
 | `ctx.webhookRuntime` | core | Webhook 规则运行时 |
+| `ctx.remoteAccess` | core | 远端访问（浏览器 Peer 连接）。**`0.2.1-alpha.3` 新增**，随新官方包 `@deepseek-ai/dsh-api-remote-access`；声明处为 `super(ctx, 'remoteAccess')` —— 宿主侧 `packages/api/remote-access/src/index.ts:135`、客户端侧 `packages/api/remote-access/src/client/mount.ts:63`。⚠️ 本区间服务面**只增不减**（移除数 0） |
 
 **怎么选**：要「替换实现」→ 找 `seam` 行；要「新增能力」→ 自建三件套；要「消费」→ 直接 `inject` 已存在的服务。
 

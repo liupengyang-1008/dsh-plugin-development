@@ -2,7 +2,7 @@
 
 > **本文件用途**：术语表、事实来源清单（含「不存在/未证实」的明确清单）、已知的官方文档内部矛盾、以及两套手册各自的诚实边界声明与素材索引。
 > **合成来源**：DSH插件开发指导手册.md（附录 D 术语表 + 附录 F 事实来源） + DSH插件开发实战补充-模板与踩坑.md（附录 素材来源与边界）
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-alpha.2` / commit `d743267388`，2026-10-09），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-alpha.3` / commit `2fbf4359b8`，2026-10-14），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
@@ -52,8 +52,8 @@
 # 附录 F 本手册的事实来源
 
 **仓库**：`deepseek-ai/deepseek-harness`
-**基线 commit**：`d743267388641bc76f17c45ce8b4c231aed1d32c`（2026-10-09）
-**版本**：`dsh-v0.2.1-alpha.2`
+**基线 commit**：`2fbf4359b82fb94c03dcce0b831660d87f12ea5c`（2026-10-14）
+**版本**：`dsh-v0.2.1-alpha.3`
 **核查日期**：2026-09-11
 
 ## F.1 本手册引用的一手来源
@@ -85,7 +85,7 @@
 
 | 矛盾 | 立场 |
 |---|---|
-| `basic/index.zh.md:56` 说插件路径必须绝对；`basic/config.zh.md:38` 用相对路径 | **以源码为准**：相对路径会被锚定到 patch 文件所在目录（`app-boot/src/index.ts:325-336` + 测试 `user-patches.spec.ts:128`） |
+| `basic/index.zh.md:56` 说插件路径必须绝对；`basic/config.zh.md:38` 用相对路径 | **以源码为准**：相对路径会被锚定到 patch 文件所在目录（`app-boot/src/index.ts:550-552` + 测试 `user-patches.spec.ts:128`） |
 | `docs/cookbook/extension-cookbook.zh.md` 的代码片段 | 文件自述**无法直接复制运行**（省略了 import 与辅助实现） |
 | `docs/user/develop/basic/index.zh.md` 展示了对象/类形态用 `export default` | 与 `packages/AGENTS.md:5`「函数插件无 default export」并存；**两形态不要混用** |
 | `adding-a-package.zh.md:25` 说 `private: true` 必填 | 源码模板 `packages/core/tools/package.json` **无此字段**（用 `publishConfig.access: public`）；以 `pnpm run constraints` 实际行为为准 |
@@ -109,7 +109,7 @@
 
 1. **不要追求"学会写代码"，要追求"学会验证"。** 你的 Agent 会写代码，你要会问「出处呢」「怎么验证」「哪里是猜的」。
 2. **小步快跑，每步都要能跑起来。** 第 3 章那 4 行插件就是你全部的信心来源——它跑通了，后面只是加东西。
-3. **接受它每周都在变。** 作者官方都说 API pre-stable 了。你基于 `dsh-v0.2.1-alpha.2` 学到的东西，三个月后可能需要微调。**这不是你学得不好，是这个项目就是这个阶段。**
+3. **接受它每周都在变。** 作者官方都说 API pre-stable 了。你基于 `dsh-v0.2.1-alpha.3` 学到的东西，三个月后可能需要微调。**这不是你学得不好，是这个项目就是这个阶段。**
 
 ⚛️ 从不可否认的事实出发——你的插件跑起来了，这件事不证自明。
 
@@ -153,7 +153,7 @@
 | **B** | 工具 / 外部调用（52 坑 + 4 模板 + 10 规范） | 2273 | `10b-casebook-tools.md`；另经实战补充并入 `02-templates.md`、`05-pitfalls.md` |
 | **C** | 服务 / 记忆 / 状态内核（19 坑 + 14 模板） | 1517 | `10c-casebook-services.md` |
 | **D** | 宿主 / 桌面 / 组合包（32 坑 + 4 模板） | 1189 | `10d-casebook-host-bundle.md` |
-| **E** | 官方 7 类模板 + 插槽名提取（当时 40 个，⚠️ 非全量 —— 对基线重新抽取为**约 94 个公开键**（2026-09-23 修好抽取器漏抽后；**2026-09-25 随 `rc.2` 推进 +3**；**2026-09-30 随 `0.2.0-rc.2` 推进 +1**；**2026-10-04 随 `0.2.1-alpha.1` 推进 +2**；**2026-10-09 随 `0.2.1-alpha.2` 推进 +2**（`slot-catalog.ts` `92 → 94`）；旧记 约 81 系低估），见 `api-claims.md` §三） | 1044 | `02b-official-templates.md`（原 `02-templates.md` 附录 E，2026-09-14 拆册） |
+| **E** | 官方 7 类模板 + 插槽名提取（当时 40 个，⚠️ 非全量 —— 对基线重新抽取为**约 98 个公开键**（2026-09-23 修好抽取器漏抽后；**2026-09-25 随 `rc.2` 推进 +3**；**2026-09-30 随 `0.2.0-rc.2` 推进 +1**；**2026-10-04 随 `0.2.1-alpha.1` 推进 +2**；**2026-10-09 随 `0.2.1-alpha.2` 推进 +2**（`slot-catalog.ts` `92 → 94`）；**2026-10-15 随 `0.2.1-alpha.3` 推进 +5 / −1**（`slot-catalog.ts` `94 → 98`）；旧记 约 81 系低估），见 `api-claims.md` §三） | 1044 | `02b-official-templates.md`（原 `02-templates.md` 附录 E，2026-09-14 拆册） |
 | **F** | 官方 4 篇事故复盘 | 195 | `05-pitfalls.md` 附录 |
 | **G** | 安装 / CLI 机制逐字实证 | 254 | `06-workflow.md` 第 G 篇 |
 | **H** | ouroboros 零代码组合包全文 | 231 | `02c-community-bundle.md`（原 `02-templates.md` 附录 H） |
@@ -206,7 +206,7 @@
 3. **上界面**：按 **T8/T9** 做 UI 与设置卡片（需要先跑通 `pnpm install`）。
 4. **长期**：把本文件的 **第五篇** 提示词存成片段，每次让 AI 写 DSH 代码时先贴上"铁律：要求出处"。
 
-> ⚠️ **最后一条风险提示**：本文件基线是 commit `d743267388`（`dsh-v0.2.1-alpha.2`，2026-10-09）。DSH 自称 pre-stable、tag 间隔中位数约 1.1 天且有过破坏性变更。**升级前先跑 `git log --grep='!'` 评估影响**，并把 `package.json` 的 `peerDependencies` 写成**区间**而非钉死某个 rc 号。
+> ⚠️ **最后一条风险提示**：本文件基线是 commit `2fbf4359b8`（`dsh-v0.2.1-alpha.3`，2026-10-14）。DSH 自称 pre-stable、tag 间隔中位数约 1.1 天且有过破坏性变更。**升级前先跑 `git log --grep='!'` 评估影响**，并把 `package.json` 的 `peerDependencies` 写成**区间**而非钉死某个 rc 号。
 
 ---
 

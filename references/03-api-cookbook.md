@@ -2,7 +2,7 @@
 
 > **本文件用途**：工具插件（defineTool 与裸 register 两条路径）、可配置插件（Config 与 Schema DSL）、斜杠命令、事件五种分发模式与 waterfall 拦截、服务插件、终端家族。写具体功能时按需查。
 > **合成来源**：DSH插件开发指导手册.md（第 4~8 章）
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-alpha.2` / commit `d743267388`，2026-10-09），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-alpha.3` / commit `2fbf4359b8`，2026-10-14），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
@@ -909,7 +909,7 @@ export function apply(ctx: Context) {
 
 > 尝试彻底移除 `./greeter.ts`：消费方会保持 PENDING，不输出任何内容，既不崩溃，也不会只运行一部分。处于 PENDING 的 fiber 也不会让 Node 的事件循环保持活跃，因此如果组合中没有其他运行项，进程会静默地以状态码 0 退出。
 
-**好消息：DSH 启动时会审计这件事。** 源码实证（`packages/boot/app-boot/src/index.ts:884` 单条格式串、`:904` 分组汇总表）：树 settle 后，对仍处于 PENDING 的条目会打印
+**好消息：DSH 启动时会审计这件事。** 源码实证（`packages/boot/app-boot/src/index.ts:1109` 单条格式串、`:1129` 分组汇总表）：树 settle 后，对仍处于 PENDING 的条目会打印
 
 ```
 <name>: pending (waiting for service: <缺失服务>)

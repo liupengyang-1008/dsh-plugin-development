@@ -4,7 +4,7 @@ slug: dsh-plugin-development
 displayName: DSH Plugin Development
 summary: Develop DSH (DeepSeek Harness) / Cordis plugins end to end — plugin forms, templates, an API cookbook, catalogued pitfalls, packaging and publishing, plus a mandatory version gate for the pre-stable upstream. Third-party fragments quoted here remain under their own licences (MIT / Apache-2.0 / BSD-3-Clause) — see the bundled LICENSE and NOTICE.
 description: A development-time skill for building plugins on DSH (DeepSeek Harness) / Cordis. It is not itself an installable DSH plugin; it is the tooling that guides a developer or AI agent through creating, debugging, packaging, and publishing one. This skill should be used when the user asks to develop a DSH plugin, write or modify a cordis plugin, add a tool, slash command, config schema, service, UI slot or HTTP route to DSH, run a periodic task inside a plugin, fix a plugin that fails to load or stays in PENDING, or package a plugin bundle for installation or distribution. It covers the plugin forms and official conventions, with 12 templates, 23 catalogued pitfalls, and copy-ready prompts for AI-agent pair development. Because DSH is pre-stable and ships breaking changes on a short cadence, it also ships a mandatory pre-coding version gate, a probe that re-verifies its own claims against a live source checkout, and a per-tag history of upstream breaking changes.
-version: 1.4.0
+version: 1.5.0
 license: MIT-0
 agent_created: true
 metadata:
@@ -33,7 +33,7 @@ metadata:
 
 ## 第 0 步（强制，不可跳过）· 版本闸门
 
-**references 是某一时刻的快照，会腐化。** DSH 处于 rc 阶段（基线 `dsh-v0.2.1-alpha.2` / commit `d743267388`，2026-10-09），tag 间隔中位数约 1.1 天、出现过破坏性变更。**所以不要承诺「不过时」，要保证「过时会响」。**
+**references 是某一时刻的快照，会腐化。** DSH 处于 rc 阶段（基线 `dsh-v0.2.1-alpha.3` / commit `2fbf4359b8`，2026-10-14），tag 间隔中位数约 1.1 天、出现过破坏性变更。**所以不要承诺「不过时」，要保证「过时会响」。**
 
 **① 权威顺序（源码永远压过本技能）**
 
@@ -61,9 +61,31 @@ bash   <skill>/scripts/dsh-api-probe.sh <DSH 仓库路径>    # 备选：仅当 
 > **目标版本高于基线时**不要猜：`dsh-sync.sh` 拉源码（先经确认）→ 探针核验 → `dsh-version-diff.sh` 出差异。
 > 完整机制（腐化推导、三级全表、五种核验手段、网络不可达时的降级路径）见 `references/00-version-gate.md`。
 
-**基线 `dsh-v0.2.1-alpha.2` 的硬变化（照抄旧资料前先对照）**
+**基线 `dsh-v0.2.1-alpha.3` 的硬变化（照抄旧资料前先对照）**
 
 DSH 每次发版的破坏性变更集中在少数几类。**下面按「新 → 旧」排列，标题就是区间本身**（不再用「上一轮 / 上上轮」这类会随轮次漂移的说法）。
+
+**`0.2.1-alpha.2` → `0.2.1-alpha.3`（852 个提交、1 个新 tag）—— 🔴 有破坏性变更，手上是 alpha.2 时代资料的人必须看完下面 15 条（🔴 硬失效 10 条 + ⚠️ 语义/行为收紧 5 条）。**
+
+> 🔴 **本轮换判据了 —— 记住这条方法论**：本区间 `!:` 自报破坏性提交是 **0 条**（`--all` 口径也是 0），实测却有 **15 条**破坏性项。**所以本技能起改用上游自带的 `docs/upgrade-guide/v<版本>/<topic>/guide.md` 当主判据**（每篇只讲一处破坏性变更，含 `## Change` / `## Migration`；英文上限 500 词）。⚠️ **但目录名不可全信**：上游约定「目录名 = 升级**起点**版本」（`.agents/skills/dsh-doc/SKILL.md:71`），而本区间新增的 14 个主题目录里有 **4 个挂在更早的版本名下**、描述的变化其实落在 alpha.3（作者先写指南、代码后合入发布线）。**判「属不属于本区间」必须回到两端源码树验证** —— 只信目录名会把这 4 条整批漏掉。实测对照表见 `references/13-version-history.md` §2.5。
+
+1. 🔴 **`llm-deepseek-account` 移除了配置键 `models`**：残留该键会让插件**在加载期直接失败**（报 `llm-deepseek-account: models is no longer configurable`），Desktop / Web 在删掉它之前**不显示任何账号模型**。模型改由账号的 `GET /models` 列出（未加载前先给内置目录），逐模型微调只走新键 **`modelOverrides`**（判据 `docs/upgrade-guide/v0.2.1-alpha.2/deepseek-account-model-catalog/guide.md`）。
+2. 🔴 **`ctx.connection.operator` 改名 `browserPeer`**（`packages/extensions/tool-cordis/src/api-catalog.ts:757`，同一行号位置对照）；`OperatorPeer` 类型整族消失，读 `ctx.connection.operator` 的插件**编译期即报错**。`admit()` 保留，另新增 `admitConnection()` 与 `createPeer(options)`。
+3. 🔴 **`pluginManager.installBundle(spec)` 装了已装的包会硬失败**：在跑 HMR 的 profile（官方 profile 都跑）里，改为**在跑 pnpm 之前就失败** —— `application: 'failed'` + `error.code: 'already-installed'`，**且不改任何 profile 文件**；重复装同一 spec 也不再返回 `changed: false`。影响 Host API 调用方、`@deepseek-ai/dsh-api-remotes/client` 与 agent 侧 `plugin_manager` 的 `install_bundle`。
+4. 🔴 **非 page 的 Connection 安装默认 `interactions: 'none'`**：该模式下**不打开 `$events`**，`$on()` 与世代恢复辅助 `$stream()` **不可用**（生成的一元方法与裸流方法仍可用；浏览器无需重新认证）。
+5. 🔴 **pi-ai 的 Azure provider 路由键 `azure-openai-responses` → `azure`**：写死旧键的配置与模型选择**不再命中**（`AZURE_OPENAI_*` 环境变量名不变）。
+6. 🔴 **`dsh-tool-subagent` 在加载期拒绝 `persona` / `toolFilter`（含空值）**：`packages/subagent/tool-subagent/src/index.ts:147-149` 直接抛 `tool-subagent: <field> is no longer supported; configure persona and tool plugins in an Agent Preset and select it with agentPreset (spawn only)`。同批新增 `src/preset-selection.ts`，`Config` 改 `extends PresetSelectionConfig`，由它提供 `agentPreset` / `allowedAgentPresets`；fork 继承父 preset、不能再独立改 persona 或收窄工具。⚠️ **这不是「schemastery 静默合并未知键」** —— 上游**专门加了显式拒绝**，理由见 `.agents/notes/implemented/simplification/2026-10-09-preset-owned-subagent-composition.md:15`（「仅删 schemastery 字段不会拒绝未知配置」）。
+7. 🔴 **`@deepseek-ai/dsh-session-persistence-jsonl` 取消了 default export**：改为具名 `name` / `Config` / `apply` 的命名空间插件形式。**默认导入、直接构造服务类、继承、`instanceof`、类类型标注全部失效**；`sessionPersistence` 服务 API、YAML 配置与已存文件不变。
+8. 🔴 **JobId 换格式并删掉 `executionId`**：注册表由 `<kind>-N`（序号）改为 **`<kind>-<short-uuid>`**（16 位小写 UUID hex，`packages/jobs/jobs-local/src/index.ts:231`）；生命周期记录**不再携带 `executionId`**，`JobExecutionId` 品牌类型整族移除（`docs/persistence-schema.json` 里成对的字段被删）。→ 用 kind + 序号自行拼 id、或按 `executionId` 配对 SDK 事件的代码失效（改按 `data.jobId` 配对）。
+9. 🔴 **`dsh-app-boot` 移除了 `HARNESS_SOURCE_SECTION` / `addHarnessSourceSection`**（旧 `packages/boot/app-boot/src/index.ts:1061`；该文件区间 +266 / −69）：checkout 路径与 Web GUI URL 这两个**进程相关值**从系统提示词移入**运行时上下文**，改由**新官方包 `@deepseek-ai/dsh-harness-dev-context`** 承担；`dsh-host-webserver` 新增 `WebServer.getOrigin()` / `bindUrlHost(host)`、`dsh-web-app` 的 `webApp.getAdvertisedUrl()`、`dsh-system-prompt` 新增 `CONTEXT_ORDERS.HARNESS_SOURCE = 200` / `WEB_SURFACE = 210`。**动因值得记住**：这两个值每次 Desktop 启动（`--port 0` 随机端口）都会变，从而改写提示词头部；对**非 `systemPromptUpdate: 'in-history'`** 的路由（如手工声明的 pi-ai `anthropic-messages`），Claude 会把历史 thinking 签名绑到会话前缀，于是上游回 **400 `Invalid signature … bound to a different conversation`**、会话卡死。
+10. 🔴 **客户端 UI 契约改名（5 个导出符号消失 → 4 个插槽增删）**：`ui-chat` 的 `RenderMessageImages` / `TURN_PROCESS_INDEPENDENT_KINDS` / `projectUserText`、`ui-primitives` 的 `UserTextReferences`、`api/terminal-controller` 的 `TerminalAttachmentId` 全树 0 命中；替代名为 `MessageImagesOwnerProps` / `MessageImageLoader` / `MessageImageSource` / `UserTextFacts` / `UserTextInput` / `TurnProcessChatData`（`packages/client/ui-chat/src/client/contract/slots.ts:11`）。同批插槽：新增 `conversation.chat.message.images`、`conversation.chat.user.images`、`conversation.hero.options`、`conversation.user.text.node`、`workspace.toast`（**+5**），**旧键 `conversation.message.images` 改名走掉**（**−1**）。
+11. ⚠️ **`DeepSeekAccount.watch(signal)` 语义收窄**：原先「profile 首次给出或改变缓存 Platform 用户 ID」也会发快照，现在默认只发账号状态变更 —— 用它刷新 `getPlatformSession()` 的插件必须**显式订阅身份变更**（新增可选参 `includeIdentityChanges`）。凭证替换与登录态变更仍通知全部订阅者。
+12. ⚠️ **凭证优先级反转 + headless 默认不再用存储凭证**：`$DSH_HOME/.credentials.yaml` 的 `refs` 条目现在**优先于**同名导出环境变量（导出变量只在文件里没有该名字时才生效；`$cwd/.env` 与 `$DSH_HOME/.env` 仍排在两者之后）。且随包的 `headless` profile **关闭了凭证存储 / 授权 / DeepSeek 账号 provider** → **只靠已保存密钥或登录态认证的 headless 作业会失败**（Web / SDK / ACP 仍保留存储）。
+13. ⚠️ **`dsh --profile <name> --from-default-profile <template>` 由「拒绝」改为「删除并替换」**：目标 profile 已存在时不再报 `profile "<name>" already exists`，而是**每次都把目标目录换成模板的全新副本**，**旧目录连同 `package.json` 依赖、已装 `node_modules`、`cordis.patch.yml` 一起被删除**（官方 profile 名仍被拒绝作为目标）。⚠️ 该选项**在 alpha.2 就已存在**，本轮只改语义。
+14. ⚠️ **Desktop 占用了字号快捷键**：`Cmd`/`Ctrl` + `=`（含 `Shift` + `=`）与 `Cmd`/`Ctrl` + `-` 被桌面端征用调字号（文本、代码、终端一起），**用这些组合（含重叠双键和弦）的自定义绑定仍保存但不再执行**；Web 行为不变。
+15. ⚠️ **自定义 primary-runtime payload 的 python 解释器别名必须可重定位**（macOS / Linux）：`dependencies/python/bin/python` 与 `python3` 必须**直接指向同级的、与 `runtime.json` 的 Python 主次版本同名的正则文件**（如 `python3.12`）；旧式指向 payload 之外或经其它链接跳转的别名会在 **payload 校验 / 工具调用期失败**（Windows 不变；正则命令文件含 wheel 分发的仍受支持）。
+
+**其余为加法，未变项逐条实测**：官方包 **340 → 345（+5 / −0，移除数 0）** —— 新增 `dsh-api-remote-access`、`dsh-client-ui-secret-mask`、`dsh-cua`、`dsh-experimental-cua-macos`、`dsh-harness-dev-context`（第 9 条的载体）。插槽计数由 **129 / 131 / 约 94** 改为 **139 / 141 / 约 98**，客户端权威目录 `slot-catalog.ts` **94 → 98**。**未变**：`SESSION_FORMAT_VERSION` 仍 **4**；模型 ID 仍 `deepseek-flash`；**参数 DSL `packages/core/tools/src/schema.ts` blob `2cc6f0cb` 两端逐字相同**；CLI **选项集合未变**（`--from-default-profile` 早已存在）；`docs/postmortem/` 仍 4 篇；上游 skill 树 **22 文件 / 4 个 skill 两端相同**。⚠️ **两处「有内容但不动六维度」的改动**：① **包内 `Config` 键 406 → 412（+10 / −4）** —— 新增 `collapseTiming`、`tool-fs.{read,readImage,write,edit}`、`ptc-runtime-node.executionMode`、`session-persistence-jsonl.listConcurrency`、`llm-deepseek-account.{modelsTimeoutMs,modelsMaxAgeMs,modelOverrides}`；移除 `tool-subagent.{persona,toolFilter,allow,deny}`；② **base 补丁 blob `9e3f03ee` → `ee2f8f28`**（+`remote-access` 一行、凭证来源注释改写）；③ 包内非代码资源 **43 → 45**。
 
 **`0.2.1-alpha.1` → `0.2.1-alpha.2`（669 个提交、1 个新 tag）—— 🔴 有破坏性变更，手上是 alpha.1 时代资料的人必须看完下面 6 条。**
 

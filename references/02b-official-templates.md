@@ -3,7 +3,7 @@
 > **文件来源**：本文件由 `02-templates.md` 拆分而来，正文为原文的**逐行搬迁**，未做改写。
 > **本册性质**：**全部是上游一手素材原文** —— 性质不一：既有官方文档的**逐字摘录（属权威原文）**，也有调研期写下的**粗笔记（仅备查）**。**读某一段前，务必连带读该段开头的取材说明**，那是判断这段能信多少的依据。
 > **不要整读**：先 `grep -n '^#{1,2} '` 拿小节清单，再只读需要的那一节。本技能面向任务的整理稿见 `02-templates.md`。
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-alpha.2` / commit `d743267388`，2026-10-09），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-alpha.3` / commit `2fbf4359b8`，2026-10-14），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 
@@ -13,7 +13,7 @@
 
 # E. 官方自带插件 —— 七类可复用模板（原始素材）
 
-> 来源：**DSH 上游检出**（完整克隆，commit `d743267388`，`0.2.1-alpha.2`；本 skill 不附带该检出，核验方式见 `00-version-gate.md`）。
+> 来源：**DSH 上游检出**（完整克隆，commit `2fbf4359b8`，`0.2.1-alpha.3`；本 skill 不附带该检出，核验方式见 `00-version-gate.md`）。
 > 所有代码**逐字照抄**仓库原文，未改写。每个模板标注来源文件路径。
 > 面向《DSH 插件开发实战手册》补充篇，读者为零软件工程经验新手。
 
@@ -918,7 +918,7 @@ export function AppearanceRow({ t, setTheme, useStore }: AppearanceRowComponentP
 | `configForms` | 客户端设置表单的读 / 写面（`get<T>(entryId)` → `getSnapshot` / `subscribe` / `set` / `unset` / `mutate`） | `ui-theme` |
 
 > 🔴 **本表最后一行 2026-09-30 更正**：原先记的是 **`settingsScope`** —— 该客户端服务随 `0.1.7-rc.1` 的「设置机制重做」**已被移除**（新树全树 **0 命中**），继任者是 **`configForms`**。
-> 实测依据：`packages/client/ui-theme/src/client/index.ts:421` 的 `inject = ['slots', 'locale', 'remote', 'configForms']`、`:431` 的 `ctx.configForms.get<ThemeSettings>(ns)`。
+> 实测依据：`packages/client/ui-theme/src/client/index.ts:536` 的 `inject = ['slots', 'locale', 'remote', 'configForms']`、`:548` 的 `ctx.configForms.get<ThemeSettings>(ns)`。
 > 其余各行经同轮复核**仍然有效**。
 
 **宿主事件名（`ctx.on` 实证）**：`webserver/index-inject`（注入页面 HTML）、`theme/change`（自定义事件示例）。
@@ -930,7 +930,7 @@ export function AppearanceRow({ t, setTheme, useStore }: AppearanceRowComponentP
 ## 附：官方 UI 插槽名（**节选 40 余个**，实测提取）
 
 > ⚠️ **这不是全清单。** 本表由 `grep -rhoE "slots\.(inject|register)\(\s*'[^']+'" packages/*/*/src` 提取，因此**天然抓不到内建键**（如 `root` 是用 `renderSlot('root')` 渲染的）。
-> 对 `dsh-v0.2.1-alpha.2` 的声明侧复核结果：**129 个键**（并集 **131** 个；剔除 **37** 个测试专用键后**约 94 个公开可用**）—— 2026-09-23 修好抽取器两处漏抽后重抽、2026-09-25 随 rc.2 推进 **+3 / −0**、2026-09-29 随 0.2.0-rc.1 推进 **+0 / −0**、2026-09-30 随 0.2.0-rc.2 推进 **+1 / −0**、2026-10-04 随 0.2.1-alpha.1 推进 **+2 / −0**、**2026-10-09 随 0.2.1-alpha.2 推进 +2 / −0**（旧值 96/99/约81 系低估）。另有**客户端半侧的权威口径**：上游生成产物 `packages/extensions/cordis-client-runner/src/client/slot-catalog.ts` 现有 **94 个**，抽取器 A2 段与它自动交叉核对，**漏抽量须为 0**。完整清单与可复现的抽取命令见 `14-inbound-http-and-timers.md` 与 `scripts/extract_slots.py`；注册签名（组件是第二个参数）与「未声明 slot 报什么错」也记在那里。
+> 对 `dsh-v0.2.1-alpha.3` 的声明侧复核结果：**139 个键**（并集 **141** 个；剔除 **43** 个测试专用键后**约 98 个公开可用**）—— 2026-09-23 修好抽取器两处漏抽后重抽、2026-09-25 随 rc.2 推进 **+3 / −0**、2026-09-29 随 0.2.0-rc.1 推进 **+0 / −0**、2026-09-30 随 0.2.0-rc.2 推进 **+1 / −0**、2026-10-04 随 0.2.1-alpha.1 推进 **+2 / −0**、2026-10-09 随 0.2.1-alpha.2 推进 **+2 / −0**、**2026-10-15 随 0.2.1-alpha.3 推进 +5 / −1**（新增 `conversation.chat.message.images` / `conversation.chat.user.images` / `conversation.hero.options` / `conversation.user.text.node` / `workspace.toast`，**旧键 `conversation.message.images` 改名走掉**）（旧值 96/99/约81 系低估）。另有**客户端半侧的权威口径**：上游生成产物 `packages/extensions/cordis-client-runner/src/client/slot-catalog.ts` 现有 **98 个**，抽取器 A2 段与它自动交叉核对，**漏抽量须为 0**。完整清单与可复现的抽取命令见 `14-inbound-http-and-timers.md` 与 `scripts/extract_slots.py`；注册签名（组件是第二个参数）与「未声明 slot 报什么错」也记在那里。
 > 用法：`ctx.slots.inject('<插槽名>', () => ctx.slots.register({ name: '<插槽名>' }, 组件))`
 
 ### 会话 / 对话区（conversation.*）
@@ -949,11 +949,15 @@ export function AppearanceRow({ t, setTheme, useStore }: AppearanceRowComponentP
 | `conversation.input.plan` | 输入区计划 |
 | `conversation.hero.workspace` | 空态主视觉 / 工作区 |
 | `conversation.hero.workspace.directoryFlow` | 空态目录选择流 |
-| `conversation.message.images` | 消息里的图片 |
+| `conversation.chat.message.images` | `0.2.1-alpha.3` 起：助手消息里**一组连续持久化图片**的渲染器（`single` / `session`；`packages/client/ui-chat/src/client/contract/slots.ts:415`）。⚠️ **旧键 `conversation.message.images` 已在 `0.2.1-alpha.3` 改名走掉** |
+| `conversation.chat.user.images` | `0.2.1-alpha.3` 新增：**用户消息**里的图片（含待发送与本地回显预览），可与输出侧图片**分别替换**（`single` / `session`；`…/ui-chat/src/client/contract/slots.ts:417`） |
+| `conversation.user.text.node` | `0.2.1-alpha.3` 新增：业务方自有的**纯 JSON 文本节点**内联渲染器（`keyed` / `session`；`packages/client/ui-conversation/src/client/contract/slots.ts:196`） |
+| `conversation.hero.options` | `0.2.1-alpha.3` 新增：新建会话行里**右对齐的紧凑选项位**（排在工作区与预设控件之后，仅在有会话时渲染；`list` / `session`；`…/ui-conversation/src/client/contract/slots.ts:268`） |
 | `conversation.trajectory.images` | 轨迹里的图片 |
 | `conversation.session.header.corner` | 会话头部角落 |
 | `conversation.session.header.utilities` | 会话头部工具区 |
 | `conversation.approval.detail` | 审批详情 |
+| `workspace.toast` | `0.2.1-alpha.3` 新增：工作区级**通知位**，按既有的业务判别键选择（`keyed` / `root`；`packages/extensions/cordis-client-runner/src/client/slot-catalog.ts` 的 `key: 'workspace.toast'` 条目） |
 
 ### 侧栏（sidebar.*）
 

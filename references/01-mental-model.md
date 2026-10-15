@@ -2,7 +2,7 @@
 
 > **本文件用途**：DSH 与 Cordis 的心智模型、插件三种形态、profile/组合包的加载机制、方向决策树（做什么该用哪个模板），以及第一个最小插件的完整走通过程。写插件前先读这个，选错形态会导致后面全部返工。
 > **合成来源**：DSH插件开发指导手册.md（第 0/1/3 章） + DSH插件开发实战补充-模板与踩坑.md（第一篇）
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-alpha.2` / commit `d743267388`，2026-10-09），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-alpha.3` / commit `2fbf4359b8`，2026-10-14），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
@@ -107,7 +107,7 @@ export function apply(ctx: Context) {
 
 **这意味着什么**（给你的三条行动建议）：
 
-1. **锁版本**：开发时记录下你依据的 commit（本手册是 `d743267388`）。升级前先读 diff。
+1. **锁版本**：开发时记录下你依据的 commit（本手册是 `2fbf4359b8`）。升级前先读 diff。
 2. **只信文档 + 源码**：网上第三方博客（尤其 2026-07 之前的）大概率已过时。**任何 API，都要在仓库里找到出处再用。**
 3. **接受返工**：你以为的"稳定 API"可能下周就改名了。实际案例：`code-mode` 被改名为 `ptc`；client 清单字段 `dshClient` 在 2026-08-10 被改成嵌套的 `dsh.client`；插件的 client 机制 2026-07-19 才诞生。
 
@@ -344,7 +344,7 @@ export function apply(ctx: Context) {
 |---|---|
 | `docs/user/develop/basic/index.zh.md:56` | 「插件路径必须是绝对路径。patch 文件只贡献配置，不会改变 loader 解析模块路径时使用的 profile 目录。」 |
 | `docs/user/develop/basic/config.zh.md:36-43` | 示例用的是**相对路径**：`name: './src/my-plugin.ts'` |
-| **源码 `packages/boot/app-boot/src/index.ts:325-336`** | 实际行为：若 `name` 是绝对路径，或以 `./` `../` 开头，会被重写为**相对该 patch 文件所在目录**的 file URL |
+| **源码 `packages/boot/app-boot/src/index.ts:550-552`** | 实际行为：若 `name` 是绝对路径，或以 `./` `../` 开头，会被重写为**相对该 patch 文件所在目录**的 file URL |
 | **测试 `packages/boot/app-boot/tests/user-patches.spec.ts:128`** | 有单元测试固定了这个「相对路径锚定到 patch 文件旁」的行为 |
 
 **本手册的建议（以源码为准）**：

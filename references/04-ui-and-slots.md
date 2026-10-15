@@ -2,7 +2,7 @@
 
 > **本文件用途**：UI 插件与设置卡片的完整实现：两个半侧结构、三个登记点、slot 插槽机制、React/TSX 技术栈约束、样式打包、开发期调试、三层配置解析模型。
 > **合成来源**：DSH插件开发指导手册.md（第 9/10 章）
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-alpha.2` / commit `d743267388`，2026-10-09），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-alpha.3` / commit `2fbf4359b8`，2026-10-14），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
@@ -40,7 +40,7 @@
 
 **为什么要两个半侧？** 因为 DSH 是「后端 host + 前端 web」的架构。你的插件既要在 Node 里被加载（哪怕是空壳），又要在浏览器里运行 UI。
 
-⚠️ **Host 半侧不能省**。官方（`packages/client/AGENTS.md:138,142`）：缺 node half 会让 Loader 无法 import 你的包。
+⚠️ **Host 半侧不能省**。官方（`packages/client/AGENTS.md:142,147`）：缺 node half 会让 Loader 无法 import 你的包。
 
 **最小的 Host 半侧可以就这么点**（`packages/client/ui-brand-official/src/index.ts` 全文，逐字）：
 
@@ -97,7 +97,7 @@ export function apply(): void {}
 | `dsh.client.platform` | **总是必填**，值为 `"web"` |
 | `dsh.client.inject` | **信息性**的包名依赖边——**只用于 preflight 显示与 HMR diff，不决定激活顺序**。激活顺序由 Cordis fiber 等**服务**决定 |
 
-来源：`packages/client/AGENTS.md:140`
+来源：`packages/client/AGENTS.md:148`
 
 `tsdown.config.ts`（`ui-brand-official/tsdown.config.ts`，逐字）：
 
@@ -128,7 +128,7 @@ export default clientBundle('@deepseek-ai/dsh-client-ui-brand-official', ['lib/t
 
 ## 9.3 ⚠️ 再加 3 个登记点（漏一个就失败）
 
-官方（`packages/client/AGENTS.md:143`）：客户端插件除了正常的包登记，还**必须**：
+官方（`packages/client/AGENTS.md:147`）：客户端插件除了正常的包登记，还**必须**：
 
 1. 在 `tsconfig.client.json` 的 `references` 里加你的包
 2. 在 `packages/bundle/web-app/cordis.patch.yml` 里加一行
@@ -148,7 +148,7 @@ export default clientBundle('@deepseek-ai/dsh-client-ui-brand-official', ['lib/t
 
 > 功能插件**只**通过 `ctx.slots.register()` 贡献 UI，**绝不导入其他功能插件的组件**。
 
-**唯一的注册 API**（用法见 `packages/client/AGENTS.md:11`；完整选项类型 `packages/client/ui-slots/src/index.ts:875` `interface ErasedOptions`）：
+**唯一的注册 API**（用法见 `packages/client/AGENTS.md:11`；完整选项类型 `packages/client/ui-slots/src/index.ts:879` `interface ErasedOptions`）：
 
 ```ts
 ctx.slots.register({ name, id?, key?, order?, children?, store?, inject? }, Component)
@@ -281,10 +281,10 @@ export function apply(ctx: Context): void {
 |---|---|
 | **React 18**（`react: ^18.2.0`、`react-dom: ^18.2.0`） | `packages/client/ui-theme/package.json`、`apps/web/package.json` |
 | **样式：CSS Modules + `clsx`**，用语义 token `--dsw-*` | `docs/web-styling.zh.md:16` |
-| ⚠️ **不得添加组件库或 Tailwind** | `packages/client/AGENTS.md:111` |
+| ⚠️ **不得添加组件库或 Tailwind** | `packages/client/AGENTS.md:117` |
 | 不得写颜色字面量，要用 `--dsw-alias-*` 语义别名 | `docs/web-styling.zh.md:9,17` |
-| 业务组件**不得**含订阅机制（无 `useSyncExternalStore`、无手写 subscribe） | `packages/client/AGENTS.md:24` |
-| ⚠️ **跨插件的运行时值导入被门禁拒绝**，只能 `import type` | `packages/client/AGENTS.md:36` |
+| 业务组件**不得**含订阅机制（无 `useSyncExternalStore`、无手写 subscribe） | `packages/client/AGENTS.md:26` |
+| ⚠️ **跨插件的运行时值导入被门禁拒绝**，只能 `import type` | `packages/client/AGENTS.md:40` |
 
 **最后一条最容易踩**：你想用别的插件的组件？**不行。** 只能通过 slots 组合，或者通过注入的 Cordis 服务协作。
 
@@ -529,7 +529,7 @@ openSettingsDocument(signal: AbortSignal): Promise<SettingsDocumentOpenValue>
 | 用户层落在 `$DSH_HOME/settings.yaml`（热重载） | **移除**；改由**配置编辑器写 Cordis patch**；`settings.yaml` 只剩一次性迁移 `importLegacyDocument()`（成功后改名 `.imported`） | 新 `docs/subsystems/settings.zh.md:5`；`packages/settings/settings/src/index.ts` |
 | 写入无并发保护 | **乐观并发**：`expectedRevision` 不匹配抛 `SettingsConflictError`（`code = 'SETTINGS_CONFLICT'`） | 新 `SettingsForms` 源码 |
 | 客户端手写卡片族（`card-form.ts` / `fields.tsx` / `*-card-controller.ts` / `BashCard` / `SubagentCard` …） | **整体删除**（−4608 / +73 行）；官方配置页拆为**每插件一个伴生包** | `packages/client/ui-settings-plugins/src/client/` 现只剩 4 个文件 |
-| 客户端服务 `settingsScope` + `settings-contract.ts` | **移除**；**取表单改 `ctx.configForms.get<T>(entryId)`**（客户端服务名 `configForms`；`ConfigForms extends Service`），`inject` 里写 `'configForms'`；它底下走 `ctx.remote.settings`（Host `ctx.settingsController`）。方法面基本同名：`getSnapshot()` / `subscribe()` 照旧，旧的 `update(patch)` → **`set(field, value)`** / `unset(field)` / `mutate(ops, expectedRevision?)` | `packages/client/ui-settings/src/client/config-form.ts:241,266,293` + `packages/client/ui-settings/src/client/config-form-types.ts:39-77`；`settings-contract.ts` 已删；用法实证 `packages/client/ui-theme/src/client/index.ts:478,488` |
+| 客户端服务 `settingsScope` + `settings-contract.ts` | **移除**；**取表单改 `ctx.configForms.get<T>(entryId)`**（客户端服务名 `configForms`；`ConfigForms extends Service`），`inject` 里写 `'configForms'`；它底下走 `ctx.remote.settings`（Host `ctx.settingsController`）。方法面基本同名：`getSnapshot()` / `subscribe()` 照旧，旧的 `update(patch)` → **`set(field, value)`** / `unset(field)` / `mutate(ops, expectedRevision?)` | `packages/client/ui-settings/src/client/config-form.ts:241,266,293` + `packages/client/ui-settings/src/client/config-form-types.ts:36-74`；`settings-contract.ts` 已删；用法实证 `packages/client/ui-theme/src/client/index.ts:478,488` |
 | （无） | **新增事件** `settings/document-updated`（emit） | `docs/subsystems/settings.zh.md:139-151` |
 | （无） | **新增包** `@deepseek-ai/dsh-config-editor`（base 补丁新增 `config-editor` 行） | `packages/boot/config-editor/package.json`；`packages/bundle/base/cordis.patch.yml:97-98` |
 

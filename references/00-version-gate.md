@@ -9,10 +9,10 @@
 
 | 事实 | 数据 |
 |---|---|
-| DSH 处于 pre-stable / alpha 阶段 | 版本号 `0.2.1-alpha.2` |
+| DSH 处于 pre-stable / alpha 阶段 | 版本号 `0.2.1-alpha.3` |
 | 发布节奏 | tag 间隔中位数约 1.1 天 |
 | 是否发生过破坏性变更 | 是（仓库用标题里的 `!` 标记破坏性提交；但该标记**既非充分也非必要**，见 `13-version-history.md` §2.5） |
-| 本 skill 的事实基线 | 官方 tag `dsh-v0.2.1-alpha.2` / commit `d743267388` / 2026-10-09；对应**技能版本 `1.4.0`**（完整对照表：`13-version-history.md` §1.5） |
+| 本 skill 的事实基线 | 官方 tag `dsh-v0.2.1-alpha.3` / commit `2fbf4359b8` / 2026-10-14；对应**技能版本 `1.5.0`**（完整对照表：`13-version-history.md` §1.5） |
 | 本 skill 的 references | **冻结在基线那一刻的快照**，随基线一起推进 |
 
 **推导**：只要「把可变事实写进文档」这个动作存在，文档就会腐化。这是结构性的，不是谁疏忽。
@@ -119,7 +119,9 @@ bash <skill>/scripts/dsh-version-diff.sh <DSH 仓库路径>
 #    脚本已内置 ②-b 的 `!:` 维度，正常情况下跑这一个就够
 
 # ③-b 版本史速查（离线可用，无需源码）
-#    见 references/13-version-history.md —— 17 个 tag 的逐版本破坏性变更表
+#    见 references/13-version-history.md —— 按 tag 区间逐版本列出的破坏性变更表
+#    （⚠️ 不要在这里写「N 个 tag」这类固定计数：它每轮都要跟着基线重算，
+#      历史上就因此腐化过 —— 见 15-skill-scope-and-maintenance.md §18.2 的纪律）
 
 # ④ 直接读源码（终极权威）
 #    packages/*/*/src        —— 功能包
@@ -144,7 +146,7 @@ bash <skill>/scripts/dsh-version-diff.sh <DSH 仓库路径>
 4. **标注基线**：交付物里带一行出处注释：
 
    ```ts
-   // DSH 插件 · 依 dsh-api-probe.sh 对 d743267388 核验通过
+   // DSH 插件 · 依 dsh-api-probe.sh 对 2fbf4359b8 核验通过
    // 升级 DSH 后请重跑: bash scripts/dsh-api-probe.sh <repo>
    ```
 
@@ -202,7 +204,7 @@ bash <skill>/scripts/dsh-version-diff.sh <DSH 仓库路径>
 
 ## 8. 版本落后于基线时：拉源码 → 出差异 → 刷新快照
 
-**触发条件**：你要开发的 DSH 版本高于本 skill 基线（`dsh-v0.2.1-alpha.2` / `d743267388`），或你不确定目标版本。
+**触发条件**：你要开发的 DSH 版本高于本 skill 基线（`dsh-v0.2.1-alpha.3` / `2fbf4359b8`），或你不确定目标版本。
 
 **不要做的事**：不要凭记忆推断「新版本大概改了什么」；也不要靠版本号推理——DSH 的版本号**不连续**（没有 `0.1.4`，`0.1.3-alpha.2` 之后直接是 `0.1.5-alpha.1`）。
 

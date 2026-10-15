@@ -56,8 +56,12 @@ CHECKS: list[tuple[str, str, str, str, str, str]] = [
      r"intro: 'var module = \{ exports: \{\} \}; var exports = module\.exports;'", "has"),
     ("B03", "S", "footer 返回 module.exports 并收口",
      "packages/client/tsdown.client.ts", r"footer: 'return module\.exports; \} \}\);'", "has"),
-    ("B04", "M", "class 产物路径固定为 lib/client.js",
-     "packages/client/tsdown.client.ts", r"entryFileNames: 'client\.js'", "has"),
+    # 0.2.1-alpha.3 重写：入口产物名不再是常量 —— 新增 `dualClient` 通道后变成三元式
+    # （默认 `client.js`，开 `dualClient` 走 `client.browser.js`）。旧断言锚 `entryFileNames: 'client\.js'`
+    # 因此 STALE。锚点改为**整条三元式**：只改默认名或只改 dualClient 名都会再次 STALE。
+    ("B04", "M", "class 产物路径：默认 lib/client.js；开 dualClient 时入口改名 client.browser.js",
+     "packages/client/tsdown.client.ts",
+     r"entryFileNames: dualClient \? 'client\.browser\.js' : 'client\.js'", "has"),
     ("B05", "M", "platform 模块种子表 = 9 个 specifier（react 四件套 + cordis + store + ui-slots + ui-primitives + ui-dockkit）",
      "packages/client/web/src/platform.ts",
      r"export const PLATFORM_MODULES = \[[\s\S]{0,400}?\] as const", "has"),
@@ -72,14 +76,25 @@ CHECKS: list[tuple[str, str, str, str, str, str]] = [
     ("B08", "M", "官方明确：没有已发布的客户端预设，仓库外需自行复刻输出格式",
      "docs/cookbook/adding-a-settings-card.zh.md",
      r"而不在任何已发布的包里[\s\S]{0,120}?要自己复刻", "has"),
-    ("B09", "M", "非入口客户端分块命名为 client.<name>.js（入口固定 client.js）",
-     "packages/client/tsdown.client.ts", r"chunkFileNames: 'client\.\[name\]\.js'", "has"),
+    # 0.2.1-alpha.3 重写：同 B04，分块名也变成三元式（默认 client.<name>.js / dualClient 时 client.browser.<name>.js）。
+    ("B09", "M", "非入口客户端分块命名：默认 client.<name>.js；开 dualClient 时 client.browser.<name>.js",
+     "packages/client/tsdown.client.ts",
+     r"chunkFileNames: dualClient \? 'client\.browser\.\[name\]\.js' : 'client\.\[name\]\.js'", "has"),
     ("B10", "M", "包内动态分块改走 require.async（CJS 外壳下的异步加载）",
      "packages/client/tsdown.client.ts",
      r"require\.async\(\$\{JSON\.stringify\(specifier\)\}\)", "has"),
     ("B11", "M", "clientBundle 支持按产物文件名选法务/署名文本（clientBanner）",
      "packages/client/tsdown.client.ts",
      r"readonly clientBanner\?: \(fileName: string\) => string \| undefined", "has"),
+    # ── 0.2.1-alpha.3 新增的两条通道（本轮反向完备性撞出的新契约面） ──────────
+    ("B12", "M", "dualClient 会额外构建一个 Node 面，产物固定为 client.node.js / client.node.<name>.js",
+     "packages/client/tsdown.client.ts",
+     r"function nodeClientConfig\(manifest: PackageManifest, entry: string\): UserConfig \{[\s\S]{0,400}?entryFileNames: 'client\.node\.js',[\s\S]{0,80}?chunkFileNames: 'client\.node\.\[name\]\.js'",
+     "has"),
+    ("B13", "M", "staticLinked 通道存在，并暴露 isStaticLinkedConfig 供调用方判别",
+     "packages/client/tsdown.client.ts",
+     r"export function staticLinked\(packageDir: string, libEntry: readonly string\[\]\): BuildFaceConfig",
+     "has"),
 
     # ── 17.4 插槽真实签名 ────────────────────────────────────────────────
     ("U01", "M", "slots.register(options, component) —— 组件是第二个参数",

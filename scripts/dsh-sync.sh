@@ -236,7 +236,7 @@ cat > "$STATE" <<EOF
   "tagCount": $TAG_COUNT,
   "latestTag": "$LOCAL_LATEST",
   "latestTagDate": "$LOCAL_LATEST_DATE",
-  "skillBaseline": "d743267388 / dsh-v0.2.1-alpha.2",
+  "skillBaseline": "2fbf4359b8 / dsh-v0.2.1-alpha.3",
   "note": "引用源，非依赖。禁止在此执行 pnpm/npm install。"
 }
 EOF
