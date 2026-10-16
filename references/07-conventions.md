@@ -2,12 +2,12 @@
 
 > **本文件用途**：工程规范，三部分：① 官方包的工程约定（目录结构、package.json 不变式、.ts 后缀规则、角色命名表、README 强制节、官方门禁脚本——这部分是权威原文）② 主手册的命名规范、代码硬规则、测试规范、质量门禁清单、提交规范，以及版本演进时间线与兼容性五条军规 ③ 补充手册的 12 条硬规则、发布前自查清单、8 条代码风格共识。①与②在 README 强制节、package.json 不变式上重叠，以①的官方原文为准。
 > **合成来源**：J-official-conventions.md + DSH插件开发指导手册.md（第 14/15 章） + DSH插件开发实战补充-模板与踩坑.md（第四篇）
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-alpha.3` / commit `2fbf4359b8`，2026-10-14），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-alpha.4` / commit `86a402200d`，2026-10-15），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
 
-> **本文件导航 —— 共 475 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
+> **本文件导航 —— 共 478 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
 > - **上游素材原文**：约 149 行（31%），起点：`J-official-conventions.md`（文件开头）。**不是本技能重写的整理稿**；性质不一——**有的是官方文档逐字摘录（属权威原文），有的是调研期粗笔记（仅备查）**。读某一段前，务必连带读**该段开头的取材说明**。
 > - **其余部分 = 面向任务的整理稿**，可直接照做；但它同样是基线快照，写代码前先过版本闸门。
 > - 常用检索：`grep -n '^## '`、`grep -n '^# J\.'`（档案起点，在文件开头）
@@ -68,6 +68,9 @@ packages/<group>/<pkg>/
 | `@deepseek-ai/schemastery` | 放 `dependencies`（运行时校验器） |
 | `files` | 精确列 `lib/index.js` + `lib/types/**/*.d.ts`；**不要**发布 `src` |
 | 客户端插件额外 | `files` 要含 `lib/client.js`；`exports` 要含 `"./client"` |
+| `engines.dsh`（**可选；⚠️ 本技能补充，不是上面那条逐字不变式**） | 自 `dsh-v0.2.1-alpha.4` 起：**声明了它，就只有它决定兼容性** —— DSH peer 范围**不再**放宽或收窄它；写 `workspace:` 会被判**不兼容**；`engines` 非对象、或 `engines.dsh` 非字符串会让兼容性检查读不出清单、**该包被直接拒绝（装不上）**。→ 要么给它一个覆盖全部目标版本的**完整范围**，要么**不写**、退回 peer 检查。宿主侧记录字段已由 `peers` 改名为 **`requirements`** |
+
+> **为什么不把 `engines.dsh` 写进上面那段逐字不变式**：那段是官方 `pnpm run constraints` 的逐字要求，`engines.dsh` 属**可选**字段、不由 constraints 强制 —— 混进逐字块会让人以为必填。（判据：`docs/upgrade-guide/v0.2.1-alpha.3/plugin-engines-dsh/guide.zh.md`；源码 `packages/boot/app-boot/src/plugin-compatibility.ts:55-73`。）
 
 **相对导入规则（逐字）**：
 > 包内的相对导入在源码中使用显式 `.ts` 后缀（例如 `export * from './types.ts'`）。编译器在输出的 JS 中将其重写为 `.js`，在声明文件中保留显式 `.ts` 后缀。

@@ -380,7 +380,7 @@ So this skill does not promise to stay current. It promises one thing: **stalene
 | **Step 0 · version gate (mandatory)** | Answer three questions and run the probe before writing any DSH code; with no source available, declare explicitly which facts are unverified |
 | **Fact grading S / M / V** | One-line test: *if this fact changed tomorrow, would my code break?* Yes → verify it. No → use it as-is |
 | `dsh-api-probe.py` | Re-verifies **56 assertions** (48 positive + 8 negative) against a **live** source checkout |
-| `verify_absorbed_claims.py` | A second set of **49** (inbound HTTP, timers, client artifact format, slots, baseline-advance facts, plus **negative assertions that keep fabricated API names out**) |
+| `verify_absorbed_claims.py` | A second set of **54** (inbound HTTP, timers, client artifact format, slots, baseline-advance facts, plugin compatibility (`engines.dsh`), plus **negative assertions that keep fabricated API names out**) |
 | `extract_slots.py` | Extracts the **authoritative slot list** from source and diffs it against the skill's claims — use it before writing any slot name, never copy from a table |
 | `check_refs.py` | Proves every path cited in the skill resolves inside the skill, with no absolute paths pointing at the author's machine |
 
@@ -441,7 +441,7 @@ Because those numbers are **reproducible**. The project rule is that any stateme
 
 | Item | Value |
 |---|---|
-| DSH baseline | tag `dsh-v0.2.1-alpha.3` / commit `2fbf4359b8` / 2026-10-14 |
+| DSH baseline | tag `dsh-v0.2.1-alpha.4` / commit `86a402200d` / 2026-10-15 |
 | Upstream | [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) |
 | Skill version | `version` in `SKILL.md` frontmatter (**the single source of truth**) |
 | Version ↔ baseline table | `references/13-version-history.md` §1.5 |

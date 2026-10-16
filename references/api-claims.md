@@ -3,12 +3,13 @@
 # API 声明登记表（本 skill 依赖的易变事实）
 
 > **用途**：本 skill 的每一条「关于 DSH 的断言」都登记在这里，标注易变性等级、基线写法、源码位置、核验方式。
-> **基线**：commit `2fbf4359b8` / `dsh-v0.2.1-alpha.3`（2026-10-14）。
+> **基线**：commit `86a402200d` / `dsh-v0.2.1-alpha.4`（2026-10-15）。
 > **探针**：`scripts/dsh-api-probe.py`（首选，零 coreutils 依赖）与 `scripts/dsh-api-probe.sh`（备选）。
 > **两份探针的断言表必须逐条一致**；被核验的断言数 = **56 条（48 正向 S/M/L + 8 反向 N）**。
 > **核验结果（2026-09-18 实测，对新基线 tag `dsh-v0.1.6-alpha.2` 的检出）**：`total=56 holds=56 stale=0`，`exit 0`。
 > **负向证明（历史实测，对 `dsh-v0.1.6-alpha.1` 的检出）**：`holds=47 stale=7 skipped=2`、`exit 1` —— 那 7 条 STALE 正是 `1.1.0` 新增/改写的断言（`M11`/`M35`/`M36`/`M37`/`N06`/`N07`/`N08`），证明它们**能失败**，不是恒真装饰。
-> **第二批断言**：`scripts/verify_absorbed_claims.py`，随 `dsh-v0.1.7-rc.1` 由 **39 条扩到 49 条**（先修 4 条判据缺陷、再加 `P06`/`P07`/`U09`/`U10`/`V01`/`X07`，本轮又加 `U11`/`U12`/`X08`/`X09`）；负向自检 `49/49 STALE`、正向 `49/49 HOLDS`（同批实测）。
+> **第二批断言**：`scripts/verify_absorbed_claims.py`，随 `dsh-v0.1.7-rc.1` 由 **39 条扩到 49 条**（先修 4 条判据缺陷、再加 `P06`/`P07`/`U09`/`U10`/`V01`/`X07`，1.5.0 轮又加 `U11`/`U12`/`X08`/`X09`，**本轮（alpha.4）再加 `E` 组 3 条** `E01`/`E02`/`E03`，口径同时修正为 **54 条**）。**负向自检 `54/54 STALE`、正向 `54/54 HOLDS`（2026-10-16 实测，两个退出码均为 0）**。
+> ⚠️ **2026-10-16 修正一处既有文档缺陷**：本条此前一直写 **49 条**，而脚本**实际一直是 51 条**（`H`5 + `T`4 + `B`13 + `U`12 + `P`7 + `V`1 + `X`9）—— 差在 §7.2 的分组表把 `B` 组少记 2 条、`U` 组少记 2 条，又**多列了一个早已不存在的 `G` 组**（其 2 条实为 `U11`/`U12`，随设置机制重做一起并进了 `U`）。复现：`grep -oE "^(  )?(HOLDS|STALE) +[A-Z][0-9]+" <日志> | grep -oE "[A-Z][0-9]+$" | sed -E 's/^([A-Z])[0-9]+/\1/' | sort | uniq -c`。**改检查器后必做可失败性探针**（硬规则 6）：本轮 `--selftest` 仍为 `54/54 STALE`。
 > **编号提示**：本表的 `M` 编号是**本表自己的**连续编号，**与探针 `dsh-api-probe.py` 的 `M` 编号不是一套**（例：本表 `M20` = 探针 `M11`）。两套编号各自连续、互不引用，对照时请按「结论文字 + 核验方式」匹配，不要按编号。新增条目会在「核验方式」列标注探针 ID。
 > **怎么用**：写代码前按 ID 或等级检索；探针 `scripts/dsh-api-probe.sh` 会逐条核验 S / M / L / N 级。
 > **四个维度**：S/M/V（易变性，越高越易变）+ **N（极性，否定性论断）**。N 级是本表唯一一类「语义反向」的条目，见第五节。
@@ -152,7 +153,8 @@
 | 论断 | 为什么不能自动 | 人工复核方式 |
 |---|---|---|
 | 官方**文档**没有随仓库提交插槽键完整清单 | skill 内没有官方文档副本，且官方文档会更新 | ✅ **2026-09-23 复核：已有更好的权威源，且原前提是错的** —— `pnpm run gen-client-catalog` 的**产物其实早已入库**：`packages/extensions/cordis-client-runner/src/client/slot-catalog.ts`（引入于 `4064198560`，2026-08-13；由 `verify-client-catalog` 守新鲜度），给出**客户端半侧完整清单**（`0.1.7-rc.1` 实测 **86 个**，带 kind/scope/owner props）。`scripts/extract_slots.py` 的 **A2 段现在自动与它交叉核对**，漏抽量应为 0。**仍需人工的只剩**：宿主侧是否也有同类生成产物。⚠️ 另注：上游文档写的 `cordis_inspect what:"client"` 是**旧简写**，实际工具为 `cordis_inspect_list` / `cordis_inspect_query`（`packages/extensions/tool-cordis/src/index.ts:23,42`） |
-| 生态**没有官方插件市场**（发现机制是 GitHub topic `dsh-plugin`） | 生态事实，不在仓库内 | 查 GitHub 是否出现官方 marketplace 仓库 |
+| ✅ **2026-10-16 复核（结论被收窄，不是推翻）**：生态**仍**没有**官方**插件市场，但**「生态里没有市场机制」已不成立** —— 自 `dsh-v0.2.1-alpha.4` 起官方**随仓库交付**了读取器 / Discover 页 / agent 工具 / 插槽（见下一行）；上游原文两处明写「**目前没有官方市场**，因此 DSH 无法随附默认源；**索引源属于用户数据**」（`.agents/notes/implemented/feature/2026-10-02-plugin-market-discover.zh.md:9`、`…-plugin-market-index-format.zh.md:9`）。**发现机制仍以 GitHub topic `dsh-plugin` 为主** | 生态事实 + 仓库内机制，**两者都要看** | ① 查 GitHub 是否出现官方 marketplace **仓库**；② 查 `packages/boot/plugin-market/` 是否被加进 **base 补丁**（若加进去，「无默认源」也随之失效） |
+| 🔴 **官方插件市场机制已在仓库内**（`dsh-v0.2.1-alpha.4` 新增，**本表本轮新登记**） | 可直接对源码核验 | 服务 `pluginMarket`（`packages/extensions/tool-cordis/src/api-catalog.ts:1780`）· 事件 `plugin-market/changed`（`api-catalog.ts:4409-4411`，emit 于 `packages/boot/plugin-market/src/index.ts:102`）· agent 工具 `plugin_market`（`packages/boot/plugin-market/src/tools.ts:72`）· 插槽 `plugins.tab`（`packages/client/ui-plugin-manager/src/client/slot-contract.ts:124`）· 新增 4 个包 · 🔴 **不在 base 补丁里** → 不装 `plugin-market-bundle` 就没有市场面。与上一行是**同一轮、同一事实的两面**：机制存在（本条）／官方市场不存在（上一行）；`E01`~`E03` 覆盖同一轮的插件兼容变更 |
 | 官方文档存在**两处内部矛盾** | 需人工阅读理解 | 重读 `11-glossary-and-provenance.md` 记录的矛盾点是否被官方修正 |
 | `!!js` 写在 `config:`/`disabled:` 之外**静默失效（不报错）** | 运行时行为，静态搜不出来 | 写一个错位用例实跑一次 |
 | 未声明 `inject` 就访问 `ctx.x` 会 **PENDING 或崩** | 同上 | 同上 |
@@ -201,25 +203,27 @@
 
 | 维度 | `dsh-api-probe.py` | `scripts/verify_absorbed_claims.py` |
 |---|---|---|
-| 覆盖面 | 本 skill 核心骨架（56 条，全仓级） | 第二批 49 条（指定文件级） |
+| 覆盖面 | 本 skill 核心骨架（56 条，全仓级） | 第二批 54 条（指定文件级） |
 | 失败信号 | `exit 1` 表示某条 M/S 事实漂移 | 同上 |
 | 分开的理由 | 「56 条」这个数字被 SKILL.md、README、发布清单多处引用；并表会让**一个纯增量的动作**引发全库数字同步，制造无关的改动面与风险 | 保持主探针稳定；新事实独立可复跑 |
 
 **代价（如实声明）**：现在有**两个**核验入口，改 DSH 基线时要跑两个。这是有意识的取舍——用「多跑一条命令」换「主探针数字不被动摇」。
 
-### 7.2 本轮核验通过并已写入 `14-*.md` 的断言（49 条）
+### 7.2 本轮核验通过并已写入 `14-*.md` 的断言（54 条）
 
-核验器自带**负向自检**（对空仓库跑同一张表，要求 49/49 全 STALE），因为一张全是「X 不存在」的断言表在空语料上会**全部假通过**——这一点在开发本核验器时**真的发生了**（首版 5 条否定断言在空仓库上 HOLDS），修法是给每条否定断言加**护栏模式**（必须同时命中一个必然存在的样本，证明语料读到了）。
+核验器自带**负向自检**（对空仓库跑同一张表，要求 54/54 全 STALE），因为一张全是「X 不存在」的断言表在空语料上会**全部假通过**——这一点在开发本核验器时**真的发生了**（首版 5 条否定断言在空仓库上 HOLDS），修法是给每条否定断言加**护栏模式**（必须同时命中一个必然存在的样本，证明语料读到了）。
+
+> ⚠️ **2026-10-16 更正**：下面这张分组表此前把 `B` 记作 11、`U` 记作 10，并**多列了一个 `G` 组（2 条）**，合计 49 —— 而脚本**实际一直是 51 条**（`G` 组从未存在；那 2 条是 `U11`/`U12`，随设置机制重做并进了 `U`）。本轮加 `E` 组 3 条后为 **54**。**「文档写 49、脚本跑 51」这种静默漂移，正是硬规则 12「条数必须从唯一真源推导」要防的东西**；本表的条数现已与脚本 `CHECKS` 表逐组对齐。
 
 | 组 | 条数 | 代表断言 | 级别 |
 |---|---|---|---|
 | H · 入站 HTTP | 5 | `register(route: WebRoute): () => void`；`WebRoute` 三字段；`webServer` 由 Web 组合的 `id: webserver` 行提供 | S/M |
 | T · 定时器 | 4 | `ctx.interval(cb, delay)` 返回 disposer；handle 绑 fiber 自动清；`ctx.setInterval` 仅 deprecated 别名 | S/M |
-| B · 客户端产物 | 11 | lazy-CJS factory 的 banner（**按 chunk 生成，非入口多带 `chunk` 字段**）/intro/footer；`lib/client.js`；分块名 `client.<name>.js` 与 `require.async`；平台模块种子表 9 项；仓库外无已发布预设 | S/M |
-| U · 插槽 | 10 | `register(options, component)`；未声明 slot 的报错原文；`root` 是内建键；`ui-layout` 可禁用；**`plugins.item` 为 list、`plugins.bundle.config`/`plugins.row.config` 为 keyed**；组件收 `view` 两态；**`plugins.bundle.activation`（keyed）与 `plugins.detail.section`（list）已声明** | S/M |
+| B · 客户端产物 | 13 | lazy-CJS factory 的 banner（**按 chunk 生成，非入口多带 `chunk` 字段**）/intro/footer；`lib/client.js`；分块名 `client.<name>.js` 与 `require.async`；平台模块种子表 9 项；仓库外无已发布预设；**`dualClient` 的 Node 面产物 `client.node.js`**；**`staticLinked` 通道与 `isStaticLinkedConfig`**（后 2 条为 `B12`/`B13`） | S/M |
+| U · 插槽 | 12 | `register(options, component)`；未声明 slot 的报错原文；`root` 是内建键；`ui-layout` 可禁用；**`plugins.item` 为 list、`plugins.bundle.config`/`plugins.row.config` 为 keyed**；组件收 `view` 两态；**`plugins.bundle.activation`（keyed）与 `plugins.detail.section`（list）已声明**；**`settings` 服务改为 `SettingsForms`（`U11`）+ 乐观并发码 `SETTINGS_CONFLICT`（`U12`）—— 后 2 条即此前误记为独立 `G` 组的那两条** | S/M |
 | P · 基线推进（`alpha.2` 新增） | 7 | base 补丁 hmr 行改用 `@deepseek-ai/dsh-hmr`；官方 README 明写只换模块名；base 补丁新增 `plugin-manager` / `tool-plugin-manager`；CLI 转发给 `dsh-plugin-manager/operations`；bundle 对账实现与警告文案；**`DefineToolOptions.deferLoading`**；**`projectContent(exec, result)`** | M |
 | V · 数据格式版本 | 1 | `SESSION_FORMAT_VERSION = 4`（0.1.7 起；0.1.5～0.1.6 为 3） | M |
-| G · 设置机制重做（`rc.1` 新增） | 2 | `settings: SettingsForms` 服务声明；`SETTINGS_CONFLICT` 乐观并发码 | M |
+| E · 插件兼容（`alpha.4` 新增） | 3 | **`engines.dsh` 命中即单独判定、不再看 peer 范围**（`E01`）；**`IncompatiblePlugin.requirements` 取代 `peers`**（`E02`）；**否定**：`peers` 字段已从该接口体内移除（`E03`，判据收紧到**接口体内**而非裸关键词 —— 测试文件里 `peers:` 是形参名） | M/N |
 | X · 否定（防编造） | 9 | 不存在 `ui` 服务；不存在裸 `settings`/`status`/`workspace` 插槽键；`webServer.register` 不收 router 回调；**`settings.plugin.item` 不再被声明为插槽**；**`conversation.session.header.leading` 已移除**；**`installSection` 已整体移除**；**`SettingsScope` 已整体移除** | N |
 
 ### 7.3 本批**修正**的既有表述（原文错了，已改）
@@ -227,7 +231,7 @@
 | # | 位置 | 原表述（错） | 现状（核验后） |
 |---|---|---|---|
 | 1 | `02b-official-templates.md`（2 处）、`05-pitfalls.md`（1 处） | 浏览器半侧「平台种子表允许的**四个**：`react` / `cordis` / `ui-slots` / `ui-primitives`」 | 种子表实为 **9 个 specifier**，且是**全名**（含 `react-dom`、`react-dom/client`、`@deepseek-ai/dsh-client-store`、`@deepseek-ai/dsh-client-ui-dockkit`）；另有 `dsh.client.external` 可追加请求。以 `packages/client/web/src/platform.ts:8-14` 为准 |
-| 2 | `02b-official-templates.md` 插槽清单标题 | 「官方全部 UI 插槽名（**40 个**，实测提取）」 | 实为 **75 个声明侧键**（并集 77；剔除 18 个测试专用键后**约 59 个公开可用** —— 2026-09-16 对 0.1.6-alpha.1 重抽为 **77 / 79 / 约 61**；2026-09-18 对 0.1.6-alpha.2 再抽为 **81 / 84 / 约 66**；**2026-09-23 对 0.1.7-rc.1 重抽为 121 / 123 / 约 86**；**2026-09-25 对 0.1.7-rc.2 再抽为 124 / 126 / 约 89**（+3 / −0）；**2026-09-29 对 0.2.0-rc.1 再抽为 124 / 126 / 约 89**（+0 / −0，客户端权威目录 `slot-catalog.ts` 89 → 89）；**2026-09-30 对 0.2.0-rc.2 再抽为 125 / 127 / 约 90**（+1 / −0，`slot-catalog.ts` 89 → 90；新增键 `sidebar.right.tab.files.actions`）；**2026-10-04 对 0.2.1-alpha.1 再抽为 127 / 129 / 约 92**（+2 / −0，`slot-catalog.ts` **90 → 92**；新增键 `plugins.add.actions` / `shell.bottom`）；**2026-10-09 对 0.2.1-alpha.2 再抽为 129 / 131 / 约 94**（+2 / −0，`slot-catalog.ts` **92 → 94**；新增键 `conversation.chat.flow` / `conversation.chat.reasoning.body`）；**2026-10-15 对 0.2.1-alpha.3 再抽为 139 / 141 / 约 98**（**+5 / −1**，`slot-catalog.ts` **94 → 98**；新增键 `conversation.chat.message.images` / `conversation.chat.user.images` / `conversation.hero.options` / `conversation.user.text.node` / `workspace.toast`，**移除键 `conversation.message.images`**——这是本链上第一次出现「移除」），见 §三）。🔴 **上面这条历史链里 2026-09-23 之前的全部数字（75 / 77 / 79 / 81 / 84 / 96 / 99）都由有缺陷的抽取器产出，是逐轮低估**：该器只扫 `.ts`、键字符类不含连字符、且用**非贪婪正则**截 `SlotMap` 正文（撞上嵌套的 `children: { … }` 即提前截断）。2026-09-23 修好后：0.1.6-alpha.2 重抽为 **104 / 106 / 约 70**、0.1.7-rc.1 为 **121 / 123 / 约 86**；并以随仓库提交的生成产物 `slot-catalog.ts` 交叉核对，**两棵树上漏抽量均为 0**），且**漏了内建的 `root`**。已把 4 处「40 个」的说法改成「节选/低估」并给出可复现命令（`08-cheatsheet.md`、`11-glossary-and-provenance.md`、`api-claims.md` 同批修正） |
+| 2 | `02b-official-templates.md` 插槽清单标题 | 「官方全部 UI 插槽名（**40 个**，实测提取）」 | 实为 **75 个声明侧键**（并集 77；剔除 18 个测试专用键后**约 59 个公开可用** —— 2026-09-16 对 0.1.6-alpha.1 重抽为 **77 / 79 / 约 61**；2026-09-18 对 0.1.6-alpha.2 再抽为 **81 / 84 / 约 66**；**2026-09-23 对 0.1.7-rc.1 重抽为 121 / 123 / 约 86**；**2026-09-25 对 0.1.7-rc.2 再抽为 124 / 126 / 约 89**（+3 / −0）；**2026-09-29 对 0.2.0-rc.1 再抽为 124 / 126 / 约 89**（+0 / −0，客户端权威目录 `slot-catalog.ts` 89 → 89）；**2026-09-30 对 0.2.0-rc.2 再抽为 125 / 127 / 约 90**（+1 / −0，`slot-catalog.ts` 89 → 90；新增键 `sidebar.right.tab.files.actions`）；**2026-10-04 对 0.2.1-alpha.1 再抽为 127 / 129 / 约 92**（+2 / −0，`slot-catalog.ts` **90 → 92**；新增键 `plugins.add.actions` / `shell.bottom`）；**2026-10-09 对 0.2.1-alpha.2 再抽为 129 / 131 / 约 94**（+2 / −0，`slot-catalog.ts` **92 → 94**；新增键 `conversation.chat.flow` / `conversation.chat.reasoning.body`）；**2026-10-15 对 0.2.1-alpha.3 再抽为 139 / 141 / 约 98**（**+5 / −1**，`slot-catalog.ts` **94 → 98**；新增键 `conversation.chat.message.images` / `conversation.chat.user.images` / `conversation.hero.options` / `conversation.user.text.node` / `workspace.toast`，**移除键 `conversation.message.images`**——这是本链上第一次出现「移除」）；**2026-10-16 对 0.2.1-alpha.4 再抽为 140 / 142 / 约 99**（**+1 / −0**，`slot-catalog.ts` **98 → 99**；新增键 `plugins.tab`，`kind: 'list'` / `scope: 'root'`，宿主 `ui-plugin-manager`），见 §三）。🔴 **上面这条历史链里 2026-09-23 之前的全部数字（75 / 77 / 79 / 81 / 84 / 96 / 99）都由有缺陷的抽取器产出，是逐轮低估**：该器只扫 `.ts`、键字符类不含连字符、且用**非贪婪正则**截 `SlotMap` 正文（撞上嵌套的 `children: { … }` 即提前截断）。2026-09-23 修好后：0.1.6-alpha.2 重抽为 **104 / 106 / 约 70**、0.1.7-rc.1 为 **121 / 123 / 约 86**；并以随仓库提交的生成产物 `slot-catalog.ts` 交叉核对，**两棵树上漏抽量均为 0**），且**漏了内建的 `root`**。已把 4 处「40 个」的说法改成「节选/低估」并给出可复现命令（`08-cheatsheet.md`、`11-glossary-and-provenance.md`、`api-claims.md` 同批修正） |
 | 3 | `04-ui-and-slots.md` 第 10 章（整章） | 整章以 `ctx.settings.installSection(...)` + `SettingsScope.update(patch)` + 手写卡片族为**主路径**教学 | 🔴 **这套机制在 `dsh-v0.1.7-rc.1` 被整体移除**（`settings` 服务换成 `SettingsForms`，表单改由 `Config` schema 派生，持久化改走配置编辑器写 profile 的 Cordis patch；客户端卡片族 −4608/+73 行）。`04` §10 已改写为派生模型并新增 **§10.9** 旧→新对照速查表；`01` / `02` / `05` / `07` / `08` / `10a` / `11` 同步 |
 
 **教训（与 §6 同源）**：「全清单」「四个」这类**完备性措辞**本身就是一种断言，而它往往来自一次不完整的 grep——用 `slots\.(inject|register)\(\s*'` 提取，永远抓不到用 `renderSlot('root')` 渲染的内建键。**凡写「全部/仅/只有 N 个」，都要能给出可复现的抽取命令。**

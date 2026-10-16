@@ -1,7 +1,7 @@
 <!--
 本文件是**手工维护**的 curated 参考，不由 scripts/build_dsh_skill.sh 生成。
 （生成器只产出 01~13 号文件；本文件已在脚本的 KEEP 白名单内，重跑不会被删。）
-所有断言均对 DSH `dsh-v0.2.1-alpha.3` / commit `2fbf4359b8`（2026-10-14）逐条源码核验，
+所有断言均对 DSH `dsh-v0.2.1-alpha.4` / commit `86a402200d`（2026-10-15）逐条源码核验，
 复现脚本：`scripts/verify_absorbed_claims.py <DSH 仓库路径>`。
 -->
 
@@ -157,7 +157,7 @@ export function apply(ctx) {
 
 同段还写明：生成它的 `clientBundle` tsdown 预设位于 `packages/client/tsdown.client.ts`，**而不在任何已发布的包里**，因此仓库之外的包要自己复刻这一步构建（本手册 `04` §9.6 已就此展开）。
 
-**格式契约**（源码 `packages/client/tsdown.client.ts:661-667`，逐字）：
+**格式契约**（源码 `packages/client/tsdown.client.ts:663-669`，逐字）：
 
 ```js
 banner: (chunk) => {
@@ -175,9 +175,9 @@ intro:  'var module = { exports: {} }; var exports = module.exports;'
 
 | 项 | 值 | 源码出处 |
 |---|---|---|
-| 分块文件名 | 默认 `client.<name>.js`（入口默认 `client.js`） | `packages/client/tsdown.client.ts:648,651` |
-| 分块的 banner | 对**非入口**分块多写一个 `chunk: "<fileName>",` 字段（入口 chunk 的 banner 与旧版逐字相同） | 同上 `:619` |
-| 动态加载 | 包内动态 import 编译成 `require.async('./client.x.js')`，由 loader 按需拉取 | 同上 `:457`（`asyncChunkRequirePlugin`） |
+| 分块文件名 | 默认 `client.<name>.js`（入口默认 `client.js`） | `packages/client/tsdown.client.ts:650,653` |
+| 分块的 banner | 对**非入口**分块多写一个 `chunk: "<fileName>",` 字段（入口 chunk 的 banner 与旧版逐字相同） | 同上 `:621` |
+| 动态加载 | 包内动态 import 编译成 `require.async('./client.x.js')`，由 loader 按需拉取 | 同上 `:459`（`asyncChunkRequirePlugin`） |
 | 分块名校验 | `/^client\.[A-Za-z0-9][A-Za-z0-9._-]*\.js$/`；不合法抛 `client-modules: invalid package-local chunk` | `packages/client/modules/src/client/system.ts:39,150-151` |
 | 法务 / 署名 banner | `clientBundle(id, libEntry, { clientBanner: (fileName) => string \| undefined })` 按产物文件名注入前缀文本 | `packages/client/tsdown.client.ts`（`ClientBundleOptions.clientBanner`） |
 
@@ -189,11 +189,11 @@ intro:  'var module = { exports: {} }; var exports = module.exports;'
 
 | 通道 | 触发方式 | 产物命名 | 源码出处 |
 |---|---|---|---|
-| 浏览器面（默认） | 不传 `dualClient`（`dualClient = false`） | 入口 `client.js`、分块 `client.<name>.js` | `packages/client/tsdown.client.ts:648,651`（三元式的 else 分支） |
-| 浏览器面（双面模式） | `clientBundle(…, { dualClient: true })` | 入口 **`client.browser.js`**、分块 **`client.browser.<name>.js`** | 同上 `:648,651`（三元式的 then 分支） |
-| **Node 面**（仅在双面模式下额外构建） | 同上；`clientFaces` 变成 `[nodeClientConfig(...), client]` 两个面 | 入口 **`client.node.js`**、分块 **`client.node.<name>.js`**；`conditionNames: ['node', 'import', 'module', 'default']` | 同上 `:125-128`（组装）与 `:480-495`（`nodeClientConfig`） |
+| 浏览器面（默认） | 不传 `dualClient`（`dualClient = false`） | 入口 `client.js`、分块 `client.<name>.js` | `packages/client/tsdown.client.ts:650,653`（三元式的 else 分支） |
+| 浏览器面（双面模式） | `clientBundle(…, { dualClient: true })` | 入口 **`client.browser.js`**、分块 **`client.browser.<name>.js`** | 同上 `:650,653`（三元式的 then 分支） |
+| **Node 面**（仅在双面模式下额外构建） | 同上；`clientFaces` 变成 `[nodeClientConfig(...), client]` 两个面 | 入口 **`client.node.js`**、分块 **`client.node.<name>.js`**；`conditionNames: ['node', 'import', 'module', 'default']` | 同上 `:125-128`（组装）与 `:482-497`（`nodeClientConfig`） |
 
-选项类型是 **`readonly dualClient?: boolean`**（`:219`）。另有一条独立的 **`staticLinked(packageDir, libEntry): BuildFaceConfig`**（`:168`，内部走 `staticLinkedConfig`，`:278`），并导出 **`isStaticLinkedConfig()`**（`:184` 附近，返回「至少有一个 config 由 `staticLinked` 构建」）。
+选项类型是 **`readonly dualClient?: boolean`**（`:219`）。另有一条独立的 **`staticLinked(packageDir, libEntry): BuildFaceConfig`**（`:168`，内部走 `staticLinkedConfig`，`:280`），并导出 **`isStaticLinkedConfig()`**（`:184` 附近，返回「至少有一个 config 由 `staticLinked` 构建」）。
 
 > 🔴 **对第三方作者的意思**：① **默认仍叫 `client.js`**，只发单面 `client.js` 的插件**不用改**；② 但如果你的构建脚本、`files` 清单或发布校验**写死了 `client.js` 这个字面量**，而你在用（或被上游预设带着用）`dualClient`，产物会变成 `client.browser.js` + `client.node.js`，**旧的字面量会找不到文件**；③ 分块白名单校验 `/^client\.[A-Za-z0-9][A-Za-z0-9._-]*\.js$/` 仍然匹配 `client.browser.x.js` 与 `client.node.x.js`（点号在字符类里），所以**改名不会触发 `invalid package-local chunk`** —— 这类改名是**静默**的，只有发布校验/`files` 清单能抓住它。
 

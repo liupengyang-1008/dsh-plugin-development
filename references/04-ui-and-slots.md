@@ -2,12 +2,12 @@
 
 > **本文件用途**：UI 插件与设置卡片的完整实现：两个半侧结构、三个登记点、slot 插槽机制、React/TSX 技术栈约束、样式打包、开发期调试、三层配置解析模型。
 > **合成来源**：DSH插件开发指导手册.md（第 9/10 章）
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-alpha.3` / commit `2fbf4359b8`，2026-10-14），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-alpha.4` / commit `86a402200d`，2026-10-15），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
 
-> **本文件导航 —— 共 540 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
+> **本文件导航 —— 共 547 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
 > - **本文件全是整理稿**（无上游素材混杂），但它仍是基线快照——写代码前先过版本闸门。
 > - 常用检索：`grep -n '^## '`、`grep -n '插槽'`（插槽名出现处）
 
@@ -207,15 +207,18 @@ root
 └─ shell.overlay
 ```
 
-> 🔴 **`dsh-v0.1.7-rc.2` 那轮新增 3 个插槽（+3 / −0）**；**`0.2.0-rc.1` 那轮插槽零变化（+0 / −0）**；**`0.2.0-rc.2` 那轮新增 1 个（+1 / −0）**；**`0.2.1-alpha.1` 那轮新增 2 个（+2 / −0）**；**`0.2.1-alpha.2` 这轮新增 2 个（+2 / −0）** —— 上面这棵树是**节选**（权威全量约 **94** 个公开键，见 `08-cheatsheet.md` §3），这几轮新增的都不在节选里，登记在此免遗漏：
+> 🔴 **`dsh-v0.1.7-rc.2` 那轮新增 3 个插槽（+3 / −0）**；**`0.2.0-rc.1` 那轮插槽零变化（+0 / −0）**；**`0.2.0-rc.2` 那轮新增 1 个（+1 / −0）**；**`0.2.1-alpha.1` 那轮新增 2 个（+2 / −0）**；**`0.2.1-alpha.2` 那轮新增 2 个（+2 / −0）**；**`0.2.1-alpha.3` 那轮新增 5 个、移除 1 个（+5 / −1）**；**`0.2.1-alpha.4` 这轮新增 1 个（+1 / −0）** —— 上面这棵树是**节选**（权威全量约 **99** 个公开键，见 `08-cheatsheet.md` §3），这几轮新增的都不在节选里，登记在此免遗漏：
 > - **`shell.quota-notice`**（`chain` / `scope: root`）—— 框架级配额提示链。宿主 `ui-chat` 在 `shell.overlay` 里放了唯一的活体 host（`QuotaNoticeHost`），**第一个 selector 命中其 code 的 entry 接管该面**；全部 decline 时回落到 host 自带的通用 warning Toast。因为 host 在 Chat 面板之外，提示**能活过面板的切换/关闭**。声明：`packages/client/ui-chat/src/client/contract/slots.ts:329`（另有 `apply.ts:265`）。
 > - **`sidebar.session.row.leading`** 与 **`sidebar.session.row.hover`**（都是 `list`）—— 会话行的**行首区**与**悬停区**。新宿主 `ui-schedule`（定时任务）用它们挂任务标记与悬停卡片：`packages/client/ui-schedule/src/client/index.ts:231`（leading）/ `:238`（hover）。声明：`packages/client/ui-workspace/src/client/contract/slots.ts`。
 > - 🆕 **`sidebar.right.tab.files.actions`**（`0.2.0-rc.2` 新增，`list` / `scope: 'session'`）—— **文件树「重新加载」控件之后的目录动作位**，owner 属性给 `absolutePath`（当前展示的目录绝对路径）。声明与宿主同在 `packages/client/ui-sidebar-files/src/client/index.ts:34`（宿主是该包的 `FilesBody`；`sidebar.right.pane.tab` 里的 `FILES_ID` 条目在挂载期间它才存在）。⚠️ 同一版里 `conversation.chat.node` 的**已占用 key 表**多了 `question-reply`（`ui-user-questions` 的 `QuestionReplyView`）—— 那是 **chat-node 的 key**，**不是插槽名**，别照抄成 `ctx.slots.register({ name: 'question-reply' })`。
-> - 🆕 **`plugins.add.actions`**（`0.2.1-alpha.1` 新增，`list` / `scope: 'root'`）—— **插件页「添加插件」菜单里追加的动作行**（安装完成后出现；每行 72px 高，含标题与两行内的描述；owner 提供 `onDismiss()`，用于先关菜单再启动动作）。声明在 `packages/client/ui-plugin-manager/src/client/slot-contract.ts:89`（宿主包 `@deepseek-ai/dsh-client-ui-plugin-manager`；`PluginAddActionsProps` 在同文件 `:81`）。
+> - 🆕 **`plugins.add.actions`**（`0.2.1-alpha.1` 新增，`list` / `scope: 'root'`）—— **插件页「添加插件」菜单里追加的动作行**（安装完成后出现；每行 72px 高，含标题与两行内的描述；owner 提供 `onDismiss()`，用于先关菜单再启动动作）。声明在 `packages/client/ui-plugin-manager/src/client/slot-contract.ts:118`（宿主包 `@deepseek-ai/dsh-client-ui-plugin-manager`；`PluginAddActionsProps` 在同文件 `:110`）。
 > - 🆕 **`shell.bottom`**（`0.2.1-alpha.1` 新增，`single` / `scope: 'root'`）—— **横跨三列下方的整行底部面板位**（占用方自管高度与显隐；三列按该高度收缩，空内容不预留空间；切换主面板时保留底部组件；列宽拖拽手柄止于其上方，`shell.overlay` 仍覆盖整框）。**声明宿主是 `ui-layout`**：`packages/client/ui-layout/src/client/index.ts:94`（渲染点 `packages/client/ui-layout/src/client/AppFrame.tsx:290`）。首个占用方是 `@deepseek-ai/dsh-experimental-inspector`（`packages/experimental/inspector/src/client/bottom/page.tsx:63,91`，devtools iframe + 快捷键切换，高度走 `--inspector-height`）。
 > - 🆕 **`conversation.chat.flow`**（`0.2.1-alpha.2` 新增，`single` / `scope: 'session'`）—— **一次渲染的 Chat 流**（有序行 + 本地回显）；带 `hookContext`（`ChatFlowHookContext`，提供 `motion: FlowMotionRows`）与 `inject.hooks`（`groupAction` / `groupHeaderAction` 两个 viewport 级 hook 工厂）。🔴 **它同时改了上层结构**：`conversation.view` 的 `PropsRenderSlots` 由 `conversation.chat.node` **改成 `conversation.chat.flow`** —— 即 view 不再直接渲染 chat node，而是渲染 flow、由 flow 内部再渲染 `conversation.chat.node`。声明：`packages/client/ui-chat/src/client/contract/slots.ts:365-371`（owner 类型 `ChatFlowOwnerProps` 在同文件 `:313-322`）。
 > - 🆕 **`conversation.chat.reasoning.body`**（`0.2.1-alpha.2` 新增，`single` / `scope: 'session'`）—— **展开后的推理正文位**；owner 给 `{ text, running }`（原始模型文本 + 尾部是否仍在流式，`packages/client/ui-chat/src/client/contract/slots.ts:76-82`）。官方 entry 优先级 **100** 并调用 reasoning Content Factory，**更小的优先级值会替换它**；贡献者**必须保留对原始文本的访问**。声明：同文件 `:402`。
 >   ⚠️ 同批还有一个**易混项**：`conversation.chat.reasoning.content` 落在 `SlotFactoryMap`（**不是 `SlotMap`**，同文件 `:354-360`，`scope: 'root'`）—— 那是**内容工厂**，**不是可注册的插槽键**，别照抄成 `ctx.slots.inject('conversation.chat.reasoning.content', …)`。
+> - 🆕 **`0.2.1-alpha.3` 那轮 +5 / −1** —— 新增 `conversation.chat.message.images` / `conversation.chat.user.images` / `conversation.hero.options` / `conversation.user.text.node` / `workspace.toast`；**移除 `conversation.message.images`**（本链上**第一次出现「移除」**）。⚠️ **诚实声明：这是上一轮（技能 1.5.0）该登记而漏登记的一处** —— 上一轮只把计数链推进到了 `08` / `11` / `api-claims`，这句「登记在此免遗漏」的承诺没兑现；**本轮补记**。逐键位置仍见 `api-claims.md` §7.3 第 2 行（那里有完整的键名与 `slot-catalog.ts` 步进）。
+> - 🆕 **`plugins.tab`**（`0.2.1-alpha.4` 新增，`list` / `scope: 'root'`）—— **插件页在自带的「已安装」标签之后的贡献标签页**（官方首个占用方就是市场页 **Discover**）。条目给 `id` / `order` / `label` / `locale`；选中后在页头与标签行之下渲染该条目自己的内容，而**安装动作不自己画，要调 owner 给的 `install()`**（打开页面的安装对话框并直接停在「校验 / 进度」两屏，跳过规格表单）。owner props `PluginTabProps` = `{ install(target: PluginTabInstall): void; openPackage(packageName: string): void }`，其中 `PluginTabInstall` = `{ spec; registry?; title; version }`（`title` 是**已本地化**的显示名，`registry` 缺省则沿用对话框自己的源）。声明：`packages/client/ui-plugin-manager/src/client/slot-contract.ts:124`（owner 类型 `:95-107`、`PluginTabInstall` `:83-92`）；宿主渲染点 `packages/client/ui-plugin-manager/src/client/PluginManagerPage.tsx:1662`，台账 `.../client/tab-ledger.ts`（`navigation-store.ts:12`：`'installed'` 是页面**自带**页签，其余值即 `plugins.tab` 条目的 id）。官方占用方 = `ui-plugin-market`：`packages/client/ui-plugin-market/src/client/index.ts:51-52` 注册 `{ name: 'plugins.tab', id: 'discover', label: () => t('title'), locale: NS, … }`，组件 `DiscoverSection.tsx`。
+>   🔴 **极易与 `settings.plugins.tab` 混淆（同名不同物，选错就注册到另一个页面去了）**：那个是**设置面板 → 插件分区**的标签页（owner `SettingsPluginsTabOwnerProps`，声明 `packages/client/ui-settings/src/client/contract/slots.ts:66`，宿主 `ui-settings-plugins`）。**判据：带 `settings.` 前缀 = 设置面板；无前缀 = 插件页。**
 
 💡 运行中的 DSH 用 `cordis_inspect_query`（先 `cordis_inspect_list` 拿 method）查**实时**插槽树。⚠️ 上游文档写作 `cordis_inspect what:"client"`（`docs/subsystems/slots.zh.md:190`），但**当前工具面没有裸 `cordis_inspect`** —— 实际只有族名 `cordis_inspect_list` / `cordis_inspect_query` / `cordis_inspect_self`（`packages/extensions/tool-cordis/src/index.ts:23,42`）；UI 侧具体查 `Slots.listSubTree`。**客户端插槽的静态权威**是生成产物 `slot-catalog.ts`（见 `scripts/extract_slots.py` 的 A2 段）。
 
@@ -412,22 +415,26 @@ async mutate(ns: string, ops: readonly SettingsPathOp[], expectedRevision?: numb
 
 **默认情况：你不用写任何浏览器半侧代码** —— 你的 `Config` schema 会在**插件页**自动渲染出配置表单（读写与持久化由配置编辑器承担）。
 
-**只有要「自定义一张页面」时才注册插槽**（`plugins.*` 声明见下面 7 键块）。注册进 `plugins.item` 的宿主组件收到的是 `PluginConfigViewProps`（**只有 `view: 'summary' | 'page'`**），**不再**是 `SettingsScope` —— 读写配置要走 `ctx.remote.settings`（Host 侧 `ctx.settingsController`）。
+**只有要「自定义一张页面」时才注册插槽**（`plugins.*` 声明见下面 **9 键块**）。注册进 `plugins.item` 的宿主组件收到的是 `PluginConfigViewProps`（**只有 `view: 'summary' | 'page'`**），**不再**是 `SettingsScope` —— 读写配置要走 `ctx.remote.settings`（Host 侧 `ctx.settingsController`）。
 
 > ⚠️ **「内置插件」设置分区现在只是个壳**：`ui-settings-plugins` 只拥有设置导航项与标签行，声明 `settings.plugins.tab`（根级 list slot）—— 它**不再自带任何配置卡片**。要贡献标签页就按 `id` / `order` / `label` 注册进 `settings.plugins.tab`（官方口径：`packages/client/ui-settings-plugins/README.zh.md`）。
 
 > 🔴 **`dsh-v0.1.6-alpha.2` 起：插槽名是 `plugins.item`（`list` 语义），不再是 `settings.plugin.item`（`keyed` 语义）。**
 > 两者**不是别名关系**：旧槽以「卡片所编辑的 settings 命名空间」为 `key`，新槽是普通列表项，用 `id` / `order` / `label`，组件额外收 `view: 'summary' | 'page'` 两个态。
-> 依据：`packages/client/ui-plugin-manager/src/client/slot-contract.ts:101`（权威声明；`0.1.7-rc.1` 那轮由 `:32` 位移至此，本基线再因文件增行下移至 `:101`）、`packages/client/ui-settings-agent-loop/src/client/index.ts:47-48`（官方自己的注册方 —— 配置页已拆成**每插件一个伴生包**，并用 `ctx.configForms.whileServed([NS], …)` 包住 `slots.inject('plugins.item', …)`，即「Host 正服务该条目期间」才注册）。
+> 依据：`packages/client/ui-plugin-manager/src/client/slot-contract.ts:136`（权威声明；`0.1.7-rc.1` 那轮由 `:32` 位移至此，本基线再因文件增行下移至 `:136`）、`packages/client/ui-settings-agent-loop/src/client/index.ts:47-48`（官方自己的注册方 —— 配置页已拆成**每插件一个伴生包**，并用 `ctx.configForms.whileServed([NS], …)` 包住 `slots.inject('plugins.item', …)`，即「Host 正服务该条目期间」才注册）。
 > ✅ **上游文档已跟上（2026-09-23 复核，撤销上一轮的警告）**：上一轮（基线 `0.1.6-alpha.2`）曾记录「该 cookbook 零改动、仍在教 `settings.plugin.item`」。**在 `dsh-v0.1.7-rc.1` 里它已被整篇改写**：标题换成「实践指南：即时配置表单」，全文**再无 `settings.plugin.item`**，并改为教 `plugins.item`（`:72`）与新的 `plugins.detail.actions` / `.badge` / `.section`（`:46-53`）。
 > ⚠️ **但改写带来另一类风险：行号级引用全线失效**。该文档由 100+ 行缩到 **72 行**，本技能原先指向它的逐字引文（旧 `:50` / `:72` / `:82` / `:94` / `:102` / `:13-44` / `:52-70`）**已不再指向原文** —— 本节与 `14 §17.3` 的引用已就地改为「旧位置 + 新位置」或改引源码。**这正是「完备性/出处措辞会静默腐化」的又一实例**：事实没变，出处漂了。
 > 机器判据：`verify_absorbed_claims.py` 的 `U06` / `U07` / `U09` / `U10`（新槽已声明）、`X06`（旧槽不再被声明）、`X07`（`conversation.session.header.leading` 已移除）、`B08`（预设仍未发布，按**新措辞**锚定）。
 
-**这组插槽的声明**（源码 `packages/client/ui-plugin-manager/src/client/slot-contract.ts`，`dsh-v0.1.7-rc.1` 逐字；**本区间由 3 个键增至 7 个**）：
+**这组插槽的声明**（源码 `packages/client/ui-plugin-manager/src/client/slot-contract.ts`，对基线 `dsh-v0.2.1-alpha.4` 逐字；**条数勿硬抄** —— 复现：`grep -c "^    'plugins\." <该文件>` → **9**）：
+
+> 📈 **历史计数（勿当现值）**：`dsh-v0.1.7-rc.1` 那轮由 3 个键增至 7 个；`0.2.1-alpha.1` 加 `plugins.add.actions`；**`0.2.1-alpha.4` 加 `plugins.tab`**。⚠️ 该文件**头部的分组散文**（「Three carry… / Three more take…」）只点名了 **7** 个键（未点名 `plugins.add.actions` 与 `plugins.bundle.activation`），**不是全量计数** —— 一律以 `declare module` 块为准。
 
 ```ts
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface SlotMap {
+    'plugins.add.actions': { kind: 'list'; scope: 'root'; owner: PluginAddActionsProps }
+    'plugins.tab': { kind: 'list'; scope: 'root'; owner: PluginTabProps }
     'plugins.bundle.activation': { kind: 'keyed'; scope: 'root'; owner: PluginActivationOwnerProps }
     'plugins.item': { kind: 'list'; scope: 'root'; owner: PluginConfigViewProps }
     'plugins.bundle.config': { kind: 'keyed'; scope: 'root'; owner: PluginConfigViewProps }

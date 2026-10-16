@@ -2,12 +2,12 @@
 
 > **本文件用途**：速查卡，三部分：① 三种插件形态对照表（最容易搞混，放最前）② 完整 API 速查——服务名（inject 字符串）、事件名（含 waterfall 全套）、UI 插槽名、官方斜杠命令、CLI 命令、目录与路径、工具参数 DSL 类型（全部由源码 grep 提取，带实证来源列）③ 主手册的插件骨架、四类注册、真实范本清单、判断口诀，以及带 core/seam/bundle 角色的 ctx 键速查表。写代码时随手查这一份就够。
 > **合成来源**：DSH插件开发实战补充-模板与踩坑.md（仅第六篇 6.5） + I-quickref.md + DSH插件开发指导手册.md（附录 A/B/C）
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-alpha.3` / commit `2fbf4359b8`，2026-10-14），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-alpha.4` / commit `86a402200d`，2026-10-15），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
 
-> **本文件导航 —— 共 442 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
+> **本文件导航 —— 共 445 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
 > - **上游素材原文**：约 192 行（46%），起点：`I-quickref.md`（文件开头）。**不是本技能重写的整理稿**；性质不一——**有的是官方文档逐字摘录（属权威原文），有的是调研期粗笔记（仅备查）**。读某一段前，务必连带读**该段开头的取材说明**。
 > - **其余部分 = 面向任务的整理稿**，可直接照做；但它同样是基线快照，写代码前先过版本闸门。
 > - 常用检索：`grep -n '^## '`、`grep -n '^# I\.'`（档案起点）
@@ -35,7 +35,7 @@
 
 # I. 速查表 —— 服务 / 事件 / 插槽 / 命令 / 扩展点（全部实测）
 
-> 来源：`deepseek-harness`（commit `2fbf4359b8`）。全部由源码 grep 提取，**不是文档复述**。
+> 来源：`deepseek-harness`（commit `86a402200d`）。全部由源码 grep 提取，**不是文档复述**。
 > 使用方法：写插件时先在这张表里找"我要挂到哪"。
 
 ---
@@ -68,7 +68,8 @@
 | `schedule` | 定时任务域（宿主侧）：任务表持久化（`ctx.storageDomain.open(scheduleDomain)`）、投递、会话恢复、保留策略（`deliveryHistoryDays` / `deliveryHistoryRecords`）。**`0.1.7-rc.2` 新增** | `packages/schedule/schedule/src/index.ts:121` |
 | `shortcuts` | 键盘快捷键注册表（**客户端侧**）：绑定 / 配置 / 持久化 + 目录（`catalog` / `fixedCatalog`）。**`0.1.7-rc.2` 新增**；desktop 运行时必须有 `dshDesktop.keyboard` 桥，缺了构造函数**直接抛** | `packages/client/shortcuts/src/client/index.ts:47` |
 | `otel` | 共享遥测传输 provider（宿主侧）：`createEventReporter(options)` / `createSessionLogReporter(options)` 各建**互相独立**的通道；**挂载本身不建队列、不建身份、不连网**，消费方自己负责排空与关闭截止。**`0.2.0-rc.1` 新增** | `packages/telemetry/otel/src/index.ts:13`（类）/ `:22` / `:30`；调用点 `packages/host/product-telemetry-otel/src/index.ts:85`、`packages/session/session-telemetry-otel/src/index.ts:189` |
-| `productAnalytics` | 产品分析事件接收（**宿主侧 `ProductAnalytics` 与客户端侧 `DesktopAnalytics` 用同一个键名**）：`enabled()`、`watchPolicy(signal)`（`@Remote` 流式，随配置热更新）、`report(event)`。**禁用态不读身份、不接新事件**。**`0.2.0-rc.1` 新增** | `packages/client/product-analytics/src/index.ts:35`、`packages/client/product-analytics/src/client/index.ts:20` |
+| `productAnalytics` | 产品分析事件接收（**宿主侧 `ProductAnalytics` 与客户端侧 `DesktopAnalytics` 用同一个键名**）：`enabled()`、`watchPolicy(signal)`（`@Remote` 流式，随配置热更新）、`report(event)`。**禁用态不读身份、不接新事件**。**`0.2.0-rc.1` 新增** | `packages/client/product-analytics/src/index.ts:46`、`packages/client/product-analytics/src/client/index.ts:20` |
+| `pluginMarket` | **插件市场索引读取器（宿主侧）**：按用户在设置里配的索引源拉取 / 校验 / 缓存市场清单，供 Web 端 **Discover** 标签页与 `plugin_market` 工具消费；`static inject = ['pluginManager']`。`Config` = `indexes`（`Volatile<string[]>`，默认 `[]`，**写入不重挂服务**）/ `fetchTimeoutMs`（默认 15000）/ `maxBytes`（默认 128 MiB）/ `cacheTtlMs`（默认 600000 ≈ 10 分钟）。🔴 **`0.2.1-alpha.4` 新增，且不在 base 补丁里** —— 不装组合包 `@deepseek-ai/dsh-experimental-plugin-market-bundle` 就没有这个服务；`plugin_market` 工具也**只在服务挂载期间**才注册 | 声明 `packages/boot/plugin-market/src/index.ts:24-29`、类 `:75`、`super(ctx, 'pluginMarket')` `:92`、`static inject`/`static Config` `:76`/`:78-83`；组合补丁 `packages/experimental/plugin-market-bundle/cordis.patch.yml` |
 
 > ⚠️ **服务名大小写敏感**（`sessionProjections` 不是 `session-projection`）。
 > 💡 探测可选服务：`ctx.get('settings')`；**只有 `inject` 里声明过的**才能写 `ctx.settings`。
@@ -111,6 +112,7 @@
 | `deepseek-account/model-sign-in-required` | 某个模型要求重新登录（**`0.1.7-rc.2` 新增**）。emit 处 `packages/credentials/deepseek-account/src/account-tasks.ts:24` |
 | `deepseek-account/signed-out` | 已登出（**`0.1.7-rc.2` 新增**）。监听处 `packages/credentials/deepseek-account/src/account-tasks.ts:27` |
 | `schedule/changed` | 定时任务变化（**`0.1.7-rc.2` 新增**，客户端经 `ctx.remote.$on`）；由新服务 `schedule` 驱动 |
+| `plugin-market/changed` | 插件市场的索引源 / 清单变化（**`0.2.1-alpha.4` 新增**）。由新服务 `pluginMarket` 在**索引源配置变化或缓存项被清后**发出（`packages/boot/plugin-market/src/index.ts:102`，在 `loader/volatile-update` 处理里）；客户端转发已登记（`packages/api/remotes/src/remote-events.ts:51`，`mode: 'emit'`）。⚠️ 该服务**不在 base 补丁里** —— 不装组合包时该事件永不发出，`ctx.on` 只会静默挂着 |
 
 ### 2.2 ⭐ waterfall 事件 —— **Agent 会话流程的扩展点**（重要）
 
@@ -157,9 +159,9 @@
 
 ---
 
-## 3. UI 插槽名（**最常用的几个**；权威全量约 **98** 个公开键 —— 对基线 `dsh-v0.2.1-alpha.3` 抽取：声明侧 **139**、并集 **141**、剔除 **43** 个测试专用键后约 98 个公开可用。用 `scripts/extract_slots.py` 复现（**2026-09-23 修好抽取器两处漏抽后重抽**；**2026-09-25 随 rc.2 推进 +3 / −0**；**2026-09-29 随 0.2.0-rc.1 推进 +0 / −0**；**2026-09-30 随 0.2.0-rc.2 推进 +1 / −0**（客户端权威目录 `slot-catalog.ts` **89 → 90**；新增键 = `sidebar.right.tab.files.actions`）；**2026-10-04 随 0.2.1-alpha.1 推进 +2 / −0**（`slot-catalog.ts` **90 → 92**；新增键 = `plugins.add.actions` / `shell.bottom`）；**2026-10-09 随 0.2.1-alpha.2 推进 +2 / −0**（`slot-catalog.ts` **92 → 94**；新增键 = `conversation.chat.flow` / `conversation.chat.reasoning.body`，另见 `04-ui-and-slots.md` 的登记）；**2026-10-15 随 0.2.1-alpha.3 推进 +5 / −1**（`slot-catalog.ts` **94 → 98**；新增键 = `conversation.chat.message.images` / `conversation.chat.user.images` / `conversation.hero.options` / `conversation.user.text.node` / `workspace.toast`，**移除键 = `conversation.message.images`**）；此前公布的 96/99/约81 系低估））
+## 3. UI 插槽名（**最常用的几个**；权威全量约 **99** 个公开键 —— 对基线 `dsh-v0.2.1-alpha.4` 抽取：声明侧 **140**、并集 **142**、剔除 **43** 个测试专用键后约 99 个公开可用。用 `scripts/extract_slots.py` 复现（**2026-09-23 修好抽取器两处漏抽后重抽**；**2026-09-25 随 rc.2 推进 +3 / −0**；**2026-09-29 随 0.2.0-rc.1 推进 +0 / −0**；**2026-09-30 随 0.2.0-rc.2 推进 +1 / −0**（客户端权威目录 `slot-catalog.ts` **89 → 90**；新增键 = `sidebar.right.tab.files.actions`）；**2026-10-04 随 0.2.1-alpha.1 推进 +2 / −0**（`slot-catalog.ts` **90 → 92**；新增键 = `plugins.add.actions` / `shell.bottom`）；**2026-10-09 随 0.2.1-alpha.2 推进 +2 / −0**（`slot-catalog.ts` **92 → 94**；新增键 = `conversation.chat.flow` / `conversation.chat.reasoning.body`，另见 `04-ui-and-slots.md` 的登记）；**2026-10-15 随 0.2.1-alpha.3 推进 +5 / −1**（`slot-catalog.ts` **94 → 98**；新增键 = `conversation.chat.message.images` / `conversation.chat.user.images` / `conversation.hero.options` / `conversation.user.text.node` / `workspace.toast`，**移除键 = `conversation.message.images`**）；**2026-10-16 随 0.2.1-alpha.4 推进 +1 / −0**（`slot-catalog.ts` **98 → 99**；新增键 = `plugins.tab`，`kind: 'list'` / `scope: 'root'`，宿主 `ui-plugin-manager`）；此前公布的 96/99/约81 系低估））
 
-**最常用的三个**：
+**最常用的几个**（下表是**高频子集，不是全量** —— 全量约 99 个公开键，计数链见本节标题）：
 
 | 插槽名 | 用途 |
 |---|---|
@@ -170,6 +172,7 @@
 | `conversation.view` | 替换对话主视图（最激进） |
 | `sidebar.brand.mark` / `sidebar.brand.name` | 侧栏品牌位（最小 UI 插件范例用的） |
 | `tool.call.toolview` | 工具调用的自定义卡片 |
+| `plugins.tab` | **插件页（`main.plugins`）在自带「已安装」页签之后的贡献页签**（**`0.2.1-alpha.4` 新增**，`list` / `scope: 'root'`）；官方首个占用方是市场页 Discover。⚠️ **别和设置面板那个 `settings.plugins.tab` 搞混**（带 `settings.` 前缀 = 设置面板；无前缀 = 插件页），详见 `04-ui-and-slots.md` §9.4.3 |
 
 ---
 
@@ -314,7 +317,7 @@ ctx.slots.inject('插槽名', () => ctx.slots.register({ name: '插槽名', id, 
 
 # 附录 B 真实范本清单（照着抄最快）
 
-> 全部路径相对于仓库根。主文件行数为主 `src/index.ts` 的行数，「src 总量」为该包 `src/` 下所有 `.ts/.tsx` 行数之和。（行数对基线 `dsh-v0.2.1-alpha.3` 逐个实测。）
+> 全部路径相对于仓库根。主文件行数为主 `src/index.ts` 的行数，「src 总量」为该包 `src/` 下所有 `.ts/.tsx` 行数之和。（行数对基线 `dsh-v0.2.1-alpha.4` 逐个实测。复现：`wc -l <仓库>/<路径>/src/index.ts`，总量用 `find <仓库>/<路径>/src -type f \( -name '*.ts' -o -name '*.tsx' \) | xargs wc -l | tail -1`。）
 
 ## B.1 最小可运行（学习包骨架）
 
@@ -322,7 +325,7 @@ ctx.slots.inject('插槽名', () => ctx.slots.register({ name: '插槽名', id, 
 |---|---|---|---|---|
 | `@deepseek-ai/dsh-brand` | `packages/util/brand` | 39 | 39 | 最小非 UI 包 |
 | `@deepseek-ai/dsh-client-ui-brand-official` | `packages/client/ui-brand-official` | 7 | **49** | **最小 UI 插件**（首选范本） |
-| `@deepseek-ai/dsh-subagent-spawn-in-process` | `packages/subagent/subagent-spawn-in-process` | 61 | 61 | 最小能力 Provider（⚠️ `0.2.1-alpha.2` 的 subagent 重构使其由 70 缩到 **61**） |
+| `@deepseek-ai/dsh-subagent-spawn-in-process` | `packages/subagent/subagent-spawn-in-process` | 59 | 59 | 最小能力 Provider（⚠️ `0.2.1-alpha.2` 的 subagent 重构使其由 70 缩到 61；**`0.2.1-alpha.4` 再缩到 59**，故上表两个数已由 61/61 更正为 **59/59**） |
 | `@deepseek-ai/dsh-agent-tool-presentation` | `packages/core/agent-tool-presentation` | 72 | 72 | 最小 `apply` + config |
 
 ## B.2 工具插件

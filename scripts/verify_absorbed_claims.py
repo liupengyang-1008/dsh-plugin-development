@@ -174,6 +174,23 @@ CHECKS: list[tuple[str, str, str, str, str, str]] = [
      "packages/settings/settings/src/index.ts",
      r"readonly code = 'SETTINGS_CONFLICT'", "has"),
 
+    # ── 0.2.1-alpha.4 新增：插件兼容判定改读 `engines.dsh`（本区间唯一的破坏性变更）──
+    # 判据来源 = 上游 docs/upgrade-guide/v0.2.1-alpha.3/plugin-engines-dsh/guide.zh.md。
+    # 三条都做过**双向翻转实测**（old tree：E01/E02 STALE、E03 命中→STALE；new tree：全 HOLDS），
+    # 比只跑 --selftest 更强 —— 空仓库自检只能证明「能失败」，翻转实测能证明「失败方向正确」。
+    ("E01", "M", "插件兼容先读 engines.dsh：命中即单独判定，不再看 peer 范围",
+     "packages/boot/app-boot/src/plugin-compatibility.ts",
+     r"Object\.hasOwn\(engines, 'dsh'\)[\s\S]{0,220}?return satisfies\(runtimeVersion, range\) \? \{\} : \{ 'engines\.dsh': range \}",
+     "has"),
+    ("E02", "M", "IncompatiblePlugin 的拒绝理由字段为 requirements（不再是 peers）",
+     "packages/boot/plugin-manager/src/types.ts",
+     r"interface IncompatiblePlugin \{[\s\S]{0,200}?requirements: Record<string, string>", "has"),
+    # E03 是**否定**断言。🔴 不能用裸关键词 `peers:` 判 —— 测试文件里 `peers: Record<string, string>`
+    # 是**形参名**（`packages/boot/app-boot/tests/profile-resolution.spec.ts:2091`），裸搜会**假 STALE**。
+    # 故把判定范围收紧到 **`IncompatiblePlugin` 接口体内**（硬规则 9：集合判定用区域，不用关键词）。
+    ("E03", "N", "`peers` 字段已从 IncompatiblePlugin 接口体内移除",
+     "packages", r"interface IncompatiblePlugin \{[^}]{0,300}?peers:", "not"),
+
     # ── 反面教材：这些「编造名」在源码中必须不存在（未命中 = HOLDS）───────
     ("X01", "N", "不存在名为 ui 的服务（同类方案 ctx.ui.request 属编造）",
      "packages", r"provide\(\s*'ui'\s*,", "not"),
@@ -222,6 +239,9 @@ NEGATIVE_GUARDS: dict[str, tuple[str, str]] = {
     # 断言结果无效（而不是「旧 API 不存在」被假通过）。
     "X08": ("packages", r"class SettingsForms extends Service"),
     "X09": ("packages", r"class SettingsForms extends Service"),
+    # E03 的护栏取**新字段 `requirements` 所在的同一个接口体**：若该接口整体消失/改名，
+    # 护栏失效 → 断言结果**无效**（而不是「peers 不存在」被假通过）。
+    "E03": ("packages", r"interface IncompatiblePlugin \{[^}]{0,300}?requirements: Record<string, string>"),
 }
 
 
