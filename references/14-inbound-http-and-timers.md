@@ -1,7 +1,7 @@
 <!--
 本文件是**手工维护**的 curated 参考，不由 scripts/build_dsh_skill.sh 生成。
 （生成器只产出 01~13 号文件；本文件已在脚本的 KEEP 白名单内，重跑不会被删。）
-所有断言均对 DSH `dsh-v0.2.1-alpha.4` / commit `86a402200d`（2026-10-15）逐条源码核验，
+所有断言均对 DSH `dsh-v0.2.1-rc.2` / commit `687f282e86`（2026-10-17）逐条源码核验，
 复现脚本：`scripts/verify_absorbed_claims.py <DSH 仓库路径>`。
 -->
 

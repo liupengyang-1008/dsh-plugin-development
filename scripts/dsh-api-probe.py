@@ -49,8 +49,8 @@ for _stream in (sys.stdout, sys.stderr):
     except Exception:                                            # pragma: no cover
         pass
 
-BASELINE_COMMIT = "86a402200d"
-BASELINE_VER = "0.2.1-alpha.4"
+BASELINE_COMMIT = "687f282e86"
+BASELINE_VER = "0.2.1-rc.2"
 
 # ── 断言表 ──────────────────────────────────────────────────────────────────
 # 格式：ID,等级,说明,模式,作用域

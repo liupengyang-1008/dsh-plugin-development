@@ -65,8 +65,8 @@ if [ ! -d "$REPO/packages" ] || { [ ! -d "$REPO/vendor/loader" ] && [ ! -d "$REP
 fi
 
 # ── 0. 报告核验基线：当前仓库的版本与 commit ────────────────────────────────
-BASELINE_COMMIT="86a402200d"
-BASELINE_VER="0.2.1-alpha.4"
+BASELINE_COMMIT="687f282e86"
+BASELINE_VER="0.2.1-rc.2"
 
 LIVE_VER="$(node -e "try{console.log(require('$REPO/package.json').version||'unknown')}catch(e){console.log('unknown')}" 2>/dev/null || echo unknown)"
 LIVE_COMMIT="$(git -C "$REPO" rev-parse --short=10 HEAD 2>/dev/null || echo unknown)"
