@@ -2,12 +2,12 @@
 
 > **本文件用途**：UI 插件与设置卡片的完整实现：两个半侧结构、三个登记点、slot 插槽机制、React/TSX 技术栈约束、样式打包、开发期调试、三层配置解析模型。
 > **合成来源**：DSH插件开发指导手册.md（第 9/10 章）
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-rc.2` / commit `687f282e86`，2026-10-17），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-rc.3` / commit `1f81c047fc`，2026-10-23），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
 
-> **本文件导航 —— 共 548 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
+> **本文件导航 —— 共 550 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
 > - **本文件全是整理稿**（无上游素材混杂），但它仍是基线快照——写代码前先过版本闸门。
 > - 常用检索：`grep -n '^## '`、`grep -n '插槽'`（插槽名出现处）
 
@@ -158,7 +158,7 @@ ctx.slots.register({ name, id?, key?, order?, children?, store?, inject? }, Comp
 
 ### 9.4.2 两个正交维度：基数与作用域
 
-来源：`docs/subsystems/slots.zh.md:48-60`（逐字表格；旧引 `:46-58`）
+来源：`docs/subsystems/slots.zh.md:50-62`（逐字表格；旧引 `:48-60`）
 
 | 维度 | 值 | 含义 |
 |---|---|---|
@@ -172,7 +172,7 @@ ctx.slots.register({ name, id?, key?, order?, children?, store?, inject? }, Comp
 
 ### 9.4.3 可用的插槽树（节选）
 
-完整树见 `docs/subsystems/slots.zh.md:113-174`（旧引 `:111-172`）。以下是**最常用的部分**：
+完整树见 `docs/subsystems/slots.zh.md:115-177`（旧引 `:113-175`）。以下是**最常用的部分**：
 
 ```text
 root
@@ -207,7 +207,7 @@ root
 └─ shell.overlay
 ```
 
-> 🔴 **`dsh-v0.1.7-rc.2` 那轮新增 3 个插槽（+3 / −0）**；**`0.2.0-rc.1` 那轮插槽零变化（+0 / −0）**；**`0.2.0-rc.2` 那轮新增 1 个（+1 / −0）**；**`0.2.1-alpha.1` 那轮新增 2 个（+2 / −0）**；**`0.2.1-alpha.2` 那轮新增 2 个（+2 / −0）**；**`0.2.1-alpha.3` 那轮新增 5 个、移除 1 个（+5 / −1）**；**`0.2.1-alpha.4` 那轮新增 1 个（+1 / −0）**；**`0.2.1-rc.2` 这轮新增 1 个（+1 / −0）** —— 上面这棵树是**节选**（权威全量约 **100** 个公开键，见 `08-cheatsheet.md` §3），这几轮新增的都不在节选里，登记在此免遗漏：
+> 🔴 **`dsh-v0.1.7-rc.2` 那轮新增 3 个插槽（+3 / −0）**；**`0.2.0-rc.1` 那轮插槽零变化（+0 / −0）**；**`0.2.0-rc.2` 那轮新增 1 个（+1 / −0）**；**`0.2.1-alpha.1` 那轮新增 2 个（+2 / −0）**；**`0.2.1-alpha.2` 那轮新增 2 个（+2 / −0）**；**`0.2.1-alpha.3` 那轮新增 5 个、移除 1 个（+5 / −1）**；**`0.2.1-alpha.4` 那轮新增 1 个（+1 / −0）**；**`0.2.1-rc.2` 这轮新增 1 个（+1 / −0）**；**`0.2.1-rc.3` 这轮新增 3 个（+3 / −0）** —— 上面这棵树是**节选**（权威全量约 **103** 个公开键，见 `08-cheatsheet.md` §3），这几轮新增的都不在节选里，登记在此免遗漏：
 > - **`shell.quota-notice`**（`chain` / `scope: root`）—— 框架级配额提示链。宿主 `ui-chat` 在 `shell.overlay` 里放了唯一的活体 host（`QuotaNoticeHost`），**第一个 selector 命中其 code 的 entry 接管该面**；全部 decline 时回落到 host 自带的通用 warning Toast。因为 host 在 Chat 面板之外，提示**能活过面板的切换/关闭**。声明：`packages/client/ui-chat/src/client/contract/slots.ts:329`（另有 `apply.ts:265`）。
 > - **`sidebar.session.row.leading`** 与 **`sidebar.session.row.hover`**（都是 `list`）—— 会话行的**行首区**与**悬停区**。新宿主 `ui-schedule`（定时任务）用它们挂任务标记与悬停卡片：`packages/client/ui-schedule/src/client/index.ts:231`（leading）/ `:238`（hover）。声明：`packages/client/ui-workspace/src/client/contract/slots.ts`。
 > - 🆕 **`sidebar.right.tab.files.actions`**（`0.2.0-rc.2` 新增，`list` / `scope: 'session'`）—— **文件树「重新加载」控件之后的目录动作位**，owner 属性给 `absolutePath`（当前展示的目录绝对路径）。声明与宿主同在 `packages/client/ui-sidebar-files/src/client/index.ts:34`（宿主是该包的 `FilesBody`；`sidebar.right.pane.tab` 里的 `FILES_ID` 条目在挂载期间它才存在）。⚠️ 同一版里 `conversation.chat.node` 的**已占用 key 表**多了 `question-reply`（`ui-user-questions` 的 `QuestionReplyView`）—— 那是 **chat-node 的 key**，**不是插槽名**，别照抄成 `ctx.slots.register({ name: 'question-reply' })`。
@@ -221,11 +221,13 @@ root
 >   🔴 **极易与 `settings.plugins.tab` 混淆（同名不同物，选错就注册到另一个页面去了）**：那个是**设置面板 → 插件分区**的标签页（owner `SettingsPluginsTabOwnerProps`，声明 `packages/client/ui-settings/src/client/contract/slots.ts:66`，宿主 `ui-settings-plugins`）。**判据：带 `settings.` 前缀 = 设置面板；无前缀 = 插件页。**
 > - 🆕 **`conversation.input.model.label`**（`0.2.1-rc.2` 新增，`single` / `scope: 'session'`）—— **输入区模型选择器里的非交互式行内标签**：owner 给 `{ provider, model, placement, selected }`，`placement` 为 `'trigger'`（输入按钮）/ `'menu'`（根菜单当前值）/ `'option'`（可选模型行）三处之一，`provider` 只含 `{ id, name }`（**不含任何连接配置**）。**没有贡献方时 composer 显示目录名**；**选择控件仍由宿主 `ui-model-selection` 拥有**，贡献方只负责展示（该键还带 `inline: true`）。声明：`packages/client/ui-model-selection/src/client/slots.ts:36-41`（owner 类型 `ModelLabelOwner` 同文件 `:9-18`）；宿主 entry 挂在 `conversation.input.model` 之下，**那个 entry 卸载时本插槽随之消失**。官方首个占用方 `@deepseek-ai/dsh-client-ui-deepseek-model-label-1017`（`packages/client/ui-deepseek-model-label-1017/src/client/index.ts:23-29`）是「**装饰既有 UI 而不接管它**」的最小范例：`ctx.slots.inject(key, () => ctx.slots.register({ name, locale }, Component))`，宿主一换实现，装饰自动跟着走 —— 想改官方某个位置的外观又不想接管整个面时，照这个写法。
 
-💡 运行中的 DSH 用 `cordis_inspect_query`（先 `cordis_inspect_list` 拿 method）查**实时**插槽树。⚠️ 上游文档写作 `cordis_inspect what:"client"`（`docs/subsystems/slots.zh.md:193`），但**当前工具面没有裸 `cordis_inspect`** —— 实际只有族名 `cordis_inspect_list` / `cordis_inspect_query` / `cordis_inspect_self`（`packages/extensions/tool-cordis/src/index.ts:23,42`）；UI 侧具体查 `Slots.listSubTree`。**客户端插槽的静态权威**是生成产物 `slot-catalog.ts`（见 `scripts/extract_slots.py` 的 A2 段）。
+> - 🆕 **`0.2.1-rc.3` 那轮 +3 / −0 —— 三个「More 菜单行」同族插槽**：`sidebar.panellist.actions`（左侧面板列表）/`conversation.session.header.views.actions`（Conversation 的 View 标签行）/ `sidebar.right.tab.guide.actions`（右栏 Guide 卡片）。三者的形状**完全一致**：`kind: 'list'` + `scope: 'root'`，owner 都给 `{ entries, onOpen(id), onPinnedChange(id, pinned), onDismiss }`；**各自的区域只在该 list 有登记时才画出 More 按钮与菜单**，所以**不注册就完全不占位**。`entries` 里的每项给 `{ id, label, pinned }`（`pinned` = 用户是否手动钉住；**钉住也可能因宽度预算被折进 More**），面板与 View 两族的项另带可选 **`active`**（当前选中项，**与钉住状态彼此独立**）。🔴 **`pinned` 与 `active` 是两件事**：前者决定「在不在主区域显示」，后者只表示「是不是当前选中的那个」—— 上游在**同一区间内**专门修过一次这件事（`39d2903841 fix(ui): separate navigation pins from selection and show menu icons`），即两者曾被混为一谈；按直觉写很容易把「选中」当成「钉住」。声明：`packages/client/ui-sidebar/src/client/contract/slots.ts:38`（owner 类型 `SidebarPanelActionsOwnerProps` 同文件 `:103`）、`packages/client/ui-conversation/src/client/contract/slots.ts:258`（`ConversationViewActionsOwnerProps` `:440`）、`packages/client/ui-sidebar-right/src/client/contract/slots.ts:91`（`SidebarRightGuideActionsOwnerProps` `:232`）。官方首个占用方是新包 `@deepseek-ai/dsh-client-ui-entry-customization`（在三个区域提供插件浏览与 Creator 草稿入口，由 `packages/bundle/web-app/cordis.patch.yml:429` 装入；它自己**不存任何状态**）。
+
+💡 运行中的 DSH 用 `cordis_inspect_query`（先 `cordis_inspect_list` 拿 method）查**实时**插槽树。⚠️ 上游文档写作 `cordis_inspect what:"client"`（`docs/subsystems/slots.zh.md:196`），但**当前工具面没有裸 `cordis_inspect`** —— 实际只有族名 `cordis_inspect_list` / `cordis_inspect_query` / `cordis_inspect_self`（`packages/extensions/tool-cordis/src/index.ts:23,42`）；UI 侧具体查 `Slots.listSubTree`。**客户端插槽的静态权威**是生成产物 `slot-catalog.ts`（见 `scripts/extract_slots.py` 的 A2 段）。
 
 ### 9.4.4 最小可用示例：往标题栏加一个按钮
 
-来源：`docs/subsystems/slots.zh.md:21-44`（逐字，原文标注 `tsx ignore-check`；旧引 `:19-42`）
+来源：`docs/subsystems/slots.zh.md:23-46`（逐字，原文标注 `tsx ignore-check`；旧引 `:21-44`）
 
 ```tsx ignore-check
 import type { Context } from '@deepseek-ai/cordis'
@@ -261,11 +263,11 @@ export function apply(ctx: Context): void {
 | `ctx.slots.register({name, id, order}, Component)` | `id` 用于 `list` 基数；`order` 决定排序 |
 | 组件签名 `{ useSession }` | 组件**不收到 `ctx`**！只收到框架给的几组 props |
 
-⚠️ **注册进未声明的 slot 会在激活时报错**（`slots.zh.md:13-17`）。所以务必用 `ctx.slots.inject` 包一层，或者确认目标插槽一定存在。
+⚠️ **注册进未声明的 slot 会在激活时报错**（`slots.zh.md:15-19`）。所以务必用 `ctx.slots.inject` 包一层，或者确认目标插槽一定存在。
 
 ### 9.4.5 组件能拿到什么（四个 share）
 
-来源：`docs/subsystems/slots.zh.md:62-77`（旧引 `:60-75`）
+来源：`docs/subsystems/slots.zh.md:64-79`（旧引 `:62-77`）
 
 | props 组 | 内容 |
 |---|---|
@@ -277,7 +279,7 @@ export function apply(ctx: Context): void {
 
 **框架提供的 hook**：`useSessions`、`useSession`、`useProjection`、`useConversation`、`useInput`、`inputActions`、`useChat`、`useTrajectory`、`useWorkspaces`、`usePanelInfo`，以及按声明 store 生成的 `useStore` 和按 locale namespace 生成的 `t`。
 
-⚠️ **硬规则**（`slots.zh.md:75`）：**组件绝不会收到 `ctx`**。这是刻意的设计——UI 组件不该直接摸服务，必须走声明的 props。
+⚠️ **硬规则**（`slots.zh.md:77`）：**组件绝不会收到 `ctx`**。这是刻意的设计——UI 组件不该直接摸服务，必须走声明的 props。
 
 ## 9.5 前端技术栈约束（写错会被门禁拦）
 
@@ -427,7 +429,7 @@ async mutate(ns: string, ops: readonly SettingsPathOp[], expectedRevision?: numb
 > ⚠️ **但改写带来另一类风险：行号级引用全线失效**。该文档由 100+ 行缩到 **72 行**，本技能原先指向它的逐字引文（旧 `:50` / `:72` / `:82` / `:94` / `:102` / `:13-44` / `:52-70`）**已不再指向原文** —— 本节与 `14 §17.3` 的引用已就地改为「旧位置 + 新位置」或改引源码。**这正是「完备性/出处措辞会静默腐化」的又一实例**：事实没变，出处漂了。
 > 机器判据：`verify_absorbed_claims.py` 的 `U06` / `U07` / `U09` / `U10`（新槽已声明）、`X06`（旧槽不再被声明）、`X07`（`conversation.session.header.leading` 已移除）、`B08`（预设仍未发布，按**新措辞**锚定）。
 
-**这组插槽的声明**（源码 `packages/client/ui-plugin-manager/src/client/slot-contract.ts`，对基线 `dsh-v0.2.1-rc.2` 逐字（该文件在本区间零改动）；**条数勿硬抄** —— 复现：`grep -c "^    'plugins\." <该文件>` → **9**）：
+**这组插槽的声明**（源码 `packages/client/ui-plugin-manager/src/client/slot-contract.ts`，对基线 `dsh-v0.2.1-rc.3` 逐字（该文件在 `0.2.1-rc.2 → -rc.3` 区间零改动）；**条数勿硬抄** —— 复现：`grep -c "^    'plugins\." <该文件>` → **9**）：
 
 > 📈 **历史计数（勿当现值）**：`dsh-v0.1.7-rc.1` 那轮由 3 个键增至 7 个；`0.2.1-alpha.1` 加 `plugins.add.actions`；**`0.2.1-alpha.4` 加 `plugins.tab`**。⚠️ 该文件**头部的分组散文**（「Three carry… / Three more take…」）只点名了 **7** 个键（未点名 `plugins.add.actions` 与 `plugins.bundle.activation`），**不是全量计数** —— 一律以 `declare module` 块为准。
 

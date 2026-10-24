@@ -2,12 +2,12 @@
 
 > **本文件用途**：速查卡，三部分：① 三种插件形态对照表（最容易搞混，放最前）② 完整 API 速查——服务名（inject 字符串）、事件名（含 waterfall 全套）、UI 插槽名、官方斜杠命令、CLI 命令、目录与路径、工具参数 DSL 类型（全部由源码 grep 提取，带实证来源列）③ 主手册的插件骨架、四类注册、真实范本清单、判断口诀，以及带 core/seam/bundle 角色的 ctx 键速查表。写代码时随手查这一份就够。
 > **合成来源**：DSH插件开发实战补充-模板与踩坑.md（仅第六篇 6.5） + I-quickref.md + DSH插件开发指导手册.md（附录 A/B/C）
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-rc.2` / commit `687f282e86`，2026-10-17），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-rc.3` / commit `1f81c047fc`，2026-10-23），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
 
-> **本文件导航 —— 共 446 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
+> **本文件导航 —— 共 449 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
 > - **上游素材原文**：约 192 行（46%），起点：`I-quickref.md`（文件开头）。**不是本技能重写的整理稿**；性质不一——**有的是官方文档逐字摘录（属权威原文），有的是调研期粗笔记（仅备查）**。读某一段前，务必连带读**该段开头的取材说明**。
 > - **其余部分 = 面向任务的整理稿**，可直接照做；但它同样是基线快照，写代码前先过版本闸门。
 > - 常用检索：`grep -n '^## '`、`grep -n '^# I\.'`（档案起点）
@@ -68,7 +68,7 @@
 | `schedule` | 定时任务域（宿主侧）：任务表持久化（`ctx.storageDomain.open(scheduleDomain)`）、投递、会话恢复、保留策略（`deliveryHistoryDays` / `deliveryHistoryRecords`）。**`0.1.7-rc.2` 新增** | `packages/schedule/schedule/src/index.ts:121` |
 | `shortcuts` | 键盘快捷键注册表（**客户端侧**）：绑定 / 配置 / 持久化 + 目录（`catalog` / `fixedCatalog`）。**`0.1.7-rc.2` 新增**；desktop 运行时必须有 `dshDesktop.keyboard` 桥，缺了构造函数**直接抛** | `packages/client/shortcuts/src/client/index.ts:47` |
 | `otel` | 共享遥测传输 provider（宿主侧）：`createEventReporter(options)` / `createSessionLogReporter(options)` 各建**互相独立**的通道；**挂载本身不建队列、不建身份、不连网**，消费方自己负责排空与关闭截止。**`0.2.0-rc.1` 新增** | `packages/telemetry/otel/src/index.ts:13`（类）/ `:22` / `:30`；调用点 `packages/host/product-telemetry-otel/src/index.ts:85`、`packages/session/session-telemetry-otel/src/index.ts:189` |
-| `productAnalytics` | 产品分析事件接收（**宿主侧 `ProductAnalytics` 与客户端侧 `DesktopAnalytics` 用同一个键名**）：`enabled()`、`watchPolicy(signal)`（`@Remote` 流式，随配置热更新）、`report(event)`。**禁用态不读身份、不接新事件**。**`0.2.0-rc.1` 新增** | `packages/client/product-analytics/src/index.ts:46`、`packages/client/product-analytics/src/client/index.ts:20` |
+| `productAnalytics` | 产品分析事件接收（**宿主侧 `ProductAnalytics` 与客户端侧 `DesktopAnalytics` 用同一个键名**）：`enabled()`、`watchPolicy(signal)`（`@Remote` 流式，随配置热更新）、`report(event)`。**禁用态不读身份、不接新事件**。**`0.2.0-rc.1` 新增** | `packages/client/product-analytics/src/index.ts:46`、`packages/client/product-analytics/src/client/index.ts:23` |
 | `pluginMarket` | **插件市场索引读取器（宿主侧）**：按用户在设置里配的索引源拉取 / 校验 / 缓存市场清单，供 Web 端 **Discover** 标签页与 `plugin_market` 工具消费；`static inject = ['pluginManager']`。`Config` = `indexes`（`Volatile<string[]>`，默认 `[]`，**写入不重挂服务**）/ `fetchTimeoutMs`（默认 15000）/ `maxBytes`（默认 128 MiB）/ `cacheTtlMs`（默认 600000 ≈ 10 分钟）。🔴 **`0.2.1-alpha.4` 新增，且不在 base 补丁里** —— 不装组合包 `@deepseek-ai/dsh-experimental-plugin-market-bundle` 就没有这个服务；`plugin_market` 工具也**只在服务挂载期间**才注册 | 声明 `packages/boot/plugin-market/src/index.ts:24-29`、类 `:75`、`super(ctx, 'pluginMarket')` `:92`、`static inject`/`static Config` `:76`/`:78-83`；组合补丁 `packages/experimental/plugin-market-bundle/cordis.patch.yml` |
 
 > ⚠️ **服务名大小写敏感**（`sessionProjections` 不是 `session-projection`）。
@@ -159,9 +159,9 @@
 
 ---
 
-## 3. UI 插槽名（**最常用的几个**；权威全量约 **100** 个公开键 —— 对基线 `dsh-v0.2.1-rc.2` 抽取：声明侧 **141**、并集 **143**、剔除 **43** 个测试专用键后约 100 个公开可用。用 `scripts/extract_slots.py` 复现（**2026-09-23 修好抽取器两处漏抽后重抽**；**2026-09-25 随 rc.2 推进 +3 / −0**；**2026-09-29 随 0.2.0-rc.1 推进 +0 / −0**；**2026-09-30 随 0.2.0-rc.2 推进 +1 / −0**（客户端权威目录 `slot-catalog.ts` **89 → 90**；新增键 = `sidebar.right.tab.files.actions`）；**2026-10-04 随 0.2.1-alpha.1 推进 +2 / −0**（`slot-catalog.ts` **90 → 92**；新增键 = `plugins.add.actions` / `shell.bottom`）；**2026-10-09 随 0.2.1-alpha.2 推进 +2 / −0**（`slot-catalog.ts` **92 → 94**；新增键 = `conversation.chat.flow` / `conversation.chat.reasoning.body`，另见 `04-ui-and-slots.md` 的登记）；**2026-10-15 随 0.2.1-alpha.3 推进 +5 / −1**（`slot-catalog.ts` **94 → 98**；新增键 = `conversation.chat.message.images` / `conversation.chat.user.images` / `conversation.hero.options` / `conversation.user.text.node` / `workspace.toast`，**移除键 = `conversation.message.images`**）；**2026-10-16 随 0.2.1-alpha.4 推进 +1 / −0**（`slot-catalog.ts` **98 → 99**；新增键 = `plugins.tab`，`kind: 'list'` / `scope: 'root'`，宿主 `ui-plugin-manager`）；**2026-10-17 随 0.2.1-rc.2 推进 +1 / −0**（`slot-catalog.ts` **99 → 100**；新增键 = `conversation.input.model.label`，`kind: 'single'` / `scope: 'session'`，宿主 `ui-model-selection`）；此前公布的 96/99/约81 系低估））
+## 3. UI 插槽名（**最常用的几个**；权威全量约 **103** 个公开键 —— 对基线 `dsh-v0.2.1-rc.3` 抽取：声明侧 **144**、并集 **146**、剔除 **43** 个测试专用键后约 103 个公开可用。用 `scripts/extract_slots.py` 复现（**2026-09-23 修好抽取器两处漏抽后重抽**；**2026-09-25 随 rc.2 推进 +3 / −0**；**2026-09-29 随 0.2.0-rc.1 推进 +0 / −0**；**2026-09-30 随 0.2.0-rc.2 推进 +1 / −0**（客户端权威目录 `slot-catalog.ts` **89 → 90**；新增键 = `sidebar.right.tab.files.actions`）；**2026-10-04 随 0.2.1-alpha.1 推进 +2 / −0**（`slot-catalog.ts` **90 → 92**；新增键 = `plugins.add.actions` / `shell.bottom`）；**2026-10-09 随 0.2.1-alpha.2 推进 +2 / −0**（`slot-catalog.ts` **92 → 94**；新增键 = `conversation.chat.flow` / `conversation.chat.reasoning.body`，另见 `04-ui-and-slots.md` 的登记）；**2026-10-15 随 0.2.1-alpha.3 推进 +5 / −1**（`slot-catalog.ts` **94 → 98**；新增键 = `conversation.chat.message.images` / `conversation.chat.user.images` / `conversation.hero.options` / `conversation.user.text.node` / `workspace.toast`，**移除键 = `conversation.message.images`**）；**2026-10-16 随 0.2.1-alpha.4 推进 +1 / −0**（`slot-catalog.ts` **98 → 99**；新增键 = `plugins.tab`，`kind: 'list'` / `scope: 'root'`，宿主 `ui-plugin-manager`）；**2026-10-17 随 0.2.1-rc.2 推进 +1 / −0**（`slot-catalog.ts` **99 → 100**；新增键 = `conversation.input.model.label`，`kind: 'single'` / `scope: 'session'`，宿主 `ui-model-selection`）；**2026-10-24 随 0.2.1-rc.3 推进 +3 / −0**（`slot-catalog.ts` **100 → 103**；新增键 = `conversation.session.header.views.actions` / `sidebar.panellist.actions` / `sidebar.right.tab.guide.actions`，三者均 `kind: 'list'` / `scope: 'root'`，是三个区域的 **More 菜单行**，宿主分别是 `ui-sidebar` / `ui-conversation` / `ui-sidebar-right`）；此前公布的 96/99/约81 系低估））
 
-**最常用的几个**（下表是**高频子集，不是全量** —— 全量约 100 个公开键，计数链见本节标题）：
+**最常用的几个**（下表是**高频子集，不是全量** —— 全量约 103 个公开键，计数链见本节标题）：
 
 | 插槽名 | 用途 |
 |---|---|
@@ -174,6 +174,9 @@
 | `tool.call.toolview` | 工具调用的自定义卡片 |
 | `plugins.tab` | **插件页（`main.plugins`）在自带「已安装」页签之后的贡献页签**（**`0.2.1-alpha.4` 新增**，`list` / `scope: 'root'`）；官方首个占用方是市场页 Discover。⚠️ **别和设置面板那个 `settings.plugins.tab` 搞混**（带 `settings.` 前缀 = 设置面板；无前缀 = 插件页），详见 `04-ui-and-slots.md` §9.4.3 |
 | `conversation.input.model.label` | **输入区模型选择器里的非交互式行内标签**（**`0.2.1-rc.2` 新增**，`single` / `scope: 'session'`）；owner 给 `{ provider, model, placement, selected }`，`placement` 区分「输入按钮 / 菜单当前值 / 可选模型行」三处。宿主是 `ui-model-selection`（声明 `packages/client/ui-model-selection/src/client/slots.ts:36`），**选择控件仍归宿主**，你只挂展示。官方占用方 `dsh-client-ui-deepseek-model-label-1017` 演示了「**装饰既有 UI 而不接管它**」的写法：`ctx.slots.inject(key, () => ctx.slots.register(...))`，宿主 entry 卸载后装饰自动消失 |
+| `sidebar.panellist.actions` | **左侧面板列表的 More 菜单行**（**`0.2.1-rc.3` 新增**，`list` / `scope: 'root'`）；owner 给 `{ entries, onOpen, onPinnedChange, onDismiss }`，`entries` 项为 `{ id, label, pinned, active? }`。**没有登记时整个 More 按钮都不显示**（不占位）。声明 `packages/client/ui-sidebar/src/client/contract/slots.ts:38` |
+| `conversation.session.header.views.actions` | **Conversation 顶部 View 标签行的 More 菜单行**（**`0.2.1-rc.3` 新增**，`list` / `scope: 'root'`）；形状与上面同族（`onOpen` / `onPinnedChange` / `onDismiss`）。🔴 `pinned`（在不在主区域显示）与 `active`（是不是当前选中）**是两件事**。声明 `packages/client/ui-conversation/src/client/contract/slots.ts:258` |
+| `sidebar.right.tab.guide.actions` | **右侧栏 Guide 卡片的 More 菜单行**（**`0.2.1-rc.3` 新增**，`list` / `scope: 'root'`）；`entries` 只列可定制的 Guide 卡片（`kind` 为 `files` 的卡片**永不出现**）。声明 `packages/client/ui-sidebar-right/src/client/contract/slots.ts:91` |
 
 ---
 
@@ -318,7 +321,7 @@ ctx.slots.inject('插槽名', () => ctx.slots.register({ name: '插槽名', id, 
 
 # 附录 B 真实范本清单（照着抄最快）
 
-> 全部路径相对于仓库根。主文件行数为主 `src/index.ts` 的行数，「src 总量」为该包 `src/` 下所有 `.ts/.tsx` 行数之和。（行数对基线 `dsh-v0.2.1-rc.2` 逐个实测，**四个数在 rc.2 上重测未变**。复现：`wc -l <仓库>/<路径>/src/index.ts`，总量用 `find <仓库>/<路径>/src -type f \( -name '*.ts' -o -name '*.tsx' \) | xargs wc -l | tail -1`。）
+> 全部路径相对于仓库根。主文件行数为主 `src/index.ts` 的行数，「src 总量」为该包 `src/` 下所有 `.ts/.tsx` 行数之和。（行数对基线 `dsh-v0.2.1-rc.3` 逐个实测，**四个数在 rc.3 上重测未变**。复现：`wc -l <仓库>/<路径>/src/index.ts`，总量用 `find <仓库>/<路径>/src -type f \( -name '*.ts' -o -name '*.tsx' \) | xargs wc -l | tail -1`。）
 
 ## B.1 最小可运行（学习包骨架）
 

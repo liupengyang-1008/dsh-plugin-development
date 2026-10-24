@@ -3,7 +3,7 @@
 > **文件来源**：本文件由 `10-community-casebook.md` 拆分而来，并按**来源政策定点改写**（**不是**逐行搬迁）：私有实现类条目不收录，通用教训以「自撰建议」形式保留。其余各册 `10a` / `10c` / `10d` 仍是逐行搬迁。
 > **本册性质**：**全部是上游一手素材原文** —— 性质不一：既有官方文档的**逐字摘录（属权威原文）**，也有调研期写下的**粗笔记（仅备查）**。**读某一段前，务必连带读该段开头的取材说明**，那是判断这段能信多少的依据。
 > **不要整读**：先 `grep -n '^#{1,2} '` 拿小节清单，再只读需要的那一节。总索引见 `10-community-casebook.md`。
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-rc.2` / commit `687f282e86`，2026-10-17），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-rc.3` / commit `1f81c047fc`，2026-10-23），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > 🔴 **许可警示（本册特有，务必先读）**：**本册只引用 MIT / Apache-2.0 / BSD-3-Clause 三类来源，不含任何 copyleft 内容。**（三者均为 permissive；BSD-3-Clause 比 MIT 只多一条无背书条款。）
@@ -240,7 +240,7 @@ a68bc532 docs: link dsh-weknora to its npm package page
   | # | 官方出处（MIT） | 原文/要点 |
   |---|---|---|
   | ① | `packages/llm/llm/src/message.ts:173-179` | 工具结果块 `ToolResultMessage` 里字段名就是 camelCase：`readonly isError?: boolean` |
-  | ② | `packages/extensions/tool-cordis/src/api-catalog.ts:8306` | 契约全文：`export interface ToolResultMessage extends MessageBase { readonly role: 'tool'; readonly source: ToolMessageSource; readonly toolCallId: ToolCallId; readonly isError?: boolean; }` |
+  | ② | `packages/extensions/tool-cordis/src/api-catalog.ts:8310` | 契约全文：`export interface ToolResultMessage extends MessageBase { readonly role: 'tool'; readonly source: ToolMessageSource; readonly toolCallId: ToolCallId; readonly isError?: boolean; }` |
   | ③ | `packages/acp/acp/src/updates.ts:82` | 官方生产代码即用它判成败：`status: result.isError === true ? 'failed' : 'completed'` |
 
 - **现象**：消费方自己写「失败判定」时按 snake_case `is_error` 去读，**永远读不到** —— 失败的调用被记成 `completed`（错误文本仍在 `tool_output` 里，只是状态字段是错的）。

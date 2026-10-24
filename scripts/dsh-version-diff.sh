@@ -16,7 +16,7 @@
 # 用法：
 #   bash dsh-version-diff.sh                       # 用 skill 内的 vendor/dsh-src
 #   bash dsh-version-diff.sh <DSH 仓库路径>
-#   bash dsh-version-diff.sh <路径> --baseline dsh-v0.2.1-rc.2
+#   bash dsh-version-diff.sh <路径> --baseline dsh-v0.2.1-rc.3
 #   bash dsh-version-diff.sh <路径> --list-only    # 只列基线之后的新 tag
 set -uo pipefail
 
@@ -25,7 +25,7 @@ SKILL_DIR="$(dirname "$SCRIPT_DIR")"
 STATE="$SKILL_DIR/vendor/dsh-state.json"
 
 REPO=""
-BASELINE="dsh-v0.2.1-rc.2"
+BASELINE="dsh-v0.2.1-rc.3"
 LIST_ONLY=0
 
 while [ $# -gt 0 ]; do
@@ -80,7 +80,8 @@ for t in "${ALLTAGS[@]}"; do
   if [ "$seen" -eq 1 ]; then NEWTAGS+=("$t"); fi
   [ "$t" = "$BASELINE" ] && seen=1
 done
-HEADREF="HEAD"
+HEADREF=""
+HEADLABEL=""
 
 if [ "${#NEWTAGS[@]}" -eq 0 ]; then
   echo "✅ 本地没有晚于基线 $BASELINE 的 tag。"
@@ -100,6 +101,28 @@ if [ "$LIST_ONLY" -eq 1 ]; then
       "$(git -C "$REPO" rev-parse --short "$t")"
   done
   exit 0
+fi
+
+# ── 「未发布」「master」代表谁：必须**严格领先于最后一个 tag** ────────────────
+# 🔴 缺陷史（2026-10-24 修）：原实现固定把本地工作树的 HEAD 当 master。
+#   主工作树按规程「只 fetch、不改工作树」长期冻结在很久以前的 commit，
+#    于是每轮都会多出一行 `rc.N → master (未发布)`，内容却是**反向**差异
+#    （包被「移除」上百个、SESSION_FORMAT_VERSION 从 4「退回」3），
+#    与真相相反且极易被当成真实的上游破坏性变更照抄。
+#   现在：优先 origin/master（远端跟踪分支），其次本地 HEAD；且**必须是最后
+#   一个 tag 的严格后代**，否则不输出这一行。
+LASTTAG="${NEWTAGS[${#NEWTAGS[@]}-1]}"
+for cand in origin/master HEAD; do
+  if git -C "$REPO" rev-parse -q --verify "$cand^{commit}" >/dev/null 2>&1 && \
+     git -C "$REPO" merge-base --is-ancestor "$LASTTAG^{commit}" "$cand^{commit}" 2>/dev/null && \
+     [ "$(git -C "$REPO" rev-parse "$cand^{commit}")" != "$(git -C "$REPO" rev-parse "$LASTTAG^{commit}")" ]; then
+    HEADREF="$cand"
+    HEADLABEL="$cand（未发布，领先 $LASTTAG）"
+    break
+  fi
+done
+if [ -z "$HEADREF" ]; then
+  HEADLABEL="无未发布提交"
 fi
 
 # ── 五个维度的快照函数 ───────────────────────────────────────────────────────
@@ -201,21 +224,18 @@ echo "────────────────────────�
 echo "以下片段可直接追加到 references/13-version-history.md 第 2 节表格末尾"
 echo "────────────────────────────────────────────────────────────"
 echo
-echo "<!-- 自动生成 $(date -u +%Y-%m-%dT%H:%M:%SZ) · 基于 $(git -C "$REPO" rev-parse --short HEAD) -->"
+echo "<!-- 自动生成 $(date -u +%Y-%m-%dT%H:%M:%SZ) · 基于 $(git -C "$REPO" rev-parse --short "${HEADREF:-HEAD}") -->"
 echo
 echo '| 区间 | 破坏性变更 | 证据 |'
 echo '|---|---|---|'
 
 PREV="$BASELINE"
-for t in "${NEWTAGS[@]}" "$HEADREF"; do
-  [ "$t" = "HEAD" ] && [ "$PREV" = "$HEADREF" ] && break
-  if [ "$t" = "HEAD" ]; then
-    if git -C "$REPO" rev-parse -q --verify "$PREV^{commit}" >/dev/null 2>&1 && \
-       [ "$(git -C "$REPO" rev-parse HEAD)" = "$(git -C "$REPO" rev-parse "$PREV^{commit}")" ]; then
-      break
-    fi
+for t in "${NEWTAGS[@]}" $HEADREF; do
+  if [ -n "$HEADREF" ] && [ "$t" = "$HEADREF" ]; then
+    label="$HEADLABEL"
+  else
+    label="$t"
   fi
-  label="$t"; [ "$t" = "HEAD" ] && label="master (未发布)"
   delta=$(emit_delta "$PREV" "$t")
   na=$(notecount "$PREV"); nb=$(notecount "$t")
   if [ -z "$delta" ]; then

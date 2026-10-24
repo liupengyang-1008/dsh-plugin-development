@@ -4,7 +4,7 @@ slug: dsh-plugin-development
 displayName: DSH Plugin Development
 summary: Develop DSH (DeepSeek Harness) / Cordis plugins end to end — plugin forms, templates, an API cookbook, catalogued pitfalls, packaging and publishing, plus a mandatory version gate for the pre-stable upstream. Third-party fragments quoted here remain under their own licences (MIT / Apache-2.0 / BSD-3-Clause) — see the bundled LICENSE and NOTICE.
 description: A development-time skill for building plugins on DSH (DeepSeek Harness) / Cordis. It is not itself an installable DSH plugin; it is the tooling that guides a developer or AI agent through creating, debugging, packaging, and publishing one. This skill should be used when the user asks to develop a DSH plugin, write or modify a cordis plugin, add a tool, slash command, config schema, service, UI slot or HTTP route to DSH, run a periodic task inside a plugin, fix a plugin that fails to load or stays in PENDING, or package a plugin bundle for installation or distribution. It covers the plugin forms and official conventions, with 12 templates, 23 catalogued pitfalls, and copy-ready prompts for AI-agent pair development. Because DSH is pre-stable and ships breaking changes on a short cadence, it also ships a mandatory pre-coding version gate, a probe that re-verifies its own claims against a live source checkout, and a per-tag history of upstream breaking changes.
-version: 1.7.0
+version: 1.7.1
 license: MIT-0
 agent_created: true
 metadata:
@@ -33,7 +33,7 @@ metadata:
 
 ## 第 0 步（强制，不可跳过）· 版本闸门
 
-**references 是某一时刻的快照，会腐化。** DSH 处于 rc 阶段（基线 `dsh-v0.2.1-rc.2` / commit `687f282e86`，2026-10-17），tag 间隔中位数约 1.0 天（实测 1.03）、出现过破坏性变更。**所以不要承诺「不过时」，要保证「过时会响」。**
+**references 是某一时刻的快照，会腐化。** DSH 处于 rc 阶段（基线 `dsh-v0.2.1-rc.3` / commit `1f81c047fc`，2026-10-23），tag 间隔中位数约 1.0 天（实测 1.03）、出现过破坏性变更。**所以不要承诺「不过时」，要保证「过时会响」。**
 
 **① 权威顺序（源码永远压过本技能）**
 
@@ -61,29 +61,29 @@ bash   <skill>/scripts/dsh-api-probe.sh <DSH 仓库路径>    # 备选：仅当 
 > **目标版本高于基线时**不要猜：`dsh-sync.sh` 拉源码（先经确认）→ 探针核验 → `dsh-version-diff.sh` 出差异。
 > 完整机制（腐化推导、三级全表、五种核验手段、网络不可达时的降级路径）见 `references/00-version-gate.md`。
 
-**基线 `dsh-v0.2.1-rc.2` 的硬变化（照抄旧资料前先对照）**
+**基线 `dsh-v0.2.1-rc.3` 的硬变化（照抄旧资料前先对照）**
 
-DSH 每次发版的破坏性变更集中在少数几类。**本节只展开基线所属的最新一个区间；更早的 10 个区间（`dsh-v0.1.5-rc.2` → `0.2.1-alpha.4`）见 `references/13-version-history.md` §2。**
+DSH 每次发版的破坏性变更集中在少数几类。**本节只展开基线所属的最新一个区间；更早的 11 个区间（`dsh-v0.1.5-rc.2` → `0.2.1-rc.2`）见 `references/13-version-history.md` §2。**
 
-**`0.2.1-alpha.4` → `0.2.1-rc.2`（49 个提交、3 个新 tag：`-alpha.5` / `-rc.1` / `-rc.2`）—— 🔴 有破坏性变更 1 条，其余全是新增面。**
+**`0.2.1-rc.2` → `0.2.1-rc.3`（6 个提交、1 个新 tag）—— ✅ 无破坏性变更；新增面 3 处 + 行为变更 1 条。**
 
-> 🔴 **判据渠道**：本区间 `!:` 自报破坏性提交 **0 条**（连续第四次空炮），而权威渠道 `docs/upgrade-guide/` 只新增 **1 个 topic / 3 个文件**（`v0.2.1-alpha.4/account-notification-fields/`）。✅ **目录名 = 区间起点，符合约定**（挂更早版本名的陷阱见 `13-version-history.md` §2.5）。
+> 🔴 **判据渠道**：本区间 `!:` 自报破坏性提交 **0 条**（第五次空炮），权威渠道 `docs/upgrade-guide/` 只新增 **1 个 topic / 3 个文件**（`v0.2.1-rc.2/new-session-blank-reuse/`）。✅ **目录名 = 区间起点，符合约定**。
 
-1. 🔴 **账号奖励通知 `AccountBonusNotification` 的四个元数据字段从「必填且有类型」改为「可选、不校验的 `JsonValue`」**：`campaign` / `amount` / `currency` / `grantedAt` 全部变为可选，`orderId` 不再要求 UUID（`z.uuid()` → `z.string()`），`expiresAt` **空字符串 = 永不过期**，另新增可选 `title`。
-   - **谁受影响**：读 `DeepSeekAccount.getUnnotifiedBonuses()`（或远端 `account/getUnnotifiedBonuses`）的插件 —— 原先把 `notification.campaign` / `amount` 当 `string` 用（`.trim()`、字面量比较、数值运算）的代码**编译期即报错**；把 `expiresAt` 当 ISO 时间直接 `new Date()` 的代码在空串上得到 `Invalid Date`；按 UUID 校验 `orderId` 的代码会把合法通知当脏数据丢掉。
-   - **迁移**：① 使用前先收窄类型并处理 `undefined`；② `expiresAt === ''` 视为永不过期；③ `orderId` 原样透传，别按 UUID 校验；④ `title` 缺省时用客户端默认标题。
-   - 判据：`docs/upgrade-guide/v0.2.1-alpha.4/account-notification-fields/guide.zh.md`；源码 `packages/credentials/deepseek-account/src/types.ts:68-81`（`readonly campaign?: JsonValue` 等）与 `packages/credentials/deepseek-account-platform/src/details.ts:19-22`（`bonusMetadata` = `z.custom<JsonValue>().optional()`、`order_id: z.string()`、`expires_at` 空值兜底为 `''`）。
+1. ⚠️ **行为变更（不是代码/配置失效）：New Session 重新复用空白会话** —— Web / Desktop 的 New Session、以及**不带参数**的 `uiWorkspace.startSession(workspaceId)`，现在**复用工作区里第一个未启动、未归档的空白会话**，只有不存在空白时才新建；`openWorkspace` / `connectWorkspace` / 带参数的 `startSession` 同规则；请求里点名了 Agent preset 时，会**跳过列出其它 preset 的空白**。
+   - **谁受影响**：① 依赖「每次 New Session 都拿全新 Agent」的插件 —— 复用到的空白若其 Agent 仍在内存里，会**沿用创建它时的 preset 组合**，即 **New Session 不再保证当前 preset 定义**；② 会抢占别人草稿的客户端集成。
+   - **迁移**：改完 preset 定义后要**重启 Host 再开 New Session**；需要独占某 preset 的集成显式传 `{ agentPreset }`。
+   - 判据：`docs/upgrade-guide/v0.2.1-rc.2/new-session-blank-reuse/guide.zh.md`。
 
-**新增面（不改任何已有契约）**：新增 **2 个官方包** —— `@deepseek-ai/dsh-web-deepseek-api`（把 DeepSeek 的 Search / Fetch 直连 API 注册成 `ctx.web` 的 provider `deepseek-search-api` / `deepseek-fetch-api`，由既有键 `web.searchProvider` / `web.fetchProvider` 选中，`packages/web/web-deepseek-api/src/index.ts:28,34-45`）与 `@deepseek-ai/dsh-client-ui-deepseek-model-label-1017`（在模型选择器旁挂 `1017` 徽标，无配置项、可禁用）；base 补丁新增插件行 **`web-deepseek-api`**（`apiKeyEnv: DEEPSEEK_API_KEY`）；新增插槽 **`conversation.input.model.label`**（`single` / `scope: 'session'`，声明在 `packages/client/ui-model-selection/src/client/slots.ts:36`）。
+**新增面（不改任何已有契约）**：新增 **1 个官方包** —— `@deepseek-ai/dsh-client-ui-entry-customization`（在左侧面板、Conversation View 标签行、右栏 Guide 三个区域的 **More 菜单**里提供插件浏览与 Creator 草稿入口；由 `packages/bundle/web-app/cordis.patch.yml:429` 装入，自身不存状态）；新增 **3 个插槽**，三者形状完全一致（`list` / `scope: 'root'`，owner 给 `{ entries, onOpen, onPinnedChange, onDismiss }`，**区域只在该 list 有登记时才画出 More 按钮**）：`sidebar.panellist.actions` / `conversation.session.header.views.actions` / `sidebar.right.tab.guide.actions`，详见 `04-ui-and-slots.md` §9.4.3；`llm-deepseek-api-key` 路由新增两个配置键 **`modelsTimeoutMs` / `modelsMaxAgeMs`**（沿用 `llm-deepseek` 的共享 mixin，默认 5 秒 / 600 秒），该路由的模型列表因此改为**跟随官方 `/models`**（`packages/llm/llm-deepseek/src/listing-config.ts:14,24`）。
 
-> 💡 **那个 1017 包是「在既有 UI 上做装饰」的最小范例**：它**不替换**宿主，而是 `ctx.slots.inject('conversation.input.model.label', () => ctx.slots.register({ name: … }, Component))` —— 宿主 entry 一卸载，装饰自动消失（`packages/client/ui-deepseek-model-label-1017/src/client/index.ts:23-29`）。要改官方某个位置的外观又不想接管整个面，照这个写法。
+> 💡 **`pinned` 与 `active` 是两个独立状态**：`pinned` = 用户手动钉住（仍可能因宽度预算被折进 More），`active` = 当前选中。上游在**同一区间内**专门修过这点（`39d2903841 fix(ui): separate navigation pins from selection`）—— 把「选中」当「钉住」是这类插槽最常见的写法错误。
 
-**其余为加法，未变项逐条实测**：官方包 **349 → 351（+2 / −0，删除的包 0 个）**。插槽计数由 **140 / 142 / 约 99** 改为 **141 / 143 / 约 100**，客户端权威目录 `slot-catalog.ts` **99 → 100**。**未变**：`SESSION_FORMAT_VERSION` 仍 **4**；模型 ID 仍 `deepseek-flash`（显示名仍是 `DeepSeek-V4.1-Flash`）；**`packages/core/tools/src/index.ts` 的 blob 由 `0970c7e2` 变 `ca939d4d`，但 `defineTool` 的公共契约未变** —— 变的只是 SDK 渲染器多收一个 `programFormat: 'function-body' | 'repl'` 参数，而该字段**自上一个基线起就存在于 `PtcRuntime`**（`packages/ptc-runtime/ptc-runtime/src/index.ts:125`），`schema.ts`、`defineTool` 的选项与导出面零变化；**base 补丁 blob `ee2f8f28` → `7d63cf26` 只多了 `web-deepseek-api` 一行**（既有 `id:` 行与全部配置键零变动）；CLI **无新增选项**；包内 `{skills,templates,examples}/` 清单 **45 → 45**（唯一改动是上游自带 skill 里的 `packages.md` 文本）。⚠️ **一处「有内容但不动六维度」的改动**：**包内 `Config` 键 +2 / −0**，都在新包 `web-deepseek-api` 里 —— `count`（每次搜索返回条数 `1~50`，默认 `10`）与 `sendOriginalQuestion`（是否把触发提问作为 `ori_question` 上送，默认 `true`，截断到 128 字符）；两者都带 `.volatile()`、**都不在 base 补丁里**，`dsh-version-diff.sh` 的配置键维度看不见它们。
+**其余为加法，未变项逐条实测**：官方包 **351 → 352（+1 / −0，删除的包 0 个）**。插槽计数由 **141 / 143 / 约 100** 改为 **144 / 146 / 约 103**，客户端权威目录 `slot-catalog.ts` **100 → 103**。**未变**：`SESSION_FORMAT_VERSION` 仍 **4**；模型 ID 仍 `deepseek-flash`；`packages/core/tools/src/schema.ts`（`2cc6f0cb`）与 `packages/core/tools/src/index.ts`（`ca939d4d`）的 blob **两端相同**（参数 DSL 与 `defineTool` 契约零变动）；**base 补丁 blob `7d63cf26` 两端相同**（`id:` 行与全部配置键零变动 → `assets/` 里的官方包名无需改）；CLI **无新增选项**；服务名 **148 → 148**、事件名 **109 → 109**、`defineTool` 工具名 **91 → 91**；包内 `{skills,templates,examples}/` **45 → 45**。⚠️ **一处纯符号搬家**：`DEFAULT_MODELS_TIMEOUT_MS` / `DEFAULT_MODELS_MAX_AGE_MS` / `ModelOverride` / `CatalogSettings` 已从 `packages/llm/llm-deepseek-account/src/config.ts` 移入 `packages/llm/llm-deepseek` —— **键名/默认值/语义不变、account 路由仍接受那两个配置键**，只有按子路径 import 这些内部符号的代码需要改 import 来源。
 
-**更早的 10 个区间（`dsh-v0.1.5-rc.2` → `0.2.1-alpha.4`）不在此处重复。** 完整破坏性变更总表（按区间逐行）见 `references/13-version-history.md` §2；作者自报渠道 `!:` 的覆盖率实测与反例见同文件 §2.5。**手上资料早于 `0.2.1-alpha.4` 时，先去读那两节再动手。** 其中上一区间（`0.2.1-alpha.3 → -alpha.4`）的重头是**官方插件市场新增面**，并附「**交付了机制、但没有官方市场与默认索引源**」那条收窄结论 —— 这两点仍在 `13` §2 该行与 `01` / `06` / `12` 的对应条目里，别因为本节换了区间就当成「没这回事」。
+**更早的 11 个区间（`dsh-v0.1.5-rc.2` → `0.2.1-rc.2`）不在此处重复。** 完整破坏性变更总表（按区间逐行）见 `references/13-version-history.md` §2；作者自报渠道 `!:` 的覆盖率实测与反例见同文件 §2.5。**手上资料早于 `0.2.1-alpha.4` 时，先去读那两节再动手。** 其中上一区间（`0.2.1-alpha.4 → -rc.2`）的重头是**账号奖励通知字段放宽**，并附「**交付了机制、但没有官方市场与默认索引源**」那条收窄结论 —— 这两点仍在 `13` §2 该行与 `01` / `06` / `12` 的对应条目里，别因为本节换了区间就当成「没这回事」。
 
 **判据**：三条来源都要看 —— 探针（`M33`~`M37` / `N06`~`N08` / `P06`~`P07` / `V01` / `X07` / `U11`~`U12` / `X08`~`X09` / **`E01`~`E03`** 就是这几批）、`dsh-version-diff.sh` 的六维度、以及上游自带的 `docs/upgrade-guide/`。
-**⚠️ 别指望 `!:`**：十一个区间里非 merge 提交带 `!:` 的分别是 **0 / 0 / 1 / 0 / 0 / 0 / 0 / 1 / 0 / 0 / 0** —— 而最狠的整族改名一条都没标 —— **`!` 既非充分也非必要，判影响只看两端文件内容的集合 diff**（完整实测与反例见 `13-version-history.md` §2.5）。
+**⚠️ 别指望 `!:`**：十二个区间里非 merge 提交带 `!:` 的分别是 **0 / 0 / 1 / 0 / 0 / 0 / 0 / 1 / 0 / 0 / 0 / 0** —— 而最狠的整族改名一条都没标 —— **`!` 既非充分也非必要，判影响只看两端文件内容的集合 diff**（完整实测与反例见 `13-version-history.md` §2.5）。
 
 
 ## 三条基础纪律

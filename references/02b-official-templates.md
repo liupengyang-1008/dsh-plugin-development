@@ -3,7 +3,7 @@
 > **文件来源**：本文件由 `02-templates.md` 拆分而来，正文为原文的**逐行搬迁**，未做改写。
 > **本册性质**：**全部是上游一手素材原文** —— 性质不一：既有官方文档的**逐字摘录（属权威原文）**，也有调研期写下的**粗笔记（仅备查）**。**读某一段前，务必连带读该段开头的取材说明**，那是判断这段能信多少的依据。
 > **不要整读**：先 `grep -n '^#{1,2} '` 拿小节清单，再只读需要的那一节。本技能面向任务的整理稿见 `02-templates.md`。
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-rc.2` / commit `687f282e86`，2026-10-17），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-rc.3` / commit `1f81c047fc`，2026-10-23），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 
@@ -932,7 +932,7 @@ export function AppearanceRow({ t, setTheme, useStore }: AppearanceRowComponentP
 ## 附：官方 UI 插槽名（**节选 40 余个**，实测提取）
 
 > ⚠️ **这不是全清单。** 本表由 `grep -rhoE "slots\.(inject|register)\(\s*'[^']+'" packages/*/*/src` 提取，因此**天然抓不到内建键**（如 `root` 是用 `renderSlot('root')` 渲染的）。
-> 对基线 `dsh-v0.2.1-rc.2` 的声明侧复核结果：**141 个键**（并集 **143** 个；剔除 **43** 个测试专用键后**约 100 个公开可用**）—— 2026-09-23 修好抽取器两处漏抽后重抽、2026-09-25 随 rc.2 推进 **+3 / −0**、2026-09-29 随 0.2.0-rc.1 推进 **+0 / −0**、2026-09-30 随 0.2.0-rc.2 推进 **+1 / −0**、2026-10-04 随 0.2.1-alpha.1 推进 **+2 / −0**、2026-10-09 随 0.2.1-alpha.2 推进 **+2 / −0**、**2026-10-15 随 0.2.1-alpha.3 推进 +5 / −1**（新增 `conversation.chat.message.images` / `conversation.chat.user.images` / `conversation.hero.options` / `conversation.user.text.node` / `workspace.toast`，**旧键 `conversation.message.images` 改名走掉**）、**2026-10-16 随 0.2.1-alpha.4 推进 +1 / −0**（新增键 `plugins.tab`）、**2026-10-17 随 0.2.1-rc.2 推进 +1 / −0**（新增键 `conversation.input.model.label`）（旧值 96/99/约81 系低估）。另有**客户端半侧的权威口径**：上游生成产物 `packages/extensions/cordis-client-runner/src/client/slot-catalog.ts` 现有 **100 个**，抽取器 A2 段与它自动交叉核对，**漏抽量须为 0**。完整清单与可复现的抽取命令见 `14-inbound-http-and-timers.md` 与 `scripts/extract_slots.py`；注册签名（组件是第二个参数）与「未声明 slot 报什么错」也记在那里。
+> 对基线 `dsh-v0.2.1-rc.3` 的声明侧复核结果：**144 个键**（并集 **146** 个；剔除 **43** 个测试专用键后**约 103 个公开可用**）—— 2026-09-23 修好抽取器两处漏抽后重抽、2026-09-25 随 rc.2 推进 **+3 / −0**、2026-09-29 随 0.2.0-rc.1 推进 **+0 / −0**、2026-09-30 随 0.2.0-rc.2 推进 **+1 / −0**、2026-10-04 随 0.2.1-alpha.1 推进 **+2 / −0**、2026-10-09 随 0.2.1-alpha.2 推进 **+2 / −0**、**2026-10-15 随 0.2.1-alpha.3 推进 +5 / −1**（新增 `conversation.chat.message.images` / `conversation.chat.user.images` / `conversation.hero.options` / `conversation.user.text.node` / `workspace.toast`，**旧键 `conversation.message.images` 改名走掉**）、**2026-10-16 随 0.2.1-alpha.4 推进 +1 / −0**（新增键 `plugins.tab`）、**2026-10-17 随 0.2.1-rc.2 推进 +1 / −0**（新增键 `conversation.input.model.label`）；**2026-10-24 随 0.2.1-rc.3 推进 +3 / −0**（`slot-catalog.ts` **100 → 103**；新增键 = `conversation.session.header.views.actions` / `sidebar.panellist.actions` / `sidebar.right.tab.guide.actions`）（旧值 96/99/约81 系低估）。另有**客户端半侧的权威口径**：上游生成产物 `packages/extensions/cordis-client-runner/src/client/slot-catalog.ts` 现有 **100 个**，抽取器 A2 段与它自动交叉核对，**漏抽量须为 0**。完整清单与可复现的抽取命令见 `14-inbound-http-and-timers.md` 与 `scripts/extract_slots.py`；注册签名（组件是第二个参数）与「未声明 slot 报什么错」也记在那里。
 > 用法：`ctx.slots.inject('<插槽名>', () => ctx.slots.register({ name: '<插槽名>' }, 组件))`
 
 ### 会话 / 对话区（conversation.*）
@@ -1135,7 +1135,7 @@ my-plugin/
 
 **2. `cordis_inspect_*` 三件套**（`packages/extensions/tool-cordis/src/index.ts:23,42`）：`cordis_inspect_list`（列 Provider/method）→ `cordis_inspect_query`（按 method 查）。可查 Service 方法、Event 模式、**已挂载插件的 Config JSON Schema**（`Config.listConfigs`：按 `name` 过滤分页目录，再查该 `entry` id → 返回 `packageDir`）、本 agent 可调用的 Tool、实时 Client Slots 与 Theme token。
 
-- ⚠️ **没有裸 `cordis_inspect`**：`docs/subsystems/slots.zh.md:193` 与历史 Agent Notes 里的 `cordis_inspect what:"client"` / `what:"api"` 是**旧简写**，照抄会找不到工具（`04` / `05` 已改为 `cordis_inspect_query`）。
+- ⚠️ **没有裸 `cordis_inspect`**：`docs/subsystems/slots.zh.md:196` 与历史 Agent Notes 里的 `cordis_inspect what:"client"` / `what:"api"` 是**旧简写**，照抄会找不到工具（`04` / `05` 已改为 `cordis_inspect_query`）。
 - `Config.listConfigs` 返回的 `packageDir` 是**权威包目录**：官方强调**不要**从 `$DSH_PROFILE_DIR` 猜路径（内置包解析自 dsh 安装目录，profile 装的 bundle 解析自 profile）。
 - 顺带：`DSH_PROFILE`（profile 名）/ `DSH_PROFILE_DIR`（其目录，`node_modules` 只含 profile 装的 bundle）在 **profile 启动的 harness 里每次 shell 调用都有**，不带 profile 启动时**不存在**；Bash 读 `$DSH_PROFILE`、PowerShell 读 `$env:DSH_PROFILE`。
 
