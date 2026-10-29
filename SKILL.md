@@ -3,8 +3,8 @@ name: dsh-plugin-development
 slug: dsh-plugin-development
 displayName: DSH Plugin Development
 summary: Develop DSH (DeepSeek Harness) / Cordis plugins end to end — plugin forms, templates, an API cookbook, catalogued pitfalls, packaging and publishing, plus a mandatory version gate for the pre-stable upstream. Third-party fragments quoted here remain under their own licences (MIT / Apache-2.0 / BSD-3-Clause) — see the bundled LICENSE and NOTICE.
-description: A development-time skill for building plugins on DSH (DeepSeek Harness) / Cordis. It is not itself an installable DSH plugin; it is the tooling that guides a developer or AI agent through creating, debugging, packaging, and publishing one. This skill should be used when the user asks to develop a DSH plugin, write or modify a cordis plugin, add a tool, slash command, config schema, service, UI slot or HTTP route to DSH, run a periodic task inside a plugin, fix a plugin that fails to load or stays in PENDING, or package a plugin bundle for installation or distribution. It covers the plugin forms and official conventions, with 12 templates, 23 catalogued pitfalls, and copy-ready prompts for AI-agent pair development. Because DSH is pre-stable and ships breaking changes on a short cadence, it also ships a mandatory pre-coding version gate, a probe that re-verifies its own claims against a live source checkout, and a per-tag history of upstream breaking changes.
-version: 1.7.1
+description: A development-time skill for building plugins on DSH (DeepSeek Harness) / Cordis. It is not itself an installable DSH plugin; it is the tooling that guides a developer or AI agent through creating, debugging, packaging, and publishing one. This skill should be used when the user asks to develop a DSH plugin, write or modify a cordis plugin, add a tool, slash command, config schema, service, UI slot or HTTP route to DSH, run a periodic task inside a plugin, fix a plugin that fails to load or stays in PENDING, or package a plugin bundle for installation or distribution. It covers the plugin forms and official conventions, with 12 templates, 25 catalogued pitfalls, and copy-ready prompts for AI-agent pair development. Because DSH is pre-stable and ships breaking changes on a short cadence, it also ships a mandatory pre-coding version gate, a probe that re-verifies its own claims against a live source checkout, and a per-tag history of upstream breaking changes.
+version: 1.8.0
 license: MIT-0
 agent_created: true
 metadata:
@@ -33,7 +33,7 @@ metadata:
 
 ## 第 0 步（强制，不可跳过）· 版本闸门
 
-**references 是某一时刻的快照，会腐化。** DSH 处于 rc 阶段（基线 `dsh-v0.2.1-rc.3` / commit `1f81c047fc`，2026-10-23），tag 间隔中位数约 1.0 天（实测 1.03）、出现过破坏性变更。**所以不要承诺「不过时」，要保证「过时会响」。**
+**references 是某一时刻的快照，会腐化。** DSH 处于 rc 阶段（基线 `dsh-v0.2.2-alpha.2` / commit `f3803c9697`，2026-10-28），tag 间隔中位数约 1.0 天（实测 1.03）、出现过破坏性变更。**所以不要承诺「不过时」，要保证「过时会响」。**
 
 **① 权威顺序（源码永远压过本技能）**
 
@@ -61,29 +61,27 @@ bash   <skill>/scripts/dsh-api-probe.sh <DSH 仓库路径>    # 备选：仅当 
 > **目标版本高于基线时**不要猜：`dsh-sync.sh` 拉源码（先经确认）→ 探针核验 → `dsh-version-diff.sh` 出差异。
 > 完整机制（腐化推导、三级全表、五种核验手段、网络不可达时的降级路径）见 `references/00-version-gate.md`。
 
-**基线 `dsh-v0.2.1-rc.3` 的硬变化（照抄旧资料前先对照）**
+**基线 `dsh-v0.2.2-alpha.2` 的硬变化（照抄旧资料前先对照）**
 
-DSH 每次发版的破坏性变更集中在少数几类。**本节只展开基线所属的最新一个区间；更早的 11 个区间（`dsh-v0.1.5-rc.2` → `0.2.1-rc.2`）见 `references/13-version-history.md` §2。**
+DSH 每次发版的破坏性变更集中在少数几类。**本节只展开基线所属的最新一个区间；更早的 16 个区间（`dsh-v0.1.5-rc.2` → `0.2.1-rc.3`）见 `references/13-version-history.md` §2。**
 
-**`0.2.1-rc.2` → `0.2.1-rc.3`（6 个提交、1 个新 tag）—— ✅ 无破坏性变更；新增面 3 处 + 行为变更 1 条。**
+**`0.2.1-rc.3` → `0.2.2-alpha.2`（2170 个提交、2 个新 tag：`-rc.4` 9 个 / `-0.2.2-alpha.2` 2161 个）—— 🔴 有破坏性变更（第二段进位 → `1.8.0`）**
 
-> 🔴 **判据渠道**：本区间 `!:` 自报破坏性提交 **0 条**（第五次空炮），权威渠道 `docs/upgrade-guide/` 只新增 **1 个 topic / 3 个文件**（`v0.2.1-rc.2/new-session-blank-reuse/`）。✅ **目录名 = 区间起点，符合约定**。
+> 🔴 **判据渠道**：本区间 `!:` 自报破坏性提交仅 **1 条**（`2f01ad549c fix(web)!: …`，第六次近乎空炮），而真破坏面 **5 条里它一条都没标出**。权威渠道 = 上游 `docs/upgrade-guide/` 本区间新增 **38** 个 topic，其中 `v0.2.1-rc.2/tool-executor-plugins` 与 `v0.2.1-rc.2/conditional-tools` 是两条主破坏面。
 
-1. ⚠️ **行为变更（不是代码/配置失效）：New Session 重新复用空白会话** —— Web / Desktop 的 New Session、以及**不带参数**的 `uiWorkspace.startSession(workspaceId)`，现在**复用工作区里第一个未启动、未归档的空白会话**，只有不存在空白时才新建；`openWorkspace` / `connectWorkspace` / 带参数的 `startSession` 同规则；请求里点名了 Agent preset 时，会**跳过列出其它 preset 的空白**。
-   - **谁受影响**：① 依赖「每次 New Session 都拿全新 Agent」的插件 —— 复用到的空白若其 Agent 仍在内存里，会**沿用创建它时的 preset 组合**，即 **New Session 不再保证当前 preset 定义**；② 会抢占别人草稿的客户端集成。
-   - **迁移**：改完 preset 定义后要**重启 Host 再开 New Session**；需要独占某 preset 的集成显式传 `{ agentPreset }`。
-   - 判据：`docs/upgrade-guide/v0.2.1-rc.2/new-session-blank-reuse/guide.zh.md`。
+1. 🔴 **工具执行器从 `dsh-tools` 拆成独立插件**。`dsh-tools` 的 `Config` 只剩两个 `z.never()` 占位：`mode`（`packages/core/tools/src/index.ts:102`，原文 `Removed. Mount a native or PTC tool executor instead.`）与 `maxParallelSubCalls`（`:103`）→ **任何还写 `tools: config: mode:` / `maxParallelSubCalls:` 的 patch 或 profile 在加载时被拒**。原生 / PTC 分别要挂 `@deepseek-ai/dsh-tool-executor-native` / `-ptc`（官方 base 补丁同批新增两行，后者 `disabled: true`；PTC 还需 `ctx.ptcRuntime` 在册）。**没有执行器时 `ctx.tools` 直接抛 `ToolExecutorUnavailableError`**（`:365` / `packages/core/tools/src/executor.ts:97`）—— 自建组合必须自己挂一个。`DSH_TOOLS_MODE` 环境变量**不再被读取**。`dsh-agent-tool-presentation` 的 `Config.mode` 仍在但**已 `@deprecated`**。
+2. 🔴 **`system-prompt/assemble` 不再携带工具数组**。该 waterfall 只给段落、上下文与变量，**返回的 `tools` 被忽略**、`assembly.tools` 为 `undefined` → **以前在这里增删工具声明的插件彻底失效**，读该字段的监听器运行时出错。替代方案：`ctx.tools.register(definition, { when })`（`packages/core/tools/src/contracts.ts:115`），以 `{ agent, modelSelection, signal }` 每步骤求值；为假即从声明 / 原生分发 / PTC 绑定 / 嵌套调用**四处**移除，抛错则轮次以 `TOOL_ACTIVATION_FAILED` 结束，集合外调用返回 `UNKNOWN_TOOL`。
+3. 🔴 **`ctx.tools` 服务面重排**：`presentAs(mode)` 与 `ToolPresentationMode` **移除**；`execute()` 由单次改为**批次**（`ToolBatchInput` / `ToolBatchResult`）；`register()` 增加第二参数；新增 `setExecutor` / `resolve` / `definitions` / `executable` / `checkGuards`。主入口**不再导出** `ToolExecutionPipeline` / `executeToolBatch` → 改从 **`@deepseek-ai/dsh-tools/pipeline`** 导入，工具测试夹具改从 **`@deepseek-ai/dsh-tool-testkit`** 取。
+4. 🔴 **配置键改名**：`tool-subagent` 的 `modelSelectionSettings` → **`modelSelection`**，并新增 `modelDiscovery`（`packages/subagent/tool-subagent/src/index.ts`）→ 旧键写进 patch 会校验失败。
+5. ⚠️ **行为面变动（不是失效）**：`web_fetch` 现在可达非公网地址（`2f01ad549c`）—— 依赖「web_fetch 只能取公网」的安全假设需复核。另一处加法：`webServer.register` 形参扩为 `WebRoute \| WebResourceRoute`（`packages/host/webserver/src/index.ts:549`），旧写法不受影响。
 
-**新增面（不改任何已有契约）**：新增 **1 个官方包** —— `@deepseek-ai/dsh-client-ui-entry-customization`（在左侧面板、Conversation View 标签行、右栏 Guide 三个区域的 **More 菜单**里提供插件浏览与 Creator 草稿入口；由 `packages/bundle/web-app/cordis.patch.yml:429` 装入，自身不存状态）；新增 **3 个插槽**，三者形状完全一致（`list` / `scope: 'root'`，owner 给 `{ entries, onOpen, onPinnedChange, onDismiss }`，**区域只在该 list 有登记时才画出 More 按钮**）：`sidebar.panellist.actions` / `conversation.session.header.views.actions` / `sidebar.right.tab.guide.actions`，详见 `04-ui-and-slots.md` §9.4.3；`llm-deepseek-api-key` 路由新增两个配置键 **`modelsTimeoutMs` / `modelsMaxAgeMs`**（沿用 `llm-deepseek` 的共享 mixin，默认 5 秒 / 600 秒），该路由的模型列表因此改为**跟随官方 `/models`**（`packages/llm/llm-deepseek/src/listing-config.ts:14,24`）。
+**新增面（不改已有契约）**：官方包 **352 → 378（+27 / −1）**，新增含 `dsh-tool-executor-native` / `-ptc` / `dsh-tool-testkit` / `dsh-official-bundles` / `dsh-plugin-detail` / `dsh-action-cards` / `dsh-message-quotes` 等，**移除 `dsh-client-ui-deepseek-model-label-1017`**（原 `conversation.input.model.label` 的官方占用方示例，本技能 `04` / `08` 已改写）；base 补丁 +`tool-executor-native` / +`tool-executor-ptc`(disabled) / −`tool-subagent-list-agents`；插槽 **+3 / −0**（`conversation.chat.text-interaction` / `conversation.chat.user.before` / `sidebar.session.row.trailing`）；服务 +8（**全部在 `experimental/` 或 headless 组合包内**）、事件 +5、类型 +144 / −8（8 项移除中 7 项是主入口改子路径导出，`ToolRuntime` 仍以别名保留）；包内 `Config` 键 **+38 / −1**（416 → 453）。
 
-> 💡 **`pinned` 与 `active` 是两个独立状态**：`pinned` = 用户手动钉住（仍可能因宽度预算被折进 More），`active` = 当前选中。上游在**同一区间内**专门修过这点（`39d2903841 fix(ui): separate navigation pins from selection`）—— 把「选中」当「钉住」是这类插槽最常见的写法错误。
-
-**其余为加法，未变项逐条实测**：官方包 **351 → 352（+1 / −0，删除的包 0 个）**。插槽计数由 **141 / 143 / 约 100** 改为 **144 / 146 / 约 103**，客户端权威目录 `slot-catalog.ts` **100 → 103**。**未变**：`SESSION_FORMAT_VERSION` 仍 **4**；模型 ID 仍 `deepseek-flash`；`packages/core/tools/src/schema.ts`（`2cc6f0cb`）与 `packages/core/tools/src/index.ts`（`ca939d4d`）的 blob **两端相同**（参数 DSL 与 `defineTool` 契约零变动）；**base 补丁 blob `7d63cf26` 两端相同**（`id:` 行与全部配置键零变动 → `assets/` 里的官方包名无需改）；CLI **无新增选项**；服务名 **148 → 148**、事件名 **109 → 109**、`defineTool` 工具名 **91 → 91**；包内 `{skills,templates,examples}/` **45 → 45**。⚠️ **一处纯符号搬家**：`DEFAULT_MODELS_TIMEOUT_MS` / `DEFAULT_MODELS_MAX_AGE_MS` / `ModelOverride` / `CatalogSettings` 已从 `packages/llm/llm-deepseek-account/src/config.ts` 移入 `packages/llm/llm-deepseek` —— **键名/默认值/语义不变、account 路由仍接受那两个配置键**，只有按子路径 import 这些内部符号的代码需要改 import 来源。
-
-**更早的 11 个区间（`dsh-v0.1.5-rc.2` → `0.2.1-rc.2`）不在此处重复。** 完整破坏性变更总表（按区间逐行）见 `references/13-version-history.md` §2；作者自报渠道 `!:` 的覆盖率实测与反例见同文件 §2.5。**手上资料早于 `0.2.1-alpha.4` 时，先去读那两节再动手。** 其中上一区间（`0.2.1-alpha.4 → -rc.2`）的重头是**账号奖励通知字段放宽**，并附「**交付了机制、但没有官方市场与默认索引源**」那条收窄结论 —— 这两点仍在 `13` §2 该行与 `01` / `06` / `12` 的对应条目里，别因为本节换了区间就当成「没这回事」。
+**未变项逐条实测**：`SESSION_FORMAT_VERSION` 仍 **4**；模型 ID 仍 `deepseek-flash`；CLI **无新增选项**；`defineTool` 的参数 DSL 契约未变（`schema.ts` 仅新增 `projectToolSchema`）。插槽计数由 **144 / 146 / 约 103** 改为 **148 / 150 / 约 106**，`slot-catalog.ts` **103 → 106**。
+**更早的 16 个区间（`dsh-v0.1.5-rc.2` → `0.2.1-rc.3`）不在此处重复。** 完整破坏性变更总表（按区间逐行）见 `references/13-version-history.md` §2；作者自报渠道 `!:` 的覆盖率实测与反例见同文件 §2.5。**手上资料早于 `0.2.1-alpha.4` 时，先去读那两节再动手。** 其中紧邻的上一区间（`0.2.1-rc.2 → -rc.3`，6 个提交）**无破坏性变更**，只做了一处行为收紧（New Session 复用空白会话）；再上一区间（`0.2.1-alpha.4 → -rc.2`）的重头是**账号奖励通知字段放宽**，并附「**交付了机制、但没有官方市场与默认索引源**」那条收窄结论 —— 这两点仍在 `13` §2 该行与 `01` / `06` / `12` 的对应条目里，别因为本节换了区间就当成「没这回事」。
 
 **判据**：三条来源都要看 —— 探针（`M33`~`M37` / `N06`~`N08` / `P06`~`P07` / `V01` / `X07` / `U11`~`U12` / `X08`~`X09` / **`E01`~`E03`** 就是这几批）、`dsh-version-diff.sh` 的六维度、以及上游自带的 `docs/upgrade-guide/`。
-**⚠️ 别指望 `!:`**：十二个区间里非 merge 提交带 `!:` 的分别是 **0 / 0 / 1 / 0 / 0 / 0 / 0 / 1 / 0 / 0 / 0 / 0** —— 而最狠的整族改名一条都没标 —— **`!` 既非充分也非必要，判影响只看两端文件内容的集合 diff**（完整实测与反例见 `13-version-history.md` §2.5）。
+**⚠️ 别指望 `!:`**：十三个区间里非 merge 提交带 `!:` 的分别是 **0 / 0 / 1 / 0 / 0 / 0 / 0 / 1 / 0 / 0 / 0 / 0 / 1** —— 而最狠的整族改名一条都没标 —— **`!` 既非充分也非必要，判影响只看两端文件内容的集合 diff**（完整实测与反例见 `13-version-history.md` §2.5）。
 
 
 ## 三条基础纪律
@@ -234,7 +232,7 @@ DSH 里最常见的「我明明装了啊」有五种成因，全部落在这 5 �
 
 1. 插件装上了但**完全没反应** → `06-workflow.md` 第 ④ 部分（`--dump-config` + PENDING 审计）
 2. 报错信息看不懂 → `05-pitfalls.md` 的「报错信息 / 现象对照表」
-3. 已知症状检索 → `05-pitfalls.md`（23 条坑，按症状编号 P1~P22b）
+3. 已知症状检索 → `05-pitfalls.md`（25 条坑，按症状编号 P1~P24）
 4. 追根究底（原始社区提交、行号级出处）→ `10-community-casebook.md`（**总索引**，再进 `10a`~`10d` 对应方向分册）
 
 ## 端到端示例（一次完整的装配）

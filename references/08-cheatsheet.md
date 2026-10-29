@@ -2,12 +2,12 @@
 
 > **本文件用途**：速查卡，三部分：① 三种插件形态对照表（最容易搞混，放最前）② 完整 API 速查——服务名（inject 字符串）、事件名（含 waterfall 全套）、UI 插槽名、官方斜杠命令、CLI 命令、目录与路径、工具参数 DSL 类型（全部由源码 grep 提取，带实证来源列）③ 主手册的插件骨架、四类注册、真实范本清单、判断口诀，以及带 core/seam/bundle 角色的 ctx 键速查表。写代码时随手查这一份就够。
 > **合成来源**：DSH插件开发实战补充-模板与踩坑.md（仅第六篇 6.5） + I-quickref.md + DSH插件开发指导手册.md（附录 A/B/C）
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-rc.3` / commit `1f81c047fc`，2026-10-23），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.2-alpha.2` / commit `f3803c9697`，2026-10-28），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
 
-> **本文件导航 —— 共 449 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
+> **本文件导航 —— 共 459 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
 > - **上游素材原文**：约 192 行（46%），起点：`I-quickref.md`（文件开头）。**不是本技能重写的整理稿**；性质不一——**有的是官方文档逐字摘录（属权威原文），有的是调研期粗笔记（仅备查）**。读某一段前，务必连带读**该段开头的取材说明**。
 > - **其余部分 = 面向任务的整理稿**，可直接照做；但它同样是基线快照，写代码前先过版本闸门。
 > - 常用检索：`grep -n '^## '`、`grep -n '^# I\.'`（档案起点）
@@ -44,7 +44,7 @@
 
 | 服务名 | 用途 | 实证来源 |
 |---|---|---|
-| `tools` | 工具注册表 | `interaction/tool-ask-user` |
+| `tools` | 工具注册表（`register` / `schemas` / `definitions` / `resolve` / `execute`／**`setExecutor`**）。⚠️ **`0.2.2-alpha.2` 起执行由独立插件承担**：`Config` 的 `mode` 与 `maxParallelSubCalls` 已是 `z.never()` 占位，**写了就被拒**，必须挂 `@deepseek-ai/dsh-tool-executor-native` 或 `-ptc`；**没挂执行器时任何选择/执行都抛 `ToolExecutorUnavailableError`**（`packages/core/tools/src/index.ts:365`、`packages/core/tools/src/executor.ts:97`） | `interaction/tool-ask-user` |
 | `commands` | 斜杠命令注册表 | `feedback/command-feedback` |
 | `agents` | agent 注册表 | `context/time-context` |
 | `sessions` | 会话存储 | `feedback/command-feedback` |
@@ -59,17 +59,19 @@
 | `tokenMeter` | token 计量 | `docs/subsystems/compaction.zh.md` |
 | `toolResultPruner` | 工具结果裁剪 | `docs/subsystems/compaction.zh.md` |
 | `sessionQuery` | 会话全文检索 | `docs/subsystems/core.zh.md` |
-| `ptcRuntime` | PTC 执行后端注册表（**0.1.6-alpha.1 起，原名 `codeRuntime`，无兼容别名**；⚠️ **`0.2.1-alpha.2` 起 `ptc` 模式下带 Agent 的 `run_code` 还需 `ctx.workingDirectory` 在册**，缺失即抛 `dsh-tools: run_code with an Agent requires workingDirectory` —— 官方 base 补丁已补该行，自建组合须自查） | `packages/ptc-runtime/ptc-runtime/src/index.ts` |
+| `ptcRuntime` | PTC 执行后端注册表（**0.1.6-alpha.1 起，原名 `codeRuntime`，无兼容别名**；⚠️ **`0.2.1-alpha.2` 起 `ptc` 模式下带 Agent 的 `run_code` 还需 `ctx.workingDirectory` 在册**，缺失即抛 `dsh-tools: run_code with an Agent requires workingDirectory` —— 官方 base 补丁已补该行，自建组合须自查；**`0.2.2-alpha.2` 起 `maxParallelSubCalls` 只存在于 PTC 执行器的 `Config`，且该执行器把本服务声明为必需注入**） | `packages/ptc-runtime/ptc-runtime/src/index.ts` |
 | `ssh` | POSIX SSH 执行后端（0.1.6-alpha.1 新增，替代被移除的 `e2b`） | `packages/ssh/ssh/src/index.ts` |
 | `browserUse` | 浏览器自动化后端注册（**只登记名字与 disposer**，不含浏览器对象/操作方法；同名二次注册必失败） | `packages/browser-use/browser-use/src/index.ts` |
 | `computerUse` | 桌面自动化后端注册（同上，独立于 `browserUse`） | `packages/computer-use/computer-use/src/index.ts` |
 | `mcpResources` | MCP 资源面：`register(server, provider)`，暴露「列资源 / 列模板 / 读 URI」三个共享工具 | `packages/mcp/mcp-resources/src/index.ts` |
 | `terminalController` | 会话级终端进程的远程控制面（含 `webTerminals` 客户端侧） | `packages/api/terminal-controller/src/index.ts` |
-| `schedule` | 定时任务域（宿主侧）：任务表持久化（`ctx.storageDomain.open(scheduleDomain)`）、投递、会话恢复、保留策略（`deliveryHistoryDays` / `deliveryHistoryRecords`）。**`0.1.7-rc.2` 新增** | `packages/schedule/schedule/src/index.ts:121` |
+| `schedule` | 定时任务域（宿主侧）：任务表持久化（`ctx.storageDomain.open(scheduleDomain)`）、投递、会话恢复、保留策略（`deliveryHistoryDays` / `deliveryHistoryRecords`）。**`0.1.7-rc.2` 新增** | `packages/schedule/schedule/src/index.ts:145` |
 | `shortcuts` | 键盘快捷键注册表（**客户端侧**）：绑定 / 配置 / 持久化 + 目录（`catalog` / `fixedCatalog`）。**`0.1.7-rc.2` 新增**；desktop 运行时必须有 `dshDesktop.keyboard` 桥，缺了构造函数**直接抛** | `packages/client/shortcuts/src/client/index.ts:47` |
 | `otel` | 共享遥测传输 provider（宿主侧）：`createEventReporter(options)` / `createSessionLogReporter(options)` 各建**互相独立**的通道；**挂载本身不建队列、不建身份、不连网**，消费方自己负责排空与关闭截止。**`0.2.0-rc.1` 新增** | `packages/telemetry/otel/src/index.ts:13`（类）/ `:22` / `:30`；调用点 `packages/host/product-telemetry-otel/src/index.ts:85`、`packages/session/session-telemetry-otel/src/index.ts:189` |
 | `productAnalytics` | 产品分析事件接收（**宿主侧 `ProductAnalytics` 与客户端侧 `DesktopAnalytics` 用同一个键名**）：`enabled()`、`watchPolicy(signal)`（`@Remote` 流式，随配置热更新）、`report(event)`。**禁用态不读身份、不接新事件**。**`0.2.0-rc.1` 新增** | `packages/client/product-analytics/src/index.ts:46`、`packages/client/product-analytics/src/client/index.ts:23` |
-| `pluginMarket` | **插件市场索引读取器（宿主侧）**：按用户在设置里配的索引源拉取 / 校验 / 缓存市场清单，供 Web 端 **Discover** 标签页与 `plugin_market` 工具消费；`static inject = ['pluginManager']`。`Config` = `indexes`（`Volatile<string[]>`，默认 `[]`，**写入不重挂服务**）/ `fetchTimeoutMs`（默认 15000）/ `maxBytes`（默认 128 MiB）/ `cacheTtlMs`（默认 600000 ≈ 10 分钟）。🔴 **`0.2.1-alpha.4` 新增，且不在 base 补丁里** —— 不装组合包 `@deepseek-ai/dsh-experimental-plugin-market-bundle` 就没有这个服务；`plugin_market` 工具也**只在服务挂载期间**才注册 | 声明 `packages/boot/plugin-market/src/index.ts:24-29`、类 `:75`、`super(ctx, 'pluginMarket')` `:92`、`static inject`/`static Config` `:76`/`:78-83`；组合补丁 `packages/experimental/plugin-market-bundle/cordis.patch.yml` |
+| `pluginMarket` | **插件市场索引读取器（宿主侧）**：按用户在设置里配的索引源拉取 / 校验 / 缓存市场清单，供 Web 端 **Discover** 标签页与 `plugin_market` 工具消费；`static inject = ['pluginManager']`。`Config` = `indexes`（`Volatile<string[]>`，默认 `[]`，**写入不重挂服务**）/ `fetchTimeoutMs`（默认 15000）/ `maxBytes`（默认 128 MiB）/ `cacheTtlMs`（默认 600000 ≈ 10 分钟）。🔴 **`0.2.1-alpha.4` 新增，且不在 base 补丁里** —— 不装组合包 `@deepseek-ai/dsh-experimental-plugin-market-bundle` 就没有这个服务；`plugin_market` 工具也**只在服务挂载期间**才注册 | 声明 `packages/boot/plugin-market/src/index.ts:35-40`、类 `:108`、`super(ctx, 'pluginMarket')` `:135`、`static inject`/`static Config` `:109`/`:111-124`；组合补丁 `packages/experimental/plugin-market-bundle/cordis.patch.yml` |
+
+| *（实验 / 组合包内部）* | **`0.2.2-alpha.2` 新增的 8 个服务全部落在实验包或组合包内**：`actionCards`（`packages/experimental/action-cards/src/index.ts:186`）、`cuaAccess`（`packages/experimental/cua/src/access.ts:42`）、`forge` / `forgeSession` / `forgePanel`（`experimental/forge` / `forge-session` / `client-ui-forge`）、`liveshareShares`（`experimental/liveshare/src/host/share-remote.ts:48`）、`pluginRecommendations`（`experimental/plugin-recommendations/src/index.ts:55`）、`headlessStartup`（**只在 headless 组合包内**，`packages/bundle/headless/src/startup.ts:26`）。**不装对应实验组合包就不存在** —— 写 `inject` 前先用 `ctx.get()` 探测 | 见各条括注 |
 
 > ⚠️ **服务名大小写敏感**（`sessionProjections` 不是 `session-projection`）。
 > 💡 探测可选服务：`ctx.get('settings')`；**只有 `inject` 里声明过的**才能写 `ctx.settings`。
@@ -108,11 +110,16 @@
 | `permission-presets/catalog-changed` | 可选权限预设目录变化（0.1.6-alpha.1 新增） |
 | `session-telemetry/record` | 遥测（**脱敏 waterfall**） |
 | `webserver/index-inject` | **往页面 HTML 注入**（UI 首屏，避免闪烁） |
-| `deepseek-account/session-expired` | 账号会话过期（**`0.1.7-rc.2` 新增**）。emit 处 `packages/credentials/deepseek-account-platform/src/index.ts:337`；客户端经 `ctx.remote.$on` 订阅（`packages/client/ui-settings-account/src/client/index.ts:176`） |
+| `deepseek-account/session-expired` | 账号会话过期（**`0.1.7-rc.2` 新增**）。emit 处 `packages/credentials/deepseek-account-platform/src/index.ts:337`；客户端经 `ctx.remote.$on` 订阅（`packages/client/ui-settings-account/src/client/index.ts:199`） |
 | `deepseek-account/model-sign-in-required` | 某个模型要求重新登录（**`0.1.7-rc.2` 新增**）。emit 处 `packages/credentials/deepseek-account/src/account-tasks.ts:24` |
 | `deepseek-account/signed-out` | 已登出（**`0.1.7-rc.2` 新增**）。监听处 `packages/credentials/deepseek-account/src/account-tasks.ts:27` |
 | `schedule/changed` | 定时任务变化（**`0.1.7-rc.2` 新增**，客户端经 `ctx.remote.$on`）；由新服务 `schedule` 驱动 |
-| `plugin-market/changed` | 插件市场的索引源 / 清单变化（**`0.2.1-alpha.4` 新增**）。由新服务 `pluginMarket` 在**索引源配置变化或缓存项被清后**发出（`packages/boot/plugin-market/src/index.ts:102`，在 `loader/volatile-update` 处理里）；客户端转发已登记（`packages/api/remotes/src/remote-events.ts:51`，`mode: 'emit'`）。⚠️ 该服务**不在 base 补丁里** —— 不装组合包时该事件永不发出，`ctx.on` 只会静默挂着 |
+| `plugin-market/changed` | 插件市场的索引源 / 清单变化（**`0.2.1-alpha.4` 新增**）。由新服务 `pluginMarket` 在**索引源配置变化或缓存项被清后**发出（`packages/boot/plugin-market/src/index.ts:167`，在 `loader/volatile-update` 处理里）；客户端转发已登记（`packages/api/remotes/src/remote-events.ts:53`，`mode: 'emit'`）。⚠️ 该服务**不在 base 补丁里** —— 不装组合包时该事件永不发出，`ctx.on` 只会静默挂着 |
+| `llm/models-updated` | 模型目录已刷新（**`0.2.2-alpha.2` 新增，`emit`**）。由 `packages/llm` 的模型列表自动刷新驱动：DeepSeek 账号 / API key 路由在首次取到列表后即安排后台刷新，成功时替换角标元数据并通知已打开的 Web 选择器。**自定义 `ModelListingCache` 持有方** 必须同时提供 `settings: () => ListingSettings \| undefined` 与 `changed: () => void`，且 `dispose()` 现在返回 promise（`docs/upgrade-guide/v0.2.1-rc.4/model-listing-refresh/guide.zh.md`）；客户端转发已登记（`packages/api/remotes/src/remote-events.ts:48`） |
+| `schedule/resolve-agent` | 定时任务开工前决定「用哪个 agent」（**`0.2.2-alpha.2` 新增，`waterfall`**）：`(sessionId, next) => Promise<Agent>`，`packages/schedule/schedule/src/index.ts:85`；派发点 `packages/schedule/schedule/src/runtime.ts:107`。**想给定时任务换 agent 装配就看这里** |
+| `plugin-manager/operation` | 插件管理器执行了一次操作（**`0.2.2-alpha.2` 新增，`parallel`**）：`(operation: PluginOperation) => void \| Promise<void>`，`packages/boot/plugin-manager/src/types.ts:389`；派发点 `…/src/index.ts:1305` |
+| `plugin-manager/update-state` | 插件升级进度（**`0.2.2-alpha.2` 新增，`emit`**）：`(progress: PluginUpdateProgress) => void`，`packages/boot/plugin-manager/src/types.ts:316`；派发点 `…/src/index.ts:716`，客户端经 `ctx.remote.$on` 订阅（`packages/api/remotes/src/remote-events.ts:54`） |
+| `forge/providers-changed` | Forge（实验包）的 provider 变化（**`0.2.2-alpha.2` 新增，`parallel`**）。**只在装 `dsh-experimental-forge` 时存在** |
 
 ### 2.2 ⭐ waterfall 事件 —— **Agent 会话流程的扩展点**（重要）
 
@@ -147,21 +154,21 @@
 > Replace the frozen call configuration. `await next()` yields the config the machine would use (agent options on the first request, the logged header afterwards); return a replacement to switch. On step admission, this runs after assembly and `step/start`, before the system prompt and accepted user batch are committed. Cancellation here or during subsequent `prepareCall()` resolution commits neither. The prepared call capability governs prompt admission. Model-visible content must use logged channels; this waterfall cannot mutate messages.
 > ```
 
-> `docs/subsystems/core.zh.md:345`（逐字）：
+> `docs/subsystems/core.zh.md:413`（逐字）：
 > ```
 > `agent/pre-step` 是请求推导前唯一的 waterfall（瀑布式）监听器链。`agent/turn-stopping` 在轮次没有工具或 steering（中途引导）后续时运行，先于最后一次 steering 排空。
 > ```
 
-> `docs/subsystems/core.zh.md:306`（逐字）：
+> `docs/subsystems/core.zh.md:374`（逐字）：
 > ```
 > [事件分类](../architecture.zh.md#events)负责 `agent/*` 生命周期、检查点与 waterfall（瀑布式事件）约定。轮次和步骤边界是持久会话事件，而不是 agent emit。
 > ```
 
 ---
 
-## 3. UI 插槽名（**最常用的几个**；权威全量约 **103** 个公开键 —— 对基线 `dsh-v0.2.1-rc.3` 抽取：声明侧 **144**、并集 **146**、剔除 **43** 个测试专用键后约 103 个公开可用。用 `scripts/extract_slots.py` 复现（**2026-09-23 修好抽取器两处漏抽后重抽**；**2026-09-25 随 rc.2 推进 +3 / −0**；**2026-09-29 随 0.2.0-rc.1 推进 +0 / −0**；**2026-09-30 随 0.2.0-rc.2 推进 +1 / −0**（客户端权威目录 `slot-catalog.ts` **89 → 90**；新增键 = `sidebar.right.tab.files.actions`）；**2026-10-04 随 0.2.1-alpha.1 推进 +2 / −0**（`slot-catalog.ts` **90 → 92**；新增键 = `plugins.add.actions` / `shell.bottom`）；**2026-10-09 随 0.2.1-alpha.2 推进 +2 / −0**（`slot-catalog.ts` **92 → 94**；新增键 = `conversation.chat.flow` / `conversation.chat.reasoning.body`，另见 `04-ui-and-slots.md` 的登记）；**2026-10-15 随 0.2.1-alpha.3 推进 +5 / −1**（`slot-catalog.ts` **94 → 98**；新增键 = `conversation.chat.message.images` / `conversation.chat.user.images` / `conversation.hero.options` / `conversation.user.text.node` / `workspace.toast`，**移除键 = `conversation.message.images`**）；**2026-10-16 随 0.2.1-alpha.4 推进 +1 / −0**（`slot-catalog.ts` **98 → 99**；新增键 = `plugins.tab`，`kind: 'list'` / `scope: 'root'`，宿主 `ui-plugin-manager`）；**2026-10-17 随 0.2.1-rc.2 推进 +1 / −0**（`slot-catalog.ts` **99 → 100**；新增键 = `conversation.input.model.label`，`kind: 'single'` / `scope: 'session'`，宿主 `ui-model-selection`）；**2026-10-24 随 0.2.1-rc.3 推进 +3 / −0**（`slot-catalog.ts` **100 → 103**；新增键 = `conversation.session.header.views.actions` / `sidebar.panellist.actions` / `sidebar.right.tab.guide.actions`，三者均 `kind: 'list'` / `scope: 'root'`，是三个区域的 **More 菜单行**，宿主分别是 `ui-sidebar` / `ui-conversation` / `ui-sidebar-right`）；此前公布的 96/99/约81 系低估））
+## 3. UI 插槽名（**最常用的几个**；权威全量约 **106** 个公开键 —— 对基线 `dsh-v0.2.2-alpha.2` 抽取：声明侧 **144**、并集 **146**、剔除 **43** 个测试专用键后约 103 个公开可用。用 `scripts/extract_slots.py` 复现（**2026-09-23 修好抽取器两处漏抽后重抽**；**2026-09-25 随 rc.2 推进 +3 / −0**；**2026-09-29 随 0.2.0-rc.1 推进 +0 / −0**；**2026-09-30 随 0.2.0-rc.2 推进 +1 / −0**（客户端权威目录 `slot-catalog.ts` **89 → 90**；新增键 = `sidebar.right.tab.files.actions`）；**2026-10-04 随 0.2.1-alpha.1 推进 +2 / −0**（`slot-catalog.ts` **90 → 92**；新增键 = `plugins.add.actions` / `shell.bottom`）；**2026-10-09 随 0.2.1-alpha.2 推进 +2 / −0**（`slot-catalog.ts` **92 → 94**；新增键 = `conversation.chat.flow` / `conversation.chat.reasoning.body`，另见 `04-ui-and-slots.md` 的登记）；**2026-10-15 随 0.2.1-alpha.3 推进 +5 / −1**（`slot-catalog.ts` **94 → 98**；新增键 = `conversation.chat.message.images` / `conversation.chat.user.images` / `conversation.hero.options` / `conversation.user.text.node` / `workspace.toast`，**移除键 = `conversation.message.images`**）；**2026-10-16 随 0.2.1-alpha.4 推进 +1 / −0**（`slot-catalog.ts` **98 → 99**；新增键 = `plugins.tab`，`kind: 'list'` / `scope: 'root'`，宿主 `ui-plugin-manager`）；**2026-10-17 随 0.2.1-rc.2 推进 +1 / −0**（`slot-catalog.ts` **99 → 100**；新增键 = `conversation.input.model.label`，`kind: 'single'` / `scope: 'session'`，宿主 `ui-model-selection`）；**2026-10-24 随 0.2.1-rc.3 推进 +3 / −0**（`slot-catalog.ts` **100 → 103**；新增键 = `conversation.session.header.views.actions` / `sidebar.panellist.actions` / `sidebar.right.tab.guide.actions`，三者均 `kind: 'list'` / `scope: 'root'`，是三个区域的 **More 菜单行**，宿主分别是 `ui-sidebar` / `ui-conversation` / `ui-sidebar-right`）；此前公布的 96/99/约81 系低估）；**2026-10-29 随 0.2.2-alpha.2 推进 +3 / −0**（`slot-catalog.ts` **103 → 106**；新增键 = `conversation.chat.text-interaction` / `conversation.chat.user.before` / `sidebar.session.row.trailing`，三个都在 `ui-chat` / `ui-sidebar` 的 `contract/slots.ts` 里，`single` / `session`；本轮口径：声明侧 **144 → 148**、并集 **146 → 150**、公开约 **103 → 106**，多出的第 4 个声明键 `quote-probe` 只出现在测试夹具里））
 
-**最常用的几个**（下表是**高频子集，不是全量** —— 全量约 103 个公开键，计数链见本节标题）：
+**最常用的几个**（下表是**高频子集，不是全量** —— 全量约 106 个公开键，计数链见本节标题）：
 
 | 插槽名 | 用途 |
 |---|---|
@@ -173,10 +180,13 @@
 | `sidebar.brand.mark` / `sidebar.brand.name` | 侧栏品牌位（最小 UI 插件范例用的） |
 | `tool.call.toolview` | 工具调用的自定义卡片 |
 | `plugins.tab` | **插件页（`main.plugins`）在自带「已安装」页签之后的贡献页签**（**`0.2.1-alpha.4` 新增**，`list` / `scope: 'root'`）；官方首个占用方是市场页 Discover。⚠️ **别和设置面板那个 `settings.plugins.tab` 搞混**（带 `settings.` 前缀 = 设置面板；无前缀 = 插件页），详见 `04-ui-and-slots.md` §9.4.3 |
-| `conversation.input.model.label` | **输入区模型选择器里的非交互式行内标签**（**`0.2.1-rc.2` 新增**，`single` / `scope: 'session'`）；owner 给 `{ provider, model, placement, selected }`，`placement` 区分「输入按钮 / 菜单当前值 / 可选模型行」三处。宿主是 `ui-model-selection`（声明 `packages/client/ui-model-selection/src/client/slots.ts:36`），**选择控件仍归宿主**，你只挂展示。官方占用方 `dsh-client-ui-deepseek-model-label-1017` 演示了「**装饰既有 UI 而不接管它**」的写法：`ctx.slots.inject(key, () => ctx.slots.register(...))`，宿主 entry 卸载后装饰自动消失 |
+| `conversation.input.model.label` | **输入区模型选择器里的非交互式行内标签**（**`0.2.1-rc.2` 新增**，`single` / `scope: 'session'`）；owner 给 `{ provider, model, placement, selected }`，`placement` 区分「输入按钮 / 菜单当前值 / 可选模型行」三处。宿主是 `ui-model-selection`（声明 `packages/client/ui-model-selection/src/client/slots.ts:37`），**选择控件仍归宿主**，你只挂展示。「**装饰既有 UI 而不接管它**」的写法见声明处的 JSDoc 示例：`ctx.slots.inject(key, () => ctx.slots.register(...))`，宿主 entry 卸载后装饰自动消失（`packages/client/ui-model-selection/src/client/slots.ts:28-41`）。⚠️ 该插槽原先的官方占用方 `dsh-client-ui-deepseek-model-label-1017` **已在 `0.2.2-alpha.2` 移除**，别再去找那个包 |
 | `sidebar.panellist.actions` | **左侧面板列表的 More 菜单行**（**`0.2.1-rc.3` 新增**，`list` / `scope: 'root'`）；owner 给 `{ entries, onOpen, onPinnedChange, onDismiss }`，`entries` 项为 `{ id, label, pinned, active? }`。**没有登记时整个 More 按钮都不显示**（不占位）。声明 `packages/client/ui-sidebar/src/client/contract/slots.ts:38` |
-| `conversation.session.header.views.actions` | **Conversation 顶部 View 标签行的 More 菜单行**（**`0.2.1-rc.3` 新增**，`list` / `scope: 'root'`）；形状与上面同族（`onOpen` / `onPinnedChange` / `onDismiss`）。🔴 `pinned`（在不在主区域显示）与 `active`（是不是当前选中）**是两件事**。声明 `packages/client/ui-conversation/src/client/contract/slots.ts:258` |
+| `conversation.session.header.views.actions` | **Conversation 顶部 View 标签行的 More 菜单行**（**`0.2.1-rc.3` 新增**，`list` / `scope: 'root'`）；形状与上面同族（`onOpen` / `onPinnedChange` / `onDismiss`）。🔴 `pinned`（在不在主区域显示）与 `active`（是不是当前选中）**是两件事**。声明 `packages/client/ui-conversation/src/client/contract/slots.ts:276` |
 | `sidebar.right.tab.guide.actions` | **右侧栏 Guide 卡片的 More 菜单行**（**`0.2.1-rc.3` 新增**，`list` / `scope: 'root'`）；`entries` 只列可定制的 Guide 卡片（`kind` 为 `files` 的卡片**永不出现**）。声明 `packages/client/ui-sidebar-right/src/client/contract/slots.ts:91` |
+| `conversation.chat.user.before` | **用户消息「源装饰」位**（**`0.2.2-alpha.2` 新增**，`chain` / `session`）——由 user Node entry 拥有并渲染，按「durable source + row kind」选择器选一个组件；**无匹配则不渲染任何内容**，steering 行与 pending 行不渲染。声明 `packages/client/ui-chat/src/client/contract/slots.ts:446` |
+| `conversation.chat.text-interaction` | **助手文本段落内的局部交互面**（**`0.2.2-alpha.2` 新增**，`keyed` / `session`）——每个消费方自己注册同步准入。声明 `…/contract/slots.ts:379` 引用族 |
+| `sidebar.session.row.trailing` | **侧栏会话行尾部的非交互图标**（**`0.2.2-alpha.2` 新增**，`list` / `root`，`inline: true`）——位于时间标签之后、pin 标记之前，按 `order` 升序；可 hover 的设备上，行被 hover / 获得键盘焦点 / 菜单展开时**隐藏**；**空白会话不渲染该插槽**；占用方须按 Session id 自取数据，**不得持有 Session**。声明 `packages/client/ui-workspace/src/client/contract/slots.ts:161` |
 
 ---
 
@@ -229,7 +239,7 @@ dsh plugin --profile tui add <package>     # 官方帮助里的原文示例
 
 ---
 
-## 7. 工具参数 DSL 支持的类型（`schema.ts:411` 原文报错信息反推）
+## 7. 工具参数 DSL 支持的类型（`schema.ts:412` 原文报错信息反推）
 
 ```
 parameters.<字段>.type 允许：
@@ -237,12 +247,12 @@ parameters.<字段>.type 允许：
 或者用 oneOf（但要 ≥2 个分支，且不能与 type 同时声明）
 ```
 
-官方报错原文（`schema.ts:411`）：
+官方报错原文（`schema.ts:412`）：
 ```
 ${path}.type must be string/number/integer/boolean/null/array/object/json, or use oneOf
 ```
 
-**必填写法**：`required: true`（**属性级**，走 `defineTool` 时）。写别的值会报（`schema.ts:293`）：
+**必填写法**：`required: true`（**属性级**，走 `defineTool` 时）。写别的值会报（`schema.ts:294`）：
 ```
 ${path}.required must be true when present
 ```
@@ -321,7 +331,7 @@ ctx.slots.inject('插槽名', () => ctx.slots.register({ name: '插槽名', id, 
 
 # 附录 B 真实范本清单（照着抄最快）
 
-> 全部路径相对于仓库根。主文件行数为主 `src/index.ts` 的行数，「src 总量」为该包 `src/` 下所有 `.ts/.tsx` 行数之和。（行数对基线 `dsh-v0.2.1-rc.3` 逐个实测，**四个数在 rc.3 上重测未变**。复现：`wc -l <仓库>/<路径>/src/index.ts`，总量用 `find <仓库>/<路径>/src -type f \( -name '*.ts' -o -name '*.tsx' \) | xargs wc -l | tail -1`。）
+> 全部路径相对于仓库根。主文件行数为主 `src/index.ts` 的行数，「src 总量」为该包 `src/` 下所有 `.ts/.tsx` 行数之和。（行数对基线 `dsh-v0.2.2-alpha.2` 逐个实测，**四个数在 rc.3 上重测未变**。复现：`wc -l <仓库>/<路径>/src/index.ts`，总量用 `find <仓库>/<路径>/src -type f \( -name '*.ts' -o -name '*.tsx' \) | xargs wc -l | tail -1`。）
 
 ## B.1 最小可运行（学习包骨架）
 
@@ -397,7 +407,7 @@ ctx.slots.inject('插槽名', () => ctx.slots.register({ name: '插槽名', id, 
 
 | ctx 键 | 角色 | 用途 |
 |---|---|---|
-| `ctx.tools` | core | 工具注册表与受把关的执行流水线 |
+| `ctx.tools` | core | 工具注册表与执行调度面（**执行本体在 `dsh-tool-executor-native` / `-ptc` 插件里**，`0.2.2-alpha.2` 起 `dsh-tools` 不再自带执行配置） |
 | `ctx.commands` | core | 人类命令注册表 |
 | `ctx.systemPrompt` | core | 系统提示词组装注册表 |
 | `ctx.llm` | **seam** | LLM 适配器注册表 |
@@ -438,7 +448,7 @@ ctx.slots.inject('插槽名', () => ctx.slots.register({ name: '插槽名', id, 
 | `ctx.credentials` | **seam** | 凭据 |
 | `ctx.attachments` | **seam** | 持久二进制附件存储 |
 | `ctx.webhookRuntime` | core | Webhook 规则运行时 |
-| `ctx.remoteAccess` | core | 远端访问（浏览器 Peer 连接）。**`0.2.1-alpha.3` 新增**，随新官方包 `@deepseek-ai/dsh-api-remote-access`；声明处为 `super(ctx, 'remoteAccess')` —— 宿主侧 `packages/api/remote-access/src/index.ts:135`、客户端侧 `packages/api/remote-access/src/client/mount.ts:63`。⚠️ 本区间服务面**只增不减**（移除数 0） |
+| `ctx.remoteAccess` | core | 远端访问（浏览器 Peer 连接）。**`0.2.1-alpha.3` 新增**，随新官方包 `@deepseek-ai/dsh-api-remote-access`；声明处为 `super(ctx, 'remoteAccess')` —— 宿主侧 `packages/api/remote-access/src/index.ts:135`、客户端侧 `packages/api/remote-access/src/client/mount.ts:92`。⚠️ 本区间服务面**只增不减**（移除数 0） |
 
 **怎么选**：要「替换实现」→ 找 `seam` 行；要「新增能力」→ 自建三件套；要「消费」→ 直接 `inject` 已存在的服务。
 

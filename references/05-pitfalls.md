@@ -1,13 +1,13 @@
 > **文件来源**：本文件由 DSH 插件开发手册套件整合生成。直接编辑会在下次整合时被覆盖，因此维护性改动记录在工作区源文档中。
 
-> **本文件用途**：按症状检索的踩坑百科：23 条编号坑点（P1~P22b）+ 症状速查表 + 报错信息/界面现象对照表 + 官方 4 篇事故复盘全文摘录与八条红线。插件出问题时第一站。
+> **本文件用途**：按症状检索的踩坑百科：25 条编号坑点（P1~P24，含 P22b）+ 症状速查表 + 报错信息/界面现象对照表 + 官方 4 篇事故复盘全文摘录与八条红线。插件出问题时第一站。
 > **合成来源**：DSH插件开发实战补充-模板与踩坑.md（第三篇，略去与官方复盘重复的红线摘要） + DSH插件开发指导手册.md（附录 E 报错对照表） + F-official-pitfalls.md
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-rc.3` / commit `1f81c047fc`，2026-10-23），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.2-alpha.2` / commit `f3803c9697`，2026-10-28），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
 
-> **本文件导航 —— 共 636 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
+> **本文件导航 —— 共 671 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
 > - **上游素材原文**：约 200 行（32%），起点：`F-official-pitfalls.md`（文件末尾）。**不是本技能重写的整理稿**；性质不一——**有的是官方文档逐字摘录（属权威原文），有的是调研期粗笔记（仅备查）**。读某一段前，务必连带读**该段开头的取材说明**。
 > - **其余部分 = 面向任务的整理稿**，可直接照做；但它同样是基线快照，写代码前先过版本闸门。
 > - 常用检索：`grep -n '^### 坑 P'`（按编号定位单条坑）、`grep -n '^# F\.'`（档案起点）
@@ -47,6 +47,8 @@
 | 外部子进程读不到凭据 | **P20** | 环境被清洗，凭据必须显式列在 `env` 里 |
 | 一段时间后整个 harness 挂掉 | **P21** | 一个坏的 client 插件会把整个 HARNESS 拖下水 |
 | 卸载后刷新 404 | **P22** | 要在响应完成前先禁掉自己的 entry |
+| 工具注册成功但模型看不到，或报 `ToolExecutorUnavailableError` | **P23** | 执行器已成独立插件，自建组合要自己挂；旧配置键 `mode` / `maxParallelSubCalls` 被拒 |
+| 靠 `system-prompt/assemble` 筛工具，升级后条件不起作用 | **P24** | 该 waterfall 不再携带工具数组，改用 `register(def, { when })` |
 
 ---
 
@@ -55,7 +57,7 @@
 ### 坑 P1 · 装完毫无反应，但 `pnpm add` 成功了 ★★★
 
 - **现象**：`dsh plugin --profile web add <你的包>` 返回成功，`node_modules` 里也有你的包，但插件完全不起作用。
-- **你会看到这条警告**（逐字，来自源码 `packages/boot/plugin-manager/src/operations.ts:102`）：
+- **你会看到这条警告**（逐字，来自源码 `packages/boot/plugin-manager/src/operations.ts:104`）：
   ```
   dsh: warning: <你的包名> declares no dsh.bundle — installed as a plain dependency, not a profile layer
   ```
@@ -193,7 +195,7 @@
     query: { type: 'string', required: true, description: '...' },   // ✅ 属性级
   }
   ```
-- **来源**：官方 `packages/core/tools/src/schema.ts:96-106, 292-295, 449-458, 570-571`；社区侧 `Tencent_WeKnora/packages/dsh-weknora/src/tools.ts`。
+- **来源**：官方 `packages/core/tools/src/schema.ts:97-107, 293-296, 450-459, 571-572`；社区侧 `Tencent_WeKnora/packages/dsh-weknora/src/tools.ts`。
 
 ### 坑 P8 · `output.schema` 根节点写了 `required` ★
 
@@ -213,6 +215,39 @@
 
 ---
 
+### 坑 P23 · 工具注册成功、模型却调不到；或一调就报 `ToolExecutorUnavailableError` ★★★（**`0.2.2-alpha.2` 起的新形态**）
+**现象**：`ctx.tools.register(...)` 不报错，但请求里根本没有这个工具；或者模型一调就抛 `ToolExecutorUnavailableError`；也可能启动直接失败，报 `Config` 校验错误。
+**根因**：**`0.2.2-alpha.2` 起，「工具定义」与「工具执行」被拆成两层。** `@deepseek-ai/dsh-tools` 只留注册表与执行器选择，执行本体在独立插件里（`@deepseek-ai/dsh-tool-executor-native` 或 `-ptc`）。三处会咬人：
+1. **自建组合没挂执行器** → `ctx.tools` 的 `private selectExecutor()` 找不到执行器即抛 `ToolExecutorUnavailableError`（`packages/core/tools/src/index.ts:357-366`，错误类在 `packages/core/tools/src/executor.ts:97`）。
+2. **还在 `dsh-tools` 上写旧的执行配置** → `Config` 只剩两个 `z.never()` 占位：`mode`（`index.ts:102`，`Removed. Mount a native or PTC tool executor instead.`）与 `maxParallelSubCalls`（`:103`，`Moved to the PTC tool executor configuration.`）→ **写了就被拒**。
+3. **以为 `DSH_TOOLS_MODE` 还能用** → 该环境变量**已不再被读取**（Web / headless / SDK 一律继承 base 的原生执行）。
+**怎么修**：
+```yaml
+# 官方 base 补丁就是这么写的：原生 + PTC 各一行，PTC 默认关
+- id: tool-executor-native
+  name: '@deepseek-ai/dsh-tool-executor-native'
+- id: tool-executor-ptc
+  name: '@deepseek-ai/dsh-tool-executor-ptc'
+  disabled: true
+```
+需要 PTC 时，用 overlay 补丁把两者对调（原生 `disabled: true` / PTC `disabled: false`），并确保 **`ctx.ptcRuntime` 在册** —— PTC 执行器把它声明为必需注入，缺了会阻止启动。
+**判据**：`docs/upgrade-guide/v0.2.1-rc.2/tool-executor-plugins/guide.zh.md`（权威迁移指南）+ `packages/core/tools/src/index.ts:99-104` + `packages/bundle/base/cordis.patch.yml` 的 `tool-executor-*` 两行。
+**顺带**：`dsh-agent-tool-presentation` 的 `Config.mode` 选择器**仍可用但已 `@deprecated`**（`packages/core/agent-tool-presentation/src/index.ts:23,25`）—— 它内部就是把对应执行器插件挂上去，别再往新代码里写。
+---
+### 坑 P24 · 在 `system-prompt/assemble` 里筛工具 —— 升级后**彻底失效**，而且不报错 ★★★
+**现象**：原来靠 `system-prompt/assemble` waterfall 给工具做「按条件隐藏」的插件，升级后**条件完全不起作用**（工具照样全给模型）；读取 `assembly.tools` 的监听器要么拿到 `undefined`，要么直接在下游抛错。
+**根因**：**`0.2.2-alpha.2` 起该 waterfall 不再携带工具数组。** 它只接收段落、上下文与变量（`PromptPresentation`），**返回的 `tools` 字段被忽略** —— 也就是说「在 waterfall 里增删工具声明」这条路被官方关掉了。而这次收窄**没有任何运行时报错**：你在 waterfall 里做的删除不再进入请求。
+**怎么修**：把条件挪到**注册时**，用 `ToolRegistrationOptions.when`：
+```ts
+ctx.tools.register(defineTool({ /* … */ }), {
+  when: ({ agent, modelSelection, signal }) => /* 同步或异步布尔 */,
+})
+```
+- 条件在**每个拟议步骤**求值一次（`agent/pre-step` 与提示词组装之前），结果（`ResolvedToolSet`）同时决定**声明 / 原生分发 / PTC 绑定 / 嵌套调用**四处。
+- 为假 → 四处一并移除；条件抛错 → 轮次以 `TOOL_ACTIVATION_FAILED` 结束；不属于已准入集合的调用 → `UNKNOWN_TOOL`，**不执行**。
+- 若你在做**自定义执行器**，用 `ctx.tools.executable(name, agent, toolSet)` 逐次查找，别自己缓存注册表。
+**两个连带坑**：① 步骤中途重新注册工具（热重载 / MCP 重连 / skill 重载）会让该步骤内**尚未开始**的调用失败 —— 已被准入的批次按原集合结算；② `exit_plan_mode` 现在**只在会话首次进入计划模式之后**才声明，所以「从未进过计划模式」的请求里它不会出现，快照测试要相应更新。
+**判据**：`docs/upgrade-guide/v0.2.1-rc.2/conditional-tools/guide.zh.md` + `packages/core/tools/src/contracts.ts:105-126`。
 ## 3.3 生命周期 / 热更新类
 
 ### 坑 P10 · 副作用不回收 → 热更新后叠加 ★★★
@@ -233,7 +268,7 @@
   ctx.locale.register(NS, { zh, en })         // 返回 () => void（幂等）
   ```
   > ⚠️ **2026-09-30 更正**：本例第二行原写 `settings.register(ns, Schema)` —— 该 **Host 侧**入口随 `0.1.7-rc.1` 的设置机制重做**已被移除**（新树全树 0 命中），换成同一文件里仍有效的 `ctx.locale.register(...)`
-  > （`packages/client/locale/src/client/index.ts:389,399` 的两个重载均返回 `() => void`）。**「注册类 API 自带 disposer」这条通用规则不变。**
+  > （`packages/client/locale/src/client/index.ts:403-404` 的两个重载均返回 `() => void`）。**「注册类 API 自带 disposer」这条通用规则不变。**
 - **来源**：官方 `packages/client/ui-theme/src/client/index.ts`。
 
 ### 坑 P11 · 裸注册 → 热重载报 `duplicate` ★★

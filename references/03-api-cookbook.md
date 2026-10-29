@@ -2,12 +2,12 @@
 
 > **本文件用途**：工具插件（defineTool 与裸 register 两条路径）、可配置插件（Config 与 Schema DSL）、斜杠命令、事件五种分发模式与 waterfall 拦截、服务插件、终端家族。写具体功能时按需查。
 > **合成来源**：DSH插件开发指导手册.md（第 4~8 章）
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-rc.3` / commit `1f81c047fc`，2026-10-23），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.2-alpha.2` / commit `f3803c9697`，2026-10-28），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
 
-> **本文件导航 —— 共 1,100 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
+> **本文件导航 —— 共 1,101 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
 > - **本文件全是整理稿**（无上游素材混杂），但它仍是基线快照——写代码前先过版本闸门。
 > - 常用检索：`grep -n '^## '`（API 面分类）、`grep -n 'ctx\.'`（按 API 名查）
 
@@ -67,12 +67,12 @@ export function apply(ctx: Context) {
 **三个必知要点**：
 
 1. `export const inject = ['tools']` —— 没写这行，`ctx.tools` 就是 undefined，插件直接报错。
-2. 工具名 `name: 'greet'` **必须唯一**；`run_code` 是保留名，不能用（`docs/subsystems/tools.zh.md:525`；⚠️ 原引 `:500` 在**旧树里就已偏 15 行**，属历史笔误，非本区间漂移）。
+2. 工具名 `name: 'greet'` **必须唯一**；`run_code` 是保留名，不能用（`docs/subsystems/tools.zh.md:645`；⚠️ 原引 `:633` 在**旧树里就已偏 15 行**，属历史笔误，非本区间漂移）。
 3. `ctx.tools.register(...)` 是**副作用**：插件卸载时工具自动注销，你不需要手动清。
 
 ## 4.3 `defineTool` 的完整字段
 
-`defineTool` 的选项结构（源码权威定义：`packages/core/tools/src/schema.ts:482-536`）：
+`defineTool` 的选项结构（源码权威定义：`packages/core/tools/src/schema.ts:483-537`）：
 
 ```ts
 export interface DefineToolOptions<S extends ParameterSchemaSpec, O extends ValueSchemaSpec> {
@@ -101,7 +101,7 @@ export interface DefineToolOptions<S extends ParameterSchemaSpec, O extends Valu
 }
 ```
 
-> ⚠️ **`0.2.1-alpha.2` 变更（`c7e62c1062`）**：`output.presentationMeta` 的注释由「direct top-level calls」改为「**native and nested calls**」，运行时守卫也去掉了 `exec.parent === undefined` 前缀 —— **嵌套 PTC 派发现在同样会投影**（`ToolResult.meta` 随之落到 `tool/result` **或** `tool/ptc-dispatch`）。上方摘录已同步为新签名。**纯加法**（改前嵌套调用根本不产生 `meta`），但**声明了该钩子的插件在嵌套派发时也会被调用** —— 若实现里假定「只在顶层被调」，需复核（`packages/core/tools/src/schema.ts:496-497`、`packages/core/tools/src/index.ts:219-220`、`:310`、`:1851`）。
+> ⚠️ **`0.2.1-alpha.2` 变更（`c7e62c1062`）**：`output.presentationMeta` 的注释由「direct top-level calls」改为「**native and nested calls**」，运行时守卫也去掉了 `exec.parent === undefined` 前缀 —— **嵌套 PTC 派发现在同样会投影**（`ToolResult.meta` 随之落到 `tool/result` **或** `tool/ptc-dispatch`）。上方摘录已同步为新签名。**纯加法**（改前嵌套调用根本不产生 `meta`），但**声明了该钩子的插件在嵌套派发时也会被调用** —— 若实现里假定「只在顶层被调」，需复核（`packages/core/tools/src/schema.ts:497-498`、`packages/core/tools/src/index.ts:219-220`、`:310`、`:1851`）。
 
 **按重要性分三档**：
 
@@ -121,7 +121,7 @@ export interface DefineToolOptions<S extends ParameterSchemaSpec, O extends Valu
 
 ## 4.4 参数怎么写（Schema DSL）
 
-DSH **没有**用 JSON Schema 直接写参数，而是自己的一套 DSL（源码 `packages/core/tools/src/schema.ts:85-106`）。支持的类型：
+DSH **没有**用 JSON Schema 直接写参数，而是自己的一套 DSL（源码 `packages/core/tools/src/schema.ts:86-107`）。支持的类型：
 
 ```ts
 type ValueSchemaSpec =
@@ -183,7 +183,7 @@ output: {
 
 ### 输出是对象（真实生产级写法）
 
-来源：`packages/interaction/tool-ask-user/src/index.ts:57-79`
+来源：`packages/interaction/tool-ask-user/src/index.ts:58-80`
 
 ```ts
 output: {
@@ -255,16 +255,17 @@ export function apply(ctx: Context) {
 
 官方立场（`docs/cookbook/adding-a-tool.zh.md:61`）：**尽量不要把部署策略内建到工具中。**
 
-权限走**注册表流水线**——`tools/pre-execute` 事件（详细写法见第 7 章）。决策类型（`docs/subsystems/tools.zh.md:388-412`；旧引 `:378-402`）：
+权限走**注册表流水线**——`tools/pre-execute` 事件（详细写法见第 7 章）。决策类型（`docs/subsystems/tools.zh.md:543-548`；旧引 `:388-412`）：
 
 ```ts
 type PreToolDecision =
   | { kind: 'allow' }
-  | { kind: 'deny'; reason: string }
-  | { kind: 'ask'; reason?: string }
+  | { kind: 'deny'; reason: string; info?: ToolErrorInfo }
+  | { kind: 'cancel' }
+  | { kind: 'ask'; reason?: string; displayReason?: { readonly en: string; readonly [locale: string]: string } }
 ```
 
-还有一条**不可撤销**的最终拒绝：`ctx.tools.guard(guard)`（`tools.zh.md:315-325`）：
+还有一条**不可撤销**的最终拒绝：`ctx.tools.guard(guard)`（`tools.zh.md:726-731`）：
 
 ```ts
 type ToolGuard = (execution: Readonly<ToolExecution>) => string | undefined
@@ -272,10 +273,10 @@ type ToolGuard = (execution: Readonly<ToolExecution>) => string | undefined
 
 ## 4.8 工具的注册表 API 速查
 
-来源：`docs/subsystems/tools.zh.md:488-580`（由源码生成的 cordis-surface；旧引 `:478-570`）
+来源：`docs/subsystems/tools.zh.md:639-746`（由源码生成的 cordis-surface；旧引 `:488-580`）
 
 ```ts
-register(definition: ToolDefinition): () => void
+register(definition: ToolDefinition, options: ToolRegistrationOptions = {}): () => void
 restrict(filter: ToolRestriction): () => void
 guard(guard: ToolGuard): () => void
 get(name: string, scope?: ScopeKey): ToolDefinition | undefined
@@ -776,7 +777,7 @@ export function apply(ctx: Context) {
 
 **这一个插件就能管住所有工具**（包括官方工具）——这就是「一切皆插件」架构的威力：你没有改官方一行代码，却改变了它的行为。
 
-`ask` 决策需要审批服务配合才生效；**没有审批通道时，`ask` 会变成拒绝**（`docs/subsystems/tools.zh.md:412`；旧引 `:402`）。
+`ask` 决策需要审批服务配合才生效；**没有审批通道时，`ask` 会变成拒绝**（`docs/subsystems/tools.zh.md:545`；旧引 `:402`）。
 
 ## 7.5 自定义事件（声明类型）
 
@@ -909,7 +910,7 @@ export function apply(ctx: Context) {
 
 > 尝试彻底移除 `./greeter.ts`：消费方会保持 PENDING，不输出任何内容，既不崩溃，也不会只运行一部分。处于 PENDING 的 fiber 也不会让 Node 的事件循环保持活跃，因此如果组合中没有其他运行项，进程会静默地以状态码 0 退出。
 
-**好消息：DSH 启动时会审计这件事。** 源码实证（`packages/boot/app-boot/src/index.ts:1109` 单条格式串、`:1129` 分组汇总表）：树 settle 后，对仍处于 PENDING 的条目会打印
+**好消息：DSH 启动时会审计这件事。** 源码实证（`packages/boot/app-boot/src/index.ts:1112` 单条格式串、`:1132` 分组汇总表）：树 settle 后，对仍处于 PENDING 的条目会打印
 
 ```
 <name>: pending (waiting for service: <缺失服务>)
@@ -1029,7 +1030,7 @@ export const Config: z<Config> = z.object({
 | `presentCall(args)` | 调用**进行中** | `ToolCallView` |
 | `presentResult(args, result)` | 调用**完成** | `ToolResultView` |
 
-可用的卡片类型（`docs/subsystems/tools.zh.md:469-478`；旧引 `:459-468`）：
+可用的卡片类型（`docs/subsystems/tools.zh.md:622-623`；旧引 `:459-468`）：
 
 - `presentCall` → `generic` / `terminal` / `diff`
 - `presentResult` → `generic` / `terminal` / `diff` / `read` / `search` / `web`
@@ -1064,7 +1065,7 @@ function presentBashCall(args: BashCallArgs): GenericCallView | TerminalCallView
 
 ### ⚠️ 一个反直觉事实
 
-`docs/cookbook/adding-a-tool.zh.md:97` + 源码 `packages/core/tools/README.zh.md:89`：
+`docs/cookbook/adding-a-tool.zh.md:97` + 源码 `packages/core/tools/README.zh.md:98`：
 
 > 内置 Web Client **不消费** `presentCall` / `presentResult`，而是通过 keyed slot `tool.call.toolview` 从原始事件派生。
 

@@ -23,8 +23,13 @@ from pathlib import Path
 # (id, 级别, 说明, 相对路径, 模式, 期望)  —— 期望 'has' = 必须命中；'not' = 必须不命中
 CHECKS: list[tuple[str, str, str, str, str, str]] = [
     # ── 17.1 入站 HTTP 路由 ────────────────────────────────────────────────
-    ("H01", "M", "webServer.register 接收单个 WebRoute 对象并返回 disposer",
-     "docs/subsystems/web-server.zh.md", r"register\(route: WebRoute\): \(\) => void", "has"),
+    # 0.2.2-alpha.2 复检：register 的入参从 WebRoute 放宽为 **WebRoute | WebResourceRoute**
+    # （新增 WebResource = (request: Request, peer?: PeerScope) => Promise<Response>，走 Fetch 语义）。
+    # 旧锚 `register(route: WebRoute)` 因此 STALE。锚点改为**完整联合签名**：哪天再并入新变体
+    # 或退回单类型都会再次 STALE。同文件同位行号：docs/subsystems/web-server.zh.md:222。
+    ("H01", "M", "webServer.register 接收 route: WebRoute | WebResourceRoute 并返回 disposer",
+     "docs/subsystems/web-server.zh.md",
+     r"register\(route: WebRoute \| WebResourceRoute\): \(\) => void", "has"),
     ("H02", "S", "WebRoute 结构 = {kind, path, handler(req,res)}",
      "packages/host/webserver/src/index.ts", r"type WebRouteKind = 'exact' \| 'prefix'", "has"),
     ("H03", "S", "WebRoute.handler 拥有 ServerResponse（无 JSON 便捷层）",
@@ -87,9 +92,13 @@ CHECKS: list[tuple[str, str, str, str, str, str]] = [
      "packages/client/tsdown.client.ts",
      r"readonly clientBanner\?: \(fileName: string\) => string \| undefined", "has"),
     # ── 0.2.1-alpha.3 新增的两条通道（本轮反向完备性撞出的新契约面） ──────────
+    # 0.2.2-alpha.2 复检：契约未变，但函数体插入了几行（isolation/plugins/inputOptions），
+    # 令「函数头 → entryFileNames」的字符距离从 <400 涨到实测 **485** → 原窗口 {0,400} 是
+    # 对**排版敏感**的假 STALE（与 U07 同族）。窗口放宽到 700，仍要求同文件、先后有序、
+    # 且 entry/chunk 两条产物名各自精确。
     ("B12", "M", "dualClient 会额外构建一个 Node 面，产物固定为 client.node.js / client.node.<name>.js",
      "packages/client/tsdown.client.ts",
-     r"function nodeClientConfig\(manifest: PackageManifest, entry: string\): UserConfig \{[\s\S]{0,400}?entryFileNames: 'client\.node\.js',[\s\S]{0,80}?chunkFileNames: 'client\.node\.\[name\]\.js'",
+     r"function nodeClientConfig\(manifest: PackageManifest, entry: string\): UserConfig \{[\s\S]{0,700}?entryFileNames: 'client\.node\.js',[\s\S]{0,80}?chunkFileNames: 'client\.node\.\[name\]\.js'",
      "has"),
     ("B13", "M", "staticLinked 通道存在，并暴露 isStaticLinkedConfig 供调用方判别",
      "packages/client/tsdown.client.ts",

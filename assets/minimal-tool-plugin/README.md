@@ -71,9 +71,28 @@ dsh plugin --profile <profile 名> add dsh-tool-greet
 3. **`parameters` 的 `required` 写在属性级**（`required: true`）。这是 `defineTool` 的 DSH 自有 DSL；裸 `ctx.tools.register` 才是对象级 `required: ['a']`。两条路径规则相反，套错会静默失效或直接报错。
 4. **`dsh.bundle.patch`、`files`、`exports` 都不能漏。** 前者漏了 `dsh plugin add` 只打警告不生效；`files` 漏了补丁文件不会进 npm 包；`exports` 少了 `'./cordis.patch.yml'` / `'./package.json'` 就偏离官方 bundle 的约定。
 
+## 🔴 `0.2.2-alpha.2` 起：注册成功 ≠ 能被调用
+
+`ctx.tools` 服务（`@deepseek-ai/dsh-tools`）现在**只是注册表**，真正的执行本体搬到了独立的执行器插件：
+`@deepseek-ai/dsh-tool-executor-native`（默认）或 `-ptc`。所以：
+
+- **完整 dsh**：base overlay 自带 `tool-executor-native` 行（`packages/bundle/base/cordis.patch.yml:497`），你不用管。
+- **自建最小 bundle**：必须显式加执行器行，否则本骨架注册的工具**能注册、`--dump-config` 也看得到，但模型一调就抛** `ToolExecutorUnavailableError`（`packages/core/tools/src/index.ts:365`，类定义 `executor.ts:97`）。
+
+要补的就一行（base overlay 里同款）：
+
+```yaml
+- insert:
+    - id: tool-executor-native
+      name: '@deepseek-ai/dsh-tool-executor-native'
+```
+
+`tools.mode` / `tools.maxParallelSubCalls` 也已从 `dsh-tools` 的 Config 移除（该插件里它们被标成 `z.never()`），要调并行度请改执行器自己的配置。完整症状与排查见 `references/05-pitfalls.md` 坑 P23。
+
 ## 验证清单
 
 - [ ] `dsh --dump-config` 里能看到这一行
+- [ ] 部署里有执行器（缺了就报 `ToolExecutorUnavailableError`，见上一节）
 - [ ] 插件没有停在 PENDING（PENDING = 注入的服务没到位）
 - [ ] 模型能实际调用工具并拿到正确输出
 - [ ] 卸载后工具消失（`ctx.tools.register` 是副作用，不需要手动清理）

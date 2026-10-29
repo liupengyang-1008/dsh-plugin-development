@@ -3,7 +3,7 @@
 > **文件来源**：本文件由 `10-community-casebook.md` 拆分而来，并按**来源政策定点改写**（**不是**逐行搬迁）：私有实现类条目不收录，通用教训以「自撰建议」形式保留。其余各册 `10a` / `10c` / `10d` 仍是逐行搬迁。
 > **本册性质**：**全部是上游一手素材原文** —— 性质不一：既有官方文档的**逐字摘录（属权威原文）**，也有调研期写下的**粗笔记（仅备查）**。**读某一段前，务必连带读该段开头的取材说明**，那是判断这段能信多少的依据。
 > **不要整读**：先 `grep -n '^#{1,2} '` 拿小节清单，再只读需要的那一节。总索引见 `10-community-casebook.md`。
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.1-rc.3` / commit `1f81c047fc`，2026-10-23），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.2-alpha.2` / commit `f3803c9697`，2026-10-28），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > 🔴 **许可警示（本册特有，务必先读）**：**本册只引用 MIT / Apache-2.0 / BSD-3-Clause 三类来源，不含任何 copyleft 内容。**（三者均为 permissive；BSD-3-Clause 比 MIT 只多一条无背书条款。）
@@ -210,12 +210,12 @@ a68bc532 docs: link dsh-weknora to its npm package page
 - **根因**：dsh 的 persona 若声明 `complete: true`，组装后会用 persona 段覆盖成“唯一 prompt 段”，其它 system prompt 贡献被静默丢弃。
 - **怎么修**：走 `agent/pre-step` waterfall，把注入作为**持久、带来源归属的 user 消息**追加到本步，而不是塞进 system prompt。
 
-  waterfall 监听器**必须调用 `next()`**，不调用会短路整条流水线（官方原文：`docs/user/develop/framework/events.zh.md:64-81`）。在 `agent/pre-step` 上返回值契约是 **`enter(messages)`**（`docs/agent-lifecycle.zh.md:32`）——**追加消息才是这个钩子的用途**。
+  waterfall 监听器**必须调用 `next()`**，不调用会短路整条流水线（官方原文：`docs/user/develop/framework/events.zh.md:64-81`）。在 `agent/pre-step` 上返回值契约是 **`enter(messages)`**（`docs/agent-lifecycle.zh.md:33`）——**追加消息才是这个钩子的用途**。
 
-  官方自己就是这么做「向本步追加一条消息」的 —— `packages/core/agent/src/model-selection.ts:116-120`（**官方生产代码，MIT**，节选、省略了上游上下文）：
+  官方自己就是这么做「向本步追加一条消息」的 —— `packages/core/agent/src/model-selection.ts:161-120`（**官方生产代码，MIT**，节选、省略了上游上下文）：
 
   ```ts
-  // 出处：packages/core/agent/src/model-selection.ts:116-120（节选）
+  // 出处：packages/core/agent/src/model-selection.ts:161-120（节选）
   const previous = agent.session.requestHeader()?.config
   if (selected === undefined || previous === undefined || sameRoute(selected, previous)) return decision
   return { ...decision, messages: [...decision.messages, modelSwitchNotice(previous, selected)] }
@@ -240,7 +240,7 @@ a68bc532 docs: link dsh-weknora to its npm package page
   | # | 官方出处（MIT） | 原文/要点 |
   |---|---|---|
   | ① | `packages/llm/llm/src/message.ts:173-179` | 工具结果块 `ToolResultMessage` 里字段名就是 camelCase：`readonly isError?: boolean` |
-  | ② | `packages/extensions/tool-cordis/src/api-catalog.ts:8310` | 契约全文：`export interface ToolResultMessage extends MessageBase { readonly role: 'tool'; readonly source: ToolMessageSource; readonly toolCallId: ToolCallId; readonly isError?: boolean; }` |
+  | ② | `packages/extensions/tool-cordis/src/api-catalog.ts`（自动生成的契约目录，`ToolResultMessage` 声明；行号随生成漂移，故不写死） | 契约全文：`export interface ToolResultMessage extends MessageBase { readonly role: 'tool'; readonly source: ToolMessageSource; readonly toolCallId: ToolCallId; readonly isError?: boolean; }` |
   | ③ | `packages/acp/acp/src/updates.ts:82` | 官方生产代码即用它判成败：`status: result.isError === true ? 'failed' : 'completed'` |
 
 - **现象**：消费方自己写「失败判定」时按 snake_case `is_error` 去读，**永远读不到** —— 失败的调用被记成 `completed`（错误文本仍在 `tool_output` 里，只是状态字段是错的）。
@@ -532,13 +532,13 @@ modlens 的 dsh 相关修复提交极多（`git log --oneline -i --grep='dsh'` �
 > 官方仓库 `deepseek-harness` 源码（commit `86a402200d`）实证：
 >
 > ```ts
-> // packages/core/tools/src/schema.ts:570-571（defineTool 实现体内）
+> // packages/core/tools/src/schema.ts:571-572（defineTool 实现体内）
 > const parameters = parameterSchemaSpecToJsonSchema(options.parameters)
 > const outputSchema = valueSchemaSpecToJsonSchema(options.output.schema)
 > ```
 >
 > ```ts
-> // packages/core/tools/src/schema.ts:96-106
+> // packages/core/tools/src/schema.ts:97-107
 > /** One implicit parameter-root property, optionally required. */
 > export type ParameterPropertySpec = ValueSchemaSpec & { required?: true }
 >
@@ -553,7 +553,7 @@ modlens 的 dsh 相关修复提交极多（`git log --oneline -i --grep='dsh'` �
 > ```
 >
 > ```ts
-> // packages/core/tools/src/schema.ts:290-303（属性级 required 的收集逻辑）
+> // packages/core/tools/src/schema.ts:291-304（属性级 required 的收集逻辑）
 > if (task.kind === 'property') {
 >   if (!isJsonSchemaRecord(task.property)) authorError(`${task.path} must be a value schema object`)
 >   if (Object.hasOwn(task.property, 'required') && task.property.required !== true) {
@@ -565,7 +565,7 @@ modlens 的 dsh 相关修复提交极多（`git log --oneline -i --grep='dsh'` �
 > ```
 >
 > ```ts
-> // packages/core/tools/src/schema.ts:449-458（DSL → JSON Schema 的投影）
+> // packages/core/tools/src/schema.ts:450-459（DSL → JSON Schema 的投影）
 > export function parameterSchemaSpecToJsonSchema(spec: ParameterSchemaSpec): ParameterJsonSchema {
 >   const compiled = compilePropertyMap(spec, 'parameters')
 >   const schema: ParameterJsonSchema = {
@@ -1752,7 +1752,7 @@ modlens 的 dsh 相关修复提交极多（`git log --oneline -i --grep='dsh'` �
 ## 规范 5：工具 schema 有两套写法 —— **先定路径，再定 `required` 位置**（⚠️ 原结论已按官方源码校正）
 
 - **路径 A · `defineTool()`（官方自研插件全走这条）**：`parameters` / `output.schema` 是 **DSH 作者 DSL**，必填一律**属性级** `required: true`。
-  - 证据：官方 `packages/interaction/tool-ask-user/src/index.ts`；官方 `packages/core/tools/src/schema.ts:570-571`（`parameterSchemaSpecToJsonSchema(options.parameters)`）。
+  - 证据：官方 `packages/interaction/tool-ask-user/src/index.ts`；官方 `packages/core/tools/src/schema.ts:571-572`（`parameterSchemaSpecToJsonSchema(options.parameters)`）。
 - **路径 B · 手写 `ToolDefinition` 后 `register`（社区插件常走这条）**：`parameters` 是**原始 JSON Schema**，必填为**对象级** `required: ['a','b']`。
   - 证据：本次实测 `Tencent_WeKnora/packages/dsh-weknora/src/tools.ts:186` —— `const definitions: ToolDefinition[] = []`，随后 push 裸对象，`parameters: { type:'object', properties:{...}, required:['query'], additionalProperties:false }`（第 251-259 行）；`output.schema` 同理（第 194、211-216 行）。
 - **共识证据（路径 B 内部）**：
@@ -1908,7 +1908,7 @@ yjh051108_dsh-routing-suite/
 ## 附录 D：结论来源索引（按坑号反查）
 
 - W1–W4 → `src/Tencent_WeKnora/packages/dsh-weknora/**`（tools.ts / client.ts / .github/workflows）
-- O1、O5 → 官方 `deepseek-harness` 源码（MIT）：`packages/preset/persona/src/index.ts`、`packages/llm/llm/src/types.ts:105`、`packages/acp/acp/src/updates.ts:82`（原 AGPL 来源的定位已整体移除）
+- O1、O5 → 官方 `deepseek-harness` 源码（MIT）：`packages/preset/persona/src/index.ts`、`packages/llm/llm/src/types.ts:112`、`packages/acp/acp/src/updates.ts:82`（原 AGPL 来源的定位已整体移除）
 - M1–M10 → `src/liustack_modlens/**`（package.json / docs/troubleshooting.zh-CN.md / dsh/**）
 - R1–R28 → `src/yjh051108_dsh-routing-suite/**`（injector/CHANGELOG.md、graded/CHANGELOG.md、injector/src/index.ts）+ `repos/yjh051108_dsh-routing-suite` git 提交元数据
 
