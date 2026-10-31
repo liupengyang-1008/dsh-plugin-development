@@ -7,7 +7,7 @@
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
 
-> **本文件导航 —— 共 459 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
+> **本文件导航 —— 共 458 行，不要整读。** 先 `grep` 定位小节，再只读需要的那一节。
 > - **上游素材原文**：约 192 行（46%），起点：`I-quickref.md`（文件开头）。**不是本技能重写的整理稿**；性质不一——**有的是官方文档逐字摘录（属权威原文），有的是调研期粗笔记（仅备查）**。读某一段前，务必连带读**该段开头的取材说明**。
 > - **其余部分 = 面向任务的整理稿**，可直接照做；但它同样是基线快照，写代码前先过版本闸门。
 > - 常用检索：`grep -n '^## '`、`grep -n '^# I\.'`（档案起点）
@@ -70,7 +70,6 @@
 | `otel` | 共享遥测传输 provider（宿主侧）：`createEventReporter(options)` / `createSessionLogReporter(options)` 各建**互相独立**的通道；**挂载本身不建队列、不建身份、不连网**，消费方自己负责排空与关闭截止。**`0.2.0-rc.1` 新增** | `packages/telemetry/otel/src/index.ts:13`（类）/ `:22` / `:30`；调用点 `packages/host/product-telemetry-otel/src/index.ts:85`、`packages/session/session-telemetry-otel/src/index.ts:189` |
 | `productAnalytics` | 产品分析事件接收（**宿主侧 `ProductAnalytics` 与客户端侧 `DesktopAnalytics` 用同一个键名**）：`enabled()`、`watchPolicy(signal)`（`@Remote` 流式，随配置热更新）、`report(event)`。**禁用态不读身份、不接新事件**。**`0.2.0-rc.1` 新增** | `packages/client/product-analytics/src/index.ts:46`、`packages/client/product-analytics/src/client/index.ts:23` |
 | `pluginMarket` | **插件市场索引读取器（宿主侧）**：按用户在设置里配的索引源拉取 / 校验 / 缓存市场清单，供 Web 端 **Discover** 标签页与 `plugin_market` 工具消费；`static inject = ['pluginManager']`。`Config` = `indexes`（`Volatile<string[]>`，默认 `[]`，**写入不重挂服务**）/ `fetchTimeoutMs`（默认 15000）/ `maxBytes`（默认 128 MiB）/ `cacheTtlMs`（默认 600000 ≈ 10 分钟）。🔴 **`0.2.1-alpha.4` 新增，且不在 base 补丁里** —— 不装组合包 `@deepseek-ai/dsh-experimental-plugin-market-bundle` 就没有这个服务；`plugin_market` 工具也**只在服务挂载期间**才注册 | 声明 `packages/boot/plugin-market/src/index.ts:35-40`、类 `:108`、`super(ctx, 'pluginMarket')` `:135`、`static inject`/`static Config` `:109`/`:111-124`；组合补丁 `packages/experimental/plugin-market-bundle/cordis.patch.yml` |
-
 | *（实验 / 组合包内部）* | **`0.2.2-alpha.2` 新增的 8 个服务全部落在实验包或组合包内**：`actionCards`（`packages/experimental/action-cards/src/index.ts:186`）、`cuaAccess`（`packages/experimental/cua/src/access.ts:42`）、`forge` / `forgeSession` / `forgePanel`（`experimental/forge` / `forge-session` / `client-ui-forge`）、`liveshareShares`（`experimental/liveshare/src/host/share-remote.ts:48`）、`pluginRecommendations`（`experimental/plugin-recommendations/src/index.ts:55`）、`headlessStartup`（**只在 headless 组合包内**，`packages/bundle/headless/src/startup.ts:26`）。**不装对应实验组合包就不存在** —— 写 `inject` 前先用 `ctx.get()` 探测 | 见各条括注 |
 
 > ⚠️ **服务名大小写敏感**（`sessionProjections` 不是 `session-projection`）。
