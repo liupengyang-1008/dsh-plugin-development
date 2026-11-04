@@ -1,7 +1,7 @@
 <!--
 本文件是**手工维护**的 curated 参考，不由 scripts/build_dsh_skill.sh 生成。
 （生成器只产出 01~13 号文件；本文件已在脚本的 KEEP 白名单内，重跑不会被删。）
-所有断言均对 DSH `dsh-v0.2.2-alpha.2` / commit `f3803c9697`（2026-10-28）逐条源码核验，
+所有断言均对 DSH `dsh-v0.2.2-alpha.3` / commit `05b1cae8db`（2026-11-03）逐条源码核验，
 复现脚本：`scripts/verify_absorbed_claims.py <DSH 仓库路径>`。
 -->
 
@@ -18,7 +18,7 @@
 **它不是一个核心服务，而是一个插件提供的服务。** 源码 `packages/host/webserver/src/index.ts`，在 Web 组合里由补丁行认领：
 
 ```yaml
-# packages/bundle/web-app/cordis.patch.yml:127-128
+# packages/bundle/web-app/cordis.patch.yml:175-177
 - id: webserver
   name: '@deepseek-ai/dsh-host-webserver'
 ```
@@ -189,9 +189,9 @@ intro:  'var module = { exports: {} }; var exports = module.exports;'
 
 | 项 | 值 | 源码出处 |
 |---|---|---|
-| 分块文件名 | 默认 `client.<name>.js`（入口默认 `client.js`） | `packages/client/tsdown.client.ts:917,920` |
-| 分块的 banner | 对**非入口**分块多写一个 `chunk: "<fileName>",` 字段（入口 chunk 的 banner 与旧版逐字相同） | 同上 `:931` |
-| 动态加载 | 包内动态 import 编译成 `require.async('./client.x.js')`，由 loader 按需拉取 | 同上 `:471`（`asyncChunkRequirePlugin`） |
+| 分块文件名 | 默认 `client.<name>.js`（入口默认 `client.js`） | `packages/client/tsdown.client.ts:919,922` |
+| 分块的 banner | 对**非入口**分块多写一个 `chunk: "<fileName>",` 字段（入口 chunk 的 banner 与旧版逐字相同） | 同上 `:933` |
+| 动态加载 | 包内动态 import 编译成 `require.async('./client.x.js')`，由 loader 按需拉取 | 同上 `:473`（`asyncChunkRequirePlugin`） |
 | 分块名校验 | `/^client\.[A-Za-z0-9][A-Za-z0-9._-]*\.js$/`；不合法抛 `client-modules: invalid package-local chunk` | `packages/client/modules/src/client/system.ts:39,169` |
 | 法务 / 署名 banner | `clientBundle(id, libEntry, { clientBanner: (fileName) => string \| undefined })` 按产物文件名注入前缀文本 | `packages/client/tsdown.client.ts`（`ClientBundleOptions.clientBanner`） |
 
@@ -203,8 +203,8 @@ intro:  'var module = { exports: {} }; var exports = module.exports;'
 
 | 通道 | 触发方式 | 产物命名 | 源码出处 |
 |---|---|---|---|
-| 浏览器面（默认） | 不传 `dualClient`（`dualClient = false`） | 入口 `client.js`、分块 `client.<name>.js` | `packages/client/tsdown.client.ts:917,920`（三元式的 else 分支） |
-| 浏览器面（双面模式） | `clientBundle(…, { dualClient: true })` | 入口 **`client.browser.js`**、分块 **`client.browser.<name>.js`** | 同上 `:917,920`（三元式的 then 分支） |
+| 浏览器面（默认） | 不传 `dualClient`（`dualClient = false`） | 入口 `client.js`、分块 `client.<name>.js` | `packages/client/tsdown.client.ts:919,922`（三元式的 else 分支） |
+| 浏览器面（双面模式） | `clientBundle(…, { dualClient: true })` | 入口 **`client.browser.js`**、分块 **`client.browser.<name>.js`** | 同上 `:919,922`（三元式的 then 分支） |
 | **Node 面**（仅在双面模式下额外构建） | 同上；`clientFaces` 变成 `[nodeClientConfig(...), client]` 两个面 | 入口 **`client.node.js`**、分块 **`client.node.<name>.js`**；`conditionNames: ['node', 'import', 'module', 'default']` | 同上 `:145-152`（组装）与 `:756-771`（`nodeClientConfig`） |
 
 选项类型是 **`readonly dualClient?: boolean`**（`:237`）。另有一条独立的 **`staticLinked(packageDir, libEntry): BuildFaceConfig`**（`:186`，内部走 `staticLinkedConfig`，`:303`），并导出 **`isStaticLinkedConfig()`**（`:204`，返回「至少有一个 config 由 `staticLinked` 构建」）。

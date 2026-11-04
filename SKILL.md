@@ -4,7 +4,7 @@ slug: dsh-plugin-development
 displayName: DSH Plugin Development
 summary: Develop DSH (DeepSeek Harness) / Cordis plugins end to end — plugin forms, templates, an API cookbook, catalogued pitfalls, packaging and publishing, plus a mandatory version gate for the pre-stable upstream. Third-party fragments quoted here remain under their own licences (MIT / Apache-2.0 / BSD-3-Clause) — see the bundled LICENSE and NOTICE.
 description: A development-time skill for building plugins on DSH (DeepSeek Harness) / Cordis. It is not itself an installable DSH plugin; it is the tooling that guides a developer or AI agent through creating, debugging, packaging, and publishing one. This skill should be used when the user asks to develop a DSH plugin, write or modify a cordis plugin, add a tool, slash command, config schema, service, UI slot or HTTP route to DSH, run a periodic task inside a plugin, fix a plugin that fails to load or stays in PENDING, or package a plugin bundle for installation or distribution. It covers the plugin forms and official conventions, with 12 templates, 25 catalogued pitfalls, and copy-ready prompts for AI-agent pair development. Because DSH is pre-stable and ships breaking changes on a short cadence, it also ships a mandatory pre-coding version gate, a probe that re-verifies its own claims against a live source checkout, and a per-tag history of upstream breaking changes.
-version: 1.8.1
+version: 1.9.0
 license: MIT-0
 agent_created: true
 metadata:
@@ -33,7 +33,7 @@ metadata:
 
 ## 第 0 步（强制，不可跳过）· 版本闸门
 
-**references 是某一时刻的快照，会腐化。** DSH 处于 rc 阶段（基线 `dsh-v0.2.2-alpha.2` / commit `f3803c9697`，2026-10-28），tag 间隔中位数约 1.0 天（实测 1.03）、出现过破坏性变更。**所以不要承诺「不过时」，要保证「过时会响」。**
+**references 是某一时刻的快照，会腐化。** DSH 处于 rc 阶段（基线 `dsh-v0.2.2-alpha.3` / commit `05b1cae8db`，2026-11-03），tag 间隔中位数约 1.3 天（`--cadence` 实测 1.29 / 37 个 tag）、出现过破坏性变更。**所以不要承诺「不过时」，要保证「过时会响」。**
 
 **① 权威顺序（源码永远压过本技能）**
 
@@ -61,27 +61,30 @@ bash   <skill>/scripts/dsh-api-probe.sh <DSH 仓库路径>    # 备选：仅当 
 > **目标版本高于基线时**不要猜：`dsh-sync.sh` 拉源码（先经确认）→ 探针核验 → `dsh-version-diff.sh` 出差异。
 > 完整机制（腐化推导、三级全表、五种核验手段、网络不可达时的降级路径）见 `references/00-version-gate.md`。
 
-**基线 `dsh-v0.2.2-alpha.2` 的硬变化（照抄旧资料前先对照）**
+**基线 `dsh-v0.2.2-alpha.3` 的硬变化（照抄旧资料前先对照）**
 
-DSH 每次发版的破坏性变更集中在少数几类。**本节只展开基线所属的最新一个区间；更早的 16 个区间（`dsh-v0.1.5-rc.2` → `0.2.1-rc.3`）见 `references/13-version-history.md` §2。**
+DSH 每次发版的破坏性变更集中在少数几类。**本节只展开基线所属的最新一个区间；更早的区间（`dsh-v0.1.5-rc.2` 之后到 `0.2.2-alpha.2`）见 `references/13-version-history.md` §2。**
 
-**`0.2.1-rc.3` → `0.2.2-alpha.2`（2170 个提交、2 个新 tag：`-rc.4` 9 个 / `-0.2.2-alpha.2` 2161 个）—— 🔴 有破坏性变更（第二段进位 → `1.8.0`）**
+**`0.2.2-alpha.2` → `0.2.2-alpha.3`（462 个提交、1 个新 tag）—— 🔴 有破坏性变更（第二段进位 → `1.9.0`）**
 
-> 🔴 **判据渠道**：本区间 `!:` 自报破坏性提交仅 **1 条**（`2f01ad549c fix(web)!: …`，第六次近乎空炮），而真破坏面 **5 条里它一条都没标出**。权威渠道 = 上游 `docs/upgrade-guide/` 本区间新增 **38** 个 topic，其中 `v0.2.1-rc.2/tool-executor-plugins` 与 `v0.2.1-rc.2/conditional-tools` 是两条主破坏面。
+> 🔴 **判据渠道**：本区间 `!:` 自报破坏性提交 **0 条**（又一次空炮），而真破坏面 **12 条（硬失效 7 + 语义/权限收紧 5）**。权威渠道 = 上游 `docs/upgrade-guide/` 本区间新增 **17 个 topic / 51 个文件**，**逐篇读完**并与两端源码树比对（其中 4 篇挂在更早的版本目录名下 —— 目录名 = 升级**起始**版本，不是发布版本）。
 
-1. 🔴 **工具执行器从 `dsh-tools` 拆成独立插件**。`dsh-tools` 的 `Config` 只剩两个 `z.never()` 占位：`mode`（`packages/core/tools/src/index.ts:102`，原文 `Removed. Mount a native or PTC tool executor instead.`）与 `maxParallelSubCalls`（`:103`）→ **任何还写 `tools: config: mode:` / `maxParallelSubCalls:` 的 patch 或 profile 在加载时被拒**。原生 / PTC 分别要挂 `@deepseek-ai/dsh-tool-executor-native` / `-ptc`（官方 base 补丁同批新增两行，后者 `disabled: true`；PTC 还需 `ctx.ptcRuntime` 在册）。**没有执行器时 `ctx.tools` 直接抛 `ToolExecutorUnavailableError`**（`:365` / `packages/core/tools/src/executor.ts:97`）—— 自建组合必须自己挂一个。`DSH_TOOLS_MODE` 环境变量**不再被读取**。`dsh-agent-tool-presentation` 的 `Config.mode` 仍在但**已 `@deprecated`**。
-2. 🔴 **`system-prompt/assemble` 不再携带工具数组**。该 waterfall 只给段落、上下文与变量，**返回的 `tools` 被忽略**、`assembly.tools` 为 `undefined` → **以前在这里增删工具声明的插件彻底失效**，读该字段的监听器运行时出错。替代方案：`ctx.tools.register(definition, { when })`（`packages/core/tools/src/contracts.ts:115`），以 `{ agent, modelSelection, signal }` 每步骤求值；为假即从声明 / 原生分发 / PTC 绑定 / 嵌套调用**四处**移除，抛错则轮次以 `TOOL_ACTIVATION_FAILED` 结束，集合外调用返回 `UNKNOWN_TOOL`。
-3. 🔴 **`ctx.tools` 服务面重排**：`presentAs(mode)` 与 `ToolPresentationMode` **移除**；`execute()` 由单次改为**批次**（`ToolBatchInput` / `ToolBatchResult`）；`register()` 增加第二参数；新增 `setExecutor` / `resolve` / `definitions` / `executable` / `checkGuards`。主入口**不再导出** `ToolExecutionPipeline` / `executeToolBatch` → 改从 **`@deepseek-ai/dsh-tools/pipeline`** 导入，工具测试夹具改从 **`@deepseek-ai/dsh-tool-testkit`** 取。
-4. 🔴 **配置键改名**：`tool-subagent` 的 `modelSelectionSettings` → **`modelSelection`**，并新增 `modelDiscovery`（`packages/subagent/tool-subagent/src/index.ts`）→ 旧键写进 patch 会校验失败。
-5. ⚠️ **行为面变动（不是失效）**：`web_fetch` 现在可达非公网地址（`2f01ad549c`）—— 依赖「web_fetch 只能取公网」的安全假设需复核。另一处加法：`webServer.register` 形参扩为 `WebRoute \| WebResourceRoute`（`packages/host/webserver/src/index.ts:549`），旧写法不受影响。
+1. 🔴 **右键菜单服务与类型整体改名（无兼容别名）**：`ctx.menus` → **`ctx.contextMenus`**（`packages/client/ui-context-menu/src/client/index.ts:23,119`）；`MenuTarget` → **`ContextMenuTarget`**、`ContextMenuTargetMap`（`.../types.ts:28,44-46`）；注入源 `menuTarget` / `useMenuTarget` → **`contextMenuTarget` / `useContextMenuTarget`**。新增官方包 `dsh-client-ui-context-menu` / `dsh-client-ui-file-actions` —— **自定义 Client 组合必须把这两个插件行挂上**，否则 open-in-app 等 GUI 插件无法激活（官方 Web bundle 已含）。操作图标改为 `{ key, src? }`，经 keyed 插槽 `contextMenu.icon` 渲染（不再收 React 节点）。
+2. 🔴 **Schedule 模型工具换面**：`schedule_update` / `schedule_delete` **移除** → `schedule_edit`（`action: "update" \| "delete"`）；`schedule_create` **不再接受任何时间选择参数**（`after_seconds` / `at` / `every_seconds` / `daily` / `weekly` / `cron` 全部作废），改为 `rrule` + 必填 `target`；新增 `schedule_view`；`schedule_list` 改为分页对象 `{ items, shown, total, limit, offset }`（`packages/schedule/tool-schedule/src/index.ts:372,394,417,431`）。服务侧 `update` / `delete` 移除，改 `view` / 分页 `list` / `edit`；`scheduleView` 与 `ScheduleUpdate*` 等类型不再从根入口导出。**存储写入版本 1 → 2**（首次 v2 写后 v1 程序拒绝打开 → 升级前备份）。
+3. 🔴 **Projection 帧形状变更**：`session/control` 与 `session/observeProjections` 的 `projection` 帧由 `{ key, value, seq }` 改为 **`{ changes: [{ key, val }], seq }`**（一个已提交事件一帧）；新增 Host 监听 `ctx.sessionProjections.onEventChanged`（声明 `packages/session/session-projection/src/index.ts:493`；Host 侧用法 `packages/api/session-controller/src/control.ts:22-30`）。直接读裸帧的 Remote 客户端 / 看板会静默丢更新。
+4. 🔴 **`sessionProjections` 读取面收紧**：注册表 `cachedSnapshot(session, keys)` **`@deprecated`**（只返回别处已算好的值、可能缺 key，`packages/session/session-projection/src/index.ts:540`）→ 用 `snapshot(session, keys)` 或注册句柄的 `stateOf(session)`；`snapshot()` 只计算本次返回的单元；`session.list` 摘要的 `projections` 不再带 `contextBreakdown` / `contextPressure`（改由 `SessionProjectionSummaryExcluded` 排除，改从打开的 Session 投影读取）。
+5. 🔴 **Loader 持久化契约**：`EntryTree.write()` **移除** → 子类实现 `commit(change)`；`applyEntryPatches()` **总是返回克隆**（无 patch 时也克隆），不能再通过返回值改输入（`vendor/loader/src/index.ts:75,179`）。
+6. 🔴 **`fs-observation-policy` 默认关闭**：base 补丁该行交付 `disabled: true`（`packages/bundle/base/cordis.patch.yml:292-294`）→ `write` 直接覆盖、`edit` 直接替换，**不再要求先读**；新增 **`apply_patch`** 工具（`packages/fs/tool-fs/src/apply-patch.ts:27`），由 `tool-fs` 的 **`applyPatch`** 控制（默认 `false`，`packages/fs/tool-fs/src/index.ts:37,53`）→ 🔴 **本基线里 base 补丁与 Web 的 `standard` / `ptc` / `cordis` 三个 preset 全部写 `false`**（`packages/bundle/base/cordis.patch.yml:300`、`packages/bundle/web-app/presets/standard.patch.yml:31`），即 **`apply_patch` 默认根本不存在**；⚠️ 官方指南 `v0.2.2-alpha.2/fs-observation-policy-default-off/guide.zh.md` 仍写「base 与 Web standard preset 现在列出 apply_patch（`applyPatch: true`）」—— **该说法已被同区间后续提交 `e1609fe164 fix(fs): temporarily disable apply_patch in shipped defaults`（2026-11-02）推翻，以代码为准**（见 `05` 坑 P25）。依赖 `FS_NOT_OBSERVED` / `FS_STALE_VERSION` 的录制期望会失效；想保留先读后写的 profile 要显式写回 `disabled: false`。
+7. 🔴 **`GenerateOptions.purpose` 改由声明合并派生**：`LlmRequestPurposeMap` 由生产方拥有，共享包不再声明 `compaction` / `session-title` → 直接构造辅助请求的插件必须 import 生产方（`@deepseek-ai/dsh-compaction-basic` / `@deepseek-ai/dsh-session-title-llm`）或自己扩表。
+8. ⚠️ **行为 / 权限收紧（不失效，但要复核）**：① Web 的 `fileActions.canSaveAs` 恒 `false`、`save(source, 'saveAs')` 直接拒绝，保存结果改回绝对 `path`（`packages/client/ui-file-actions/src/client/files.ts:19-21`）；② pi-ai 每条路由新增 `maxRequestImages`（默认 50）与 `imageOffloadCountQuantum`（默认 10）→ 超限时最老图片被占位文本替换并记录；③ Forge 组合包与独立 `tool-worktree` 组合包**不能同时选**（重复 `worktree` id 会让控件变只读）；④ Computer Use 需给 `DSH Computer Use.app` 单独授权，指向裸二进制的 `helperPath` 不再支持；⑤ SDK `run()` 恒返回 `RunResult` 并识别原生命令，内容块数组不再绕过命令路由。
 
-**新增面（不改已有契约）**：官方包 **352 → 378（+27 / −1）**，新增含 `dsh-tool-executor-native` / `-ptc` / `dsh-tool-testkit` / `dsh-official-bundles` / `dsh-plugin-detail` / `dsh-action-cards` / `dsh-message-quotes` 等，**移除 `dsh-client-ui-deepseek-model-label-1017`**（原 `conversation.input.model.label` 的官方占用方示例，本技能 `04` / `08` 已改写）；base 补丁 +`tool-executor-native` / +`tool-executor-ptc`(disabled) / −`tool-subagent-list-agents`；插槽 **+3 / −0**（`conversation.chat.text-interaction` / `conversation.chat.user.before` / `sidebar.session.row.trailing`）；服务 +8（**全部在 `experimental/` 或 headless 组合包内**）、事件 +5、类型 +144 / −8（8 项移除中 7 项是主入口改子路径导出，`ToolRuntime` 仍以别名保留）；包内 `Config` 键 **+38 / −1**（416 → 453）。
+**新增面（不改已有契约）**：官方包 **378 → 381（+3 / −0）** —— `dsh-client-ui-context-menu` / `dsh-client-ui-file-actions` / `dsh-fs-patch`；base 补丁 blob `863d194b → fc83f816`（只两处：`fs-observation-policy` 加 `disabled: true`、`tool-fs` 加 `config.applyPatch: false`）；插槽 **+3 / −0**（`contextMenu.content` / `contextMenu.icon` / `settings.section.icon`）→ 计数 **148 / 150 / 约 106** 改为 **151 / 153 / 约 109**，`slot-catalog.ts` **106 → 109**；服务 **+3**（`contextMenus` / `fileActions` / `sessionLogDeepSeek`，移除 **0**）；事件 **+2 / −0**（`fs/delete-intent` / `llm-pi-ai/request-headers`，均 waterfall）；工具面 **+3 / −2**（+`apply_patch` / `schedule_edit` / `schedule_view`，−`schedule_update` / `schedule_delete`）；包内 `Config` 键 **455 → 459（+4 / −0）**。
 
-**未变项逐条实测**：`SESSION_FORMAT_VERSION` 仍 **4**；模型 ID 仍 `deepseek-flash`；CLI **无新增选项**；`defineTool` 的参数 DSL 契约未变（`schema.ts` 仅新增 `projectToolSchema`）。插槽计数由 **144 / 146 / 约 103** 改为 **148 / 150 / 约 106**，`slot-catalog.ts` **103 → 106**。
-**更早的 16 个区间（`dsh-v0.1.5-rc.2` → `0.2.1-rc.3`）不在此处重复。** 完整破坏性变更总表（按区间逐行）见 `references/13-version-history.md` §2；作者自报渠道 `!:` 的覆盖率实测与反例见同文件 §2.5。**手上资料早于 `0.2.1-alpha.4` 时，先去读那两节再动手。** 其中紧邻的上一区间（`0.2.1-rc.2 → -rc.3`，6 个提交）**无破坏性变更**，只做了一处行为收紧（New Session 复用空白会话）；再上一区间（`0.2.1-alpha.4 → -rc.2`）的重头是**账号奖励通知字段放宽**，并附「**交付了机制、但没有官方市场与默认索引源**」那条收窄结论 —— 这两点仍在 `13` §2 该行与 `01` / `06` / `12` 的对应条目里，别因为本节换了区间就当成「没这回事」。
+**未变项逐条实测**：`SESSION_FORMAT_VERSION` 仍 **4**；模型 ID 仍 `deepseek-flash`；`schema.ts`（`eb6b6f30`）与 `tools/index.ts`（`d2d10d6b`）的 blob 两端相同（参数 DSL / `defineTool` 契约未变）；CLI **无新增 `.option(`**；包内 `{skills,templates,examples}/` 清单 **59 → 59 逐字相同**。
+**更早的区间（`dsh-v0.1.5-rc.2` 之后到 `0.2.2-alpha.2`）不在此处重复。** 完整破坏性变更总表（按区间逐行）见 `references/13-version-history.md` §2；作者自报渠道 `!:` 的覆盖率实测与反例见同文件 §2.5。**手上资料早于 `0.2.2-alpha.2` 时，先去读那两节再动手。** 其中紧邻的上一区间（`0.2.1-rc.3 → 0.2.2-alpha.2`，2170 个提交 / 2 个 tag）的重头是**工具执行器拆成独立插件**、**`system-prompt/assemble` 不再携带工具数组**、`ctx.tools` 服务面重排与 `tool-subagent` 配置键改名 —— 那四条仍在 `13` §2 该行与 `05-pitfalls.md` 的坑 P23 / P24 里，别因为本节换了区间就当成「没这回事」。
 
 **判据**：三条来源都要看 —— 探针（`M33`~`M37` / `N06`~`N08` / `P06`~`P07` / `V01` / `X07` / `U11`~`U12` / `X08`~`X09` / **`E01`~`E03`** 就是这几批）、`dsh-version-diff.sh` 的六维度、以及上游自带的 `docs/upgrade-guide/`。
-**⚠️ 别指望 `!:`**：十三个区间里非 merge 提交带 `!:` 的分别是 **0 / 0 / 1 / 0 / 0 / 0 / 0 / 1 / 0 / 0 / 0 / 0 / 1** —— 而最狠的整族改名一条都没标 —— **`!` 既非充分也非必要，判影响只看两端文件内容的集合 diff**（完整实测与反例见 `13-version-history.md` §2.5）。
+**⚠️ 别指望 `!:`**：最近十四个区间里非 merge 提交带 `!:` 的分别是 **0 / 0 / 1 / 0 / 0 / 0 / 0 / 1 / 0 / 0 / 0 / 0 / 1 / 0** —— 而最狠的整族改名一条都没标 —— **`!` 既非充分也非必要，判影响只看两端文件内容的集合 diff**（完整实测与反例见 `13-version-history.md` §2.5）。
 
 
 ## 三条基础纪律
@@ -232,7 +235,7 @@ DSH 里最常见的「我明明装了啊」有五种成因，全部落在这 5 �
 
 1. 插件装上了但**完全没反应** → `06-workflow.md` 第 ④ 部分（`--dump-config` + PENDING 审计）
 2. 报错信息看不懂 → `05-pitfalls.md` 的「报错信息 / 现象对照表」
-3. 已知症状检索 → `05-pitfalls.md`（25 条坑，按症状编号 P1~P24）
+3. 已知症状检索 → `05-pitfalls.md`（26 条坑，按症状编号 P1~P25）
 4. 追根究底（原始社区提交、行号级出处）→ `10-community-casebook.md`（**总索引**，再进 `10a`~`10d` 对应方向分册）
 
 ## 端到端示例（一次完整的装配）

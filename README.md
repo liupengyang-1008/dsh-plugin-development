@@ -318,7 +318,7 @@ export function apply(ctx) {
 > **服务插件是唯一允许（且必须）写 `export default` 的形态**——它和函数式插件是两种东西，别混。
 > 完整签名、客户端产物契约、反面教材见 `references/14-inbound-http-and-timers.md`；界面细节见 `references/04-ui-and-slots.md`。
 
-**到了这一级，请务必通读 `references/05-pitfalls.md` 的 23 条坑**——它们全部来自官方事故复盘或社区真实提交，每条都对应一次真实的失败。
+**到了这一级，请务必通读 `references/05-pitfalls.md` 的 26 条坑**——它们全部来自官方事故复盘或社区真实提交，每条都对应一次真实的失败。
 
 ---
 
@@ -397,7 +397,7 @@ DSH 处于 pre-stable / rc 阶段，**tag 间隔中位数约 1.1 天**，并且�
 |---|---|
 | 插件装上了但**完全没反应** | `references/06-workflow.md` ④：`--dump-config` 查组合树 + PENDING 审计 |
 | 报错信息看不懂 | `references/05-pitfalls.md` 的「报错信息 / 现象对照表」 |
-| 已知症状检索 | `references/05-pitfalls.md`（23 条坑，编号 P1~P22b） |
+| 已知症状检索 | `references/05-pitfalls.md`（26 条坑，编号 P1~P25） |
 | 改了代码不生效 | `SKILL.md` 的「改完代码怎么生效」表——**只改 `src/`，永远不要手改 `lib/`** |
 | 界面崩了 / slot 报错 | `references/04-ui-and-slots.md` |
 | 想追到原始社区提交与行号级出处 | `references/10-community-casebook.md`（总索引）→ `10a`~`10d` 分方向分册 |
@@ -431,7 +431,7 @@ DSH 处于 pre-stable / rc 阶段，**tag 间隔中位数约 1.1 天**，并且�
 **Q：目标版本比技能基线新怎么办？**
 不要猜。`scripts/dsh-sync.sh` 拉源码（需确认，首次约 200 MB，**绝不执行 pnpm install**）→ 跑探针 → `scripts/dsh-version-diff.sh` 出「基线 → 最新」差异，看六个破坏性变更高频维度。
 
-**Q：为什么文档里有些数字（23 篇 / 23 条坑 / 56 条断言 / 54 条第二批断言）看起来像在自我强调？**
+**Q：为什么文档里有些数字（23 篇 / 26 条坑 / 56 条断言 / 54 条第二批断言）看起来像在自我强调？**
 因为这些数字是**可复现的**：项目规矩是写「全部 / 仅 / 只有 N 个」必须附抽取命令与范围。历史上这条规矩已经拦下过 3 次措辞与事实不符。
 
 ---
@@ -442,7 +442,7 @@ DSH 处于 pre-stable / rc 阶段，**tag 间隔中位数约 1.1 天**，并且�
 
 | 项 | 值 |
 |---|---|
-| DSH 基线 | tag `dsh-v0.2.2-alpha.2` / commit `f3803c9697` / 2026-10-28 |
+| DSH 基线 | tag `dsh-v0.2.2-alpha.3` / commit `05b1cae8db` / 2026-11-03 |
 | 上游仓库 | [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) |
 | 技能版本 | 见 `SKILL.md` frontmatter 的 `version`（**唯一落点**） |
 | 版本 ↔ 基线对照 | `references/13-version-history.md` §1.5 |

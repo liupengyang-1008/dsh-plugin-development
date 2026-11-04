@@ -34,7 +34,7 @@ An engineering skillset for developers and AI agents building plugins on **DSH (
 | **Who is it for** | People who have DSH installed and want to write plugins for it; and the AI agents writing those plugins on their behalf |
 | **How do I use it** | **You talk to it** — there is no CLI to drive. Once loaded, it steers the agent through the whole development flow |
 | **Where it goes** | Into your **AI client's** skills directory. It follows the open **Agent Skills** format and is **not tied to any one client** — Claude Code / Codex / Cursor / Gemini CLI / Copilot / OpenClaw / WorkBuddy and more |
-| **What you get** | 12 copy-ready templates · 23 catalogued pitfalls · 8 verification scripts · 1 anti-staleness version gate · 10 agent prompt templates |
+| **What you get** | 12 copy-ready templates · 26 catalogued pitfalls · 8 verification scripts · 1 anti-staleness version gate · 10 agent prompt templates |
 | **What you do not get** | ❌ A ready-made installable plugin (that is what it helps you *build*) ❌ A DSH runtime dependency |
 | **What your environment needs** | ① An AI client that can load `SKILL.md` ② A shell (`python3` or `bash`) ③ Optional: a DSH checkout, used to verify APIs — without it the skill falls back to its explicit degradation rule |
 
@@ -317,7 +317,7 @@ export function apply(ctx) {
 > **The service plugin is the only form that may — and must — use `export default`.** It is a different animal from the function plugin; do not mix them.
 > Full signatures, the client artifact contract and an anti-pattern list are in `references/14-inbound-http-and-timers.md`; UI details in `references/04-ui-and-slots.md`.
 
-**At this level, read all 23 pitfalls in `references/05-pitfalls.md`.** Every one of them comes from an official postmortem or a real community submission, and each maps to an actual failure.
+**At this level, read all 26 pitfalls in `references/05-pitfalls.md`.** Every one of them comes from an official postmortem or a real community submission, and each maps to an actual failure.
 
 ---
 
@@ -396,7 +396,7 @@ So this skill does not promise to stay current. It promises one thing: **stalene
 |---|---|
 | Plugin installed but **does nothing at all** | `references/06-workflow.md` ④ — `--dump-config` for the composed tree plus a PENDING audit |
 | The error message makes no sense | the "error message / symptom lookup" table in `references/05-pitfalls.md` |
-| Looking up a known symptom | `references/05-pitfalls.md` (23 pitfalls, IDs P1–P22b) |
+| Looking up a known symptom | `references/05-pitfalls.md` (26 pitfalls, IDs P1–P25) |
 | Code changes have no effect | the "how changes take effect" table in `SKILL.md` — **edit `src/` only, never hand-edit `lib/`** |
 | UI crashed / slot errors | `references/04-ui-and-slots.md` |
 | Want line-level provenance back to the original submission | `references/10-community-casebook.md` (index) → the `10a`~`10d` per-direction volumes |
@@ -441,7 +441,7 @@ Because those numbers are **reproducible**. The project rule is that any stateme
 
 | Item | Value |
 |---|---|
-| DSH baseline | tag `dsh-v0.2.2-alpha.2` / commit `f3803c9697` / 2026-10-28 |
+| DSH baseline | tag `dsh-v0.2.2-alpha.3` / commit `05b1cae8db` / 2026-11-03 |
 | Upstream | [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) |
 | Skill version | `version` in `SKILL.md` frontmatter (**the single source of truth**) |
 | Version ↔ baseline table | `references/13-version-history.md` §1.5 |

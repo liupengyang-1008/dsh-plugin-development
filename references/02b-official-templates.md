@@ -3,7 +3,7 @@
 > **文件来源**：本文件由 `02-templates.md` 拆分而来，正文为原文的**逐行搬迁**，未做改写。
 > **本册性质**：**全部是上游一手素材原文** —— 性质不一：既有官方文档的**逐字摘录（属权威原文）**，也有调研期写下的**粗笔记（仅备查）**。**读某一段前，务必连带读该段开头的取材说明**，那是判断这段能信多少的依据。
 > **不要整读**：先 `grep -n '^#{1,2} '` 拿小节清单，再只读需要的那一节。本技能面向任务的整理稿见 `02-templates.md`。
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.2-alpha.2` / commit `f3803c9697`，2026-10-28），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.2-alpha.3` / commit `05b1cae8db`，2026-11-03），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 
@@ -951,7 +951,7 @@ export function AppearanceRow({ t, setTheme, useStore }: AppearanceRowComponentP
 | `conversation.input.plan` | 输入区计划 |
 | `conversation.hero.workspace` | 空态主视觉 / 工作区 |
 | `conversation.hero.workspace.directoryFlow` | 空态目录选择流 |
-| `conversation.chat.message.images` | `0.2.1-alpha.3` 起：助手消息里**一组连续持久化图片**的渲染器（`single` / `session`；`packages/client/ui-chat/src/client/contract/slots.ts:456`）。⚠️ **旧键 `conversation.message.images` 已在 `0.2.1-alpha.3` 改名走掉** |
+| `conversation.chat.message.images` | `0.2.1-alpha.3` 起：助手消息里**一组连续持久化图片**的渲染器（`single` / `session`；`packages/client/ui-chat/src/client/contract/slots.ts:467`）。⚠️ **旧键 `conversation.message.images` 已在 `0.2.1-alpha.3` 改名走掉** |
 | `conversation.chat.user.images` | `0.2.1-alpha.3` 新增：**用户消息**里的图片（含待发送与本地回显预览），可与输出侧图片**分别替换**（`single` / `session`；`…/ui-chat/src/client/contract/slots.ts:417`） |
 | `conversation.user.text.node` | `0.2.1-alpha.3` 新增：业务方自有的**纯 JSON 文本节点**内联渲染器（`keyed` / `session`；`packages/client/ui-conversation/src/client/contract/slots.ts:214`） |
 | `conversation.hero.options` | `0.2.1-alpha.3` 新增：新建会话行里**右对齐的紧凑选项位**（排在工作区与预设控件之后，仅在有会话时渲染；`list` / `session`；`…/ui-conversation/src/client/contract/slots.ts:268`） |
@@ -1135,7 +1135,7 @@ my-plugin/
 
 **2. `cordis_inspect_*` 三件套**（`packages/extensions/tool-cordis/src/index.ts:23,42`）：`cordis_inspect_list`（列 Provider/method）→ `cordis_inspect_query`（按 method 查）。可查 Service 方法、Event 模式、**已挂载插件的 Config JSON Schema**（`Config.listConfigs`：按 `name` 过滤分页目录，再查该 `entry` id → 返回 `packageDir`）、本 agent 可调用的 Tool、实时 Client Slots 与 Theme token。
 
-- ⚠️ **没有裸 `cordis_inspect`**：`docs/subsystems/slots.zh.md:202` 与历史 Agent Notes 里的 `cordis_inspect what:"client"` / `what:"api"` 是**旧简写**，照抄会找不到工具（`04` / `05` 已改为 `cordis_inspect_query`）。
+- ⚠️ **没有裸 `cordis_inspect`**：`docs/subsystems/slots.zh.md:206` 与历史 Agent Notes 里的 `cordis_inspect what:"client"` / `what:"api"` 是**旧简写**，照抄会找不到工具（`04` / `05` 已改为 `cordis_inspect_query`）。
 - `Config.listConfigs` 返回的 `packageDir` 是**权威包目录**：官方强调**不要**从 `$DSH_PROFILE_DIR` 猜路径（内置包解析自 dsh 安装目录，profile 装的 bundle 解析自 profile）。
 - 顺带：`DSH_PROFILE`（profile 名）/ `DSH_PROFILE_DIR`（其目录，`node_modules` 只含 profile 装的 bundle）在 **profile 启动的 harness 里每次 shell 调用都有**，不带 profile 启动时**不存在**；Bash 读 `$DSH_PROFILE`、PowerShell 读 `$env:DSH_PROFILE`。
 
