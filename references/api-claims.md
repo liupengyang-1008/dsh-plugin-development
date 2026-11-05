@@ -3,7 +3,7 @@
 # API 声明登记表（本 skill 依赖的易变事实）
 
 > **用途**：本 skill 的每一条「关于 DSH 的断言」都登记在这里，标注易变性等级、基线写法、源码位置、核验方式。
-> **基线**：commit `05b1cae8db` / `dsh-v0.2.2-alpha.3`（2026-11-03）。
+> **基线**：commit `66491b05e3` / `dsh-v0.2.2-rc.1`（2026-11-04）。
 > **探针**：`scripts/dsh-api-probe.py`（首选，零 coreutils 依赖）与 `scripts/dsh-api-probe.sh`（备选）。
 > **两份探针的断言表必须逐条一致**；被核验的断言数 = **56 条（48 正向 S/M/L + 8 反向 N）**。
 > **核验结果（2026-09-18 实测，对新基线 tag `dsh-v0.1.6-alpha.2` 的检出）**：`total=56 holds=56 stale=0`，`exit 0`。
@@ -152,7 +152,7 @@
 
 | 论断 | 为什么不能自动 | 人工复核方式 |
 |---|---|---|
-| 官方**文档**没有随仓库提交插槽键完整清单 | skill 内没有官方文档副本，且官方文档会更新 | ✅ **2026-09-23 复核：已有更好的权威源，且原前提是错的** —— `pnpm run gen-client-catalog` 的**产物其实早已入库**：`packages/extensions/cordis-client-runner/src/client/slot-catalog.ts`（引入于 `4064198560`，2026-08-13；由 `verify-client-catalog` 守新鲜度），给出**客户端半侧完整清单**（`0.1.7-rc.1` 实测 **86 个**，带 kind/scope/owner props；**`0.2.2-alpha.3` 实测 109 个**，本技能计数链与它逐轮交叉核对）。`scripts/extract_slots.py` 的 **A2 段现在自动与它交叉核对**，漏抽量应为 0。**仍需人工的只剩**：宿主侧是否也有同类生成产物。⚠️ 另注：上游文档写的 `cordis_inspect what:"client"` 是**旧简写**，实际工具为 `cordis_inspect_list` / `cordis_inspect_query`（`packages/extensions/tool-cordis/src/index.ts:23,42`） |
+| 官方**文档**没有随仓库提交插槽键完整清单 | skill 内没有官方文档副本，且官方文档会更新 | ✅ **2026-09-23 复核：已有更好的权威源，且原前提是错的** —— `pnpm run gen-client-catalog` 的**产物其实早已入库**：`packages/extensions/cordis-client-runner/src/client/slot-catalog.ts`（引入于 `4064198560`，2026-08-13；由 `verify-client-catalog` 守新鲜度），给出**客户端半侧完整清单**（`0.1.7-rc.1` 实测 **86 个**，带 kind/scope/owner props；**`0.2.2-rc.1` 实测 109 个**，本技能计数链与它逐轮交叉核对）。`scripts/extract_slots.py` 的 **A2 段现在自动与它交叉核对**，漏抽量应为 0。**仍需人工的只剩**：宿主侧是否也有同类生成产物。⚠️ 另注：上游文档写的 `cordis_inspect what:"client"` 是**旧简写**，实际工具为 `cordis_inspect_list` / `cordis_inspect_query`（`packages/extensions/tool-cordis/src/index.ts:23,42`） |
 | ✅ **2026-10-16 复核（结论被收窄，不是推翻）**：生态**仍**没有**官方**插件市场，但**「生态里没有市场机制」已不成立** —— 自 `dsh-v0.2.1-alpha.4` 起官方**随仓库交付**了读取器 / Discover 页 / agent 工具 / 插槽（见下一行）；上游原文两处明写「**目前没有官方市场**，因此 DSH 无法随附默认源；**索引源属于用户数据**」（`.agents/notes/implemented/feature/2026-10-02-plugin-market-discover.zh.md:9`、`…-plugin-market-index-format.zh.md:9`）。**发现机制仍以 GitHub topic `dsh-plugin` 为主** | 生态事实 + 仓库内机制，**两者都要看** | ① 查 GitHub 是否出现官方 marketplace **仓库**；② 查 `packages/boot/plugin-market/` 是否被加进 **base 补丁**（若加进去，「无默认源」也随之失效） |
 | 🔴 **官方插件市场机制已在仓库内**（`dsh-v0.2.1-alpha.4` 新增，**本表本轮新登记**） | 可直接对源码核验 | 服务 `pluginMarket`（`packages/extensions/tool-cordis/src/api-catalog.ts:2324`）· 事件 `plugin-market/changed`（`api-catalog.ts:4409-4411`，emit 于 `packages/boot/plugin-market/src/index.ts:167`）· agent 工具 `plugin_market`（`packages/boot/plugin-market/src/tools.ts:72`）· 插槽 `plugins.tab`（`packages/client/ui-plugin-manager/src/client/slot-contract.ts:124`）· 新增 4 个包 · 🔴 **不在 base 补丁里** → 不装 `plugin-market-bundle` 就没有市场面。与上一行是**同一轮、同一事实的两面**：机制存在（本条）／官方市场不存在（上一行）；`E01`~`E03` 覆盖同一轮的插件兼容变更 |
 | 官方文档存在**四处内部矛盾**（逐条见 `11-glossary-and-provenance.md` §F.2） | 需人工阅读理解 | 重读 §F.2 记录的矛盾点是否被官方修正。🔴 **2026-11-04 新增第 4 条**：升级指南说 `applyPatch: true`、tag 内代码是 `false`（`e1609fe164` 推翻指南）→ **照抄指南会以为 `apply_patch` 存在**，实为不存在（详见 `05` 坑 P25） |

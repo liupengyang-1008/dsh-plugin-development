@@ -25,7 +25,7 @@ SKILL_DIR="$(dirname "$SCRIPT_DIR")"
 STATE="$SKILL_DIR/vendor/dsh-state.json"
 
 REPO=""
-BASELINE="dsh-v0.2.2-alpha.3"
+BASELINE="dsh-v0.2.2-rc.1"
 LIST_ONLY=0
 
 while [ $# -gt 0 ]; do

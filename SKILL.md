@@ -4,7 +4,7 @@ slug: dsh-plugin-development
 displayName: DSH Plugin Development
 summary: Develop DSH (DeepSeek Harness) / Cordis plugins end to end — plugin forms, templates, an API cookbook, catalogued pitfalls, packaging and publishing, plus a mandatory version gate for the pre-stable upstream. Third-party fragments quoted here remain under their own licences (MIT / Apache-2.0 / BSD-3-Clause) — see the bundled LICENSE and NOTICE.
 description: A development-time skill for building plugins on DSH (DeepSeek Harness) / Cordis. It is not itself an installable DSH plugin; it is the tooling that guides a developer or AI agent through creating, debugging, packaging, and publishing one. This skill should be used when the user asks to develop a DSH plugin, write or modify a cordis plugin, add a tool, slash command, config schema, service, UI slot or HTTP route to DSH, run a periodic task inside a plugin, fix a plugin that fails to load or stays in PENDING, or package a plugin bundle for installation or distribution. It covers the plugin forms and official conventions, with 12 templates, 25 catalogued pitfalls, and copy-ready prompts for AI-agent pair development. Because DSH is pre-stable and ships breaking changes on a short cadence, it also ships a mandatory pre-coding version gate, a probe that re-verifies its own claims against a live source checkout, and a per-tag history of upstream breaking changes.
-version: 1.9.0
+version: 1.9.1
 license: MIT-0
 agent_created: true
 metadata:
@@ -33,7 +33,7 @@ metadata:
 
 ## 第 0 步（强制，不可跳过）· 版本闸门
 
-**references 是某一时刻的快照，会腐化。** DSH 处于 rc 阶段（基线 `dsh-v0.2.2-alpha.3` / commit `05b1cae8db`，2026-11-03），tag 间隔中位数约 1.3 天（`--cadence` 实测 1.29 / 37 个 tag）、出现过破坏性变更。**所以不要承诺「不过时」，要保证「过时会响」。**
+**references 是某一时刻的快照，会腐化。** DSH 处于 rc 阶段（基线 `dsh-v0.2.2-rc.1` / commit `66491b05e3`，2026-11-04），tag 间隔中位数约 1.1 天（`--cadence` 实测 1.15 / 38 个 tag）、出现过破坏性变更。**所以不要承诺「不过时」，要保证「过时会响」。**
 
 **① 权威顺序（源码永远压过本技能）**
 
@@ -61,9 +61,9 @@ bash   <skill>/scripts/dsh-api-probe.sh <DSH 仓库路径>    # 备选：仅当 
 > **目标版本高于基线时**不要猜：`dsh-sync.sh` 拉源码（先经确认）→ 探针核验 → `dsh-version-diff.sh` 出差异。
 > 完整机制（腐化推导、三级全表、五种核验手段、网络不可达时的降级路径）见 `references/00-version-gate.md`。
 
-**基线 `dsh-v0.2.2-alpha.3` 的硬变化（照抄旧资料前先对照）**
+**基线 `dsh-v0.2.2-rc.1` 的硬变化（照抄旧资料前先对照）**
 
-DSH 每次发版的破坏性变更集中在少数几类。**本节只展开基线所属的最新一个区间；更早的区间（`dsh-v0.1.5-rc.2` 之后到 `0.2.2-alpha.2`）见 `references/13-version-history.md` §2。**
+DSH 每次发版的破坏性变更集中在少数几类。**先看最新区间：`0.2.2-alpha.3` → `0.2.2-rc.1`（4 个提交 / 1 个新 tag）是纯发版收口 —— 387 个变更文件全是 `package.json`、零源码改动、破坏性变更 0 条**，所以下面这份清单**仍然全部有效**（rc.1 是产生它的那个区间的直接后裔）。**本节展开的是最近一次「含破坏性」的区间；更早的区间（`dsh-v0.1.5-rc.2` 之后到 `0.2.2-alpha.2`）见 `references/13-version-history.md` §2。**
 
 **`0.2.2-alpha.2` → `0.2.2-alpha.3`（462 个提交、1 个新 tag）—— 🔴 有破坏性变更（第二段进位 → `1.9.0`）**
 

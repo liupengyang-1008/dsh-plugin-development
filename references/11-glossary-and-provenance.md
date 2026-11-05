@@ -2,7 +2,7 @@
 
 > **本文件用途**：术语表、事实来源清单（含「不存在/未证实」的明确清单）、已知的官方文档内部矛盾、以及两套手册各自的诚实边界声明与素材索引。
 > **合成来源**：DSH插件开发指导手册.md（附录 D 术语表 + 附录 F 事实来源） + DSH插件开发实战补充-模板与踩坑.md（附录 素材来源与边界）
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.2-alpha.3` / commit `05b1cae8db`，2026-11-03），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.2-rc.1` / commit `66491b05e3`，2026-11-04），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
@@ -52,7 +52,7 @@
 # 附录 F 本手册的事实来源
 
 **仓库**：`deepseek-ai/deepseek-harness`
-**基线 commit**：`05b1cae8db6e674c5685101494d4eec24652424a`（2026-11-03）
+**基线 commit**：`66491b05e3f05ad35bcdd4f6cd7ed26041d9e3db`（2026-11-04）
 **版本**：`dsh-v0.2.2-alpha.2`
 **核查日期**：2026-09-11
 
@@ -207,7 +207,7 @@
 3. **上界面**：按 **T8/T9** 做 UI 与设置卡片（需要先跑通 `pnpm install`）。
 4. **长期**：把本文件的 **第五篇** 提示词存成片段，每次让 AI 写 DSH 代码时先贴上"铁律：要求出处"。
 
-> ⚠️ **最后一条风险提示**：本文件基线是 commit `05b1cae8db`（`dsh-v0.2.2-alpha.3`，2026-11-03）。DSH 自称 pre-stable、tag 间隔中位数约 1.1 天且有过破坏性变更。**升级前先跑 `git log --grep='!'` 评估影响**，并把 `package.json` 的 `peerDependencies` 写成**区间**而非钉死某个 rc 号。⚠️ 另注：若你还声明了 **`engines.dsh`**，自 `dsh-v0.2.1-alpha.4` 起**只有它决定兼容性**（DSH peer 范围**不再**放宽或收窄它，写 `workspace:` 即判不兼容）→ 要么给它完整范围，要么**不写**、退回 peer 检查（见 `07-conventions.md` §2）。
+> ⚠️ **最后一条风险提示**：本文件基线是 commit `66491b05e3`（`dsh-v0.2.2-rc.1`，2026-11-04）。DSH 自称 pre-stable、tag 间隔中位数约 1.1 天且有过破坏性变更。**升级前先跑 `git log --grep='!'` 评估影响**，并把 `package.json` 的 `peerDependencies` 写成**区间**而非钉死某个 rc 号。⚠️ 另注：若你还声明了 **`engines.dsh`**，自 `dsh-v0.2.1-alpha.4` 起**只有它决定兼容性**（DSH peer 范围**不再**放宽或收窄它，写 `workspace:` 即判不兼容）→ 要么给它完整范围，要么**不写**、退回 peer 检查（见 `07-conventions.md` §2）。
 
 ---
 

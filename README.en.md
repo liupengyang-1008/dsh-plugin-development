@@ -441,7 +441,7 @@ Because those numbers are **reproducible**. The project rule is that any stateme
 
 | Item | Value |
 |---|---|
-| DSH baseline | tag `dsh-v0.2.2-alpha.3` / commit `05b1cae8db` / 2026-11-03 |
+| DSH baseline | tag `dsh-v0.2.2-rc.1` / commit `66491b05e3` / 2026-11-04 |
 | Upstream | [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) |
 | Skill version | `version` in `SKILL.md` frontmatter (**the single source of truth**) |
 | Version ↔ baseline table | `references/13-version-history.md` §1.5 |
