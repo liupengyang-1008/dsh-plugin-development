@@ -9,10 +9,10 @@
 
 | 事实 | 数据 |
 |---|---|
-| DSH 处于 pre-stable / alpha 阶段 | 版本号 `0.2.2-rc.1` |
-| 发布节奏 | tag 间隔中位数约 1.1 天（`--cadence` 实测 1.15，38 个 tag / 78.9 天） |
+| DSH 处于 pre-stable / alpha 阶段 | 版本号 `0.2.2-rc.2` |
+| 发布节奏 | tag 间隔中位数约 1.1 天（`--cadence` 实测 1.15，39 个 tag / 78.9 天） |
 | 是否发生过破坏性变更 | 是（仓库用标题里的 `!` 标记破坏性提交；但该标记**既非充分也非必要**，见 `13-version-history.md` §2.5） |
-| 本 skill 的事实基线 | 官方 tag `dsh-v0.2.2-rc.1` / commit `66491b05e3` / 2026-11-04；对应**技能版本 `1.9.1`**（完整对照表：`13-version-history.md` §1.5） |
+| 本 skill 的事实基线 | 官方 tag `dsh-v0.2.2-rc.2` / commit `ddac96760b` / 2026-11-11；对应**技能版本 `1.10.0`**（完整对照表：`13-version-history.md` §1.5） |
 | 上游另有维护旁线（**不是基线**） | `dsh-v0.2.1-rc.5`（`b830ec950f` / 2026-10-29）是从 `0.2.1` 维护线的 `-rc.4` 切出的补丁（分叉点与提交数见 `13-version-history.md` §1 注记），与基线**互不为祖先**（双向 `git merge-base --is-ancestor` 均不成立）：基线 `dsh-v0.2.2-alpha.2` 时它多带一处 `conversation.chat.reasoning.body` 的 `rawText` 字段；**该字段已随 `dsh-v0.2.2-alpha.3` 进入基线**（`packages/client/ui-chat/src/client/contract/slots.ts:85`），故现在两条线的该插槽 props 一致 —— 分叉注记见 `04-ui-and-slots.md`，**不要**据此把基线切到旁线 |
 | 本 skill 的 references | **冻结在基线那一刻的快照**，随基线一起推进 |
 
