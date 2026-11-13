@@ -4,7 +4,7 @@ slug: dsh-plugin-development
 displayName: DSH Plugin Development
 summary: Develop DSH (DeepSeek Harness) / Cordis plugins end to end — plugin forms, templates, an API cookbook, catalogued pitfalls, packaging and publishing, plus a mandatory version gate for the pre-stable upstream. Third-party fragments quoted here remain under their own licences (MIT / Apache-2.0 / BSD-3-Clause) — see the bundled LICENSE and NOTICE.
 description: A development-time skill for building plugins on DSH (DeepSeek Harness) / Cordis. It is not itself an installable DSH plugin; it is the tooling that guides a developer or AI agent through creating, debugging, packaging, and publishing one. This skill should be used when the user asks to develop a DSH plugin, write or modify a cordis plugin, add a tool, slash command, config schema, service, UI slot or HTTP route to DSH, run a periodic task inside a plugin, fix a plugin that fails to load or stays in PENDING, or package a plugin bundle for installation or distribution. It covers the plugin forms and official conventions, with 12 templates, 28 catalogued pitfalls, and copy-ready prompts for AI-agent pair development. Because DSH is pre-stable and ships breaking changes on a short cadence, it also ships a mandatory pre-coding version gate, a probe that re-verifies its own claims against a live source checkout, and a per-tag history of upstream breaking changes.
-version: 1.10.0
+version: 1.10.1
 license: MIT-0
 agent_created: true
 metadata:
@@ -33,7 +33,7 @@ metadata:
 
 ## 第 0 步（强制，不可跳过）· 版本闸门
 
-**references 是某一时刻的快照，会腐化。** DSH 处于 rc 阶段（基线 `dsh-v0.2.2-rc.2` / commit `ddac96760b`，2026-11-11），tag 间隔中位数约 1.3 天（`--cadence` 实测 1.29 / 39 个 tag，平均 2.25 天）、出现过破坏性变更。**所以不要承诺「不过时」，要保证「过时会响」。**
+**references 是某一时刻的快照，会腐化。** DSH 处于 rc 阶段（基线 `dsh-v0.2.2-rc.3` / commit `38a6a5c965`，2026-11-13），tag 间隔中位数约 1.4 天（`--cadence` 实测 1.42 / 40 个 tag，平均 2.25 天）、出现过破坏性变更。**所以不要承诺「不过时」，要保证「过时会响」。**
 
 **① 权威顺序（源码永远压过本技能）**
 
@@ -61,9 +61,18 @@ bash   <skill>/scripts/dsh-api-probe.sh <DSH 仓库路径>    # 备选：仅当 
 > **目标版本高于基线时**不要猜：`dsh-sync.sh` 拉源码（先经确认）→ 探针核验 → `dsh-version-diff.sh` 出差异。
 > 完整机制（腐化推导、三级全表、五种核验手段、网络不可达时的降级路径）见 `references/00-version-gate.md`。
 
-**基线 `dsh-v0.2.2-rc.2` 的硬变化（照抄旧资料前先对照）**
+**基线 `dsh-v0.2.2-rc.3` 的硬变化（照抄旧资料前先对照）**
 
-DSH 每次发版的破坏性变更集中在少数几类。**最新区间 `0.2.2-rc.1` → `0.2.2-rc.2`（1568 个提交 / 1 个新 tag）破坏面很大**，本节清单换成它；**上一个含破坏性的区间 `0.2.2-alpha.2` → `-alpha.3`（右键菜单整族改名、Schedule 工具换面、projection 帧形状、`apply_patch` 默认关…）** 仍然全部有效，逐条在 `references/13-version-history.md` §2 与 `05-pitfalls.md` 坑 P25。
+DSH 每次发版的破坏性变更集中在少数几类。**最新区间 `0.2.2-rc.2` → `0.2.2-rc.3`（6 个提交 / 1 个新 tag）没有破坏性变更**（纯加法：只多了 1 个实验包、1 个服务、2 个插槽、4 个包内 `Config` 键，见下方第一条）；**上一个含破坏性的区间 `0.2.2-rc.1` → `-rc.2`（1568 个提交）破坏面很大**，其清单原样保留在下面 —— 那一批变更**在 `rc.3` 上依然全部有效**，读旧资料前仍要逐条对照。**更早那个含破坏性的区间 `0.2.2-alpha.2` → `-alpha.3`（右键菜单整族改名、Schedule 工具换面、projection 帧形状、`apply_patch` 默认关…）** 同样仍然全部有效，逐条在 `references/13-version-history.md` §2 与 `05-pitfalls.md` 坑 P25。
+
+**`0.2.2-rc.2` → `0.2.2-rc.3`（6 个提交、1 个新 tag）—— 🟢 无破坏性变更（第三段进位 → `1.10.1`）**
+
+> **判据**：`!:` 自报 0 条（第九次空炮），但这一次由集合 diff 独立证实「确实没有」—— 包名集合 `382 → 383` 只 +1、`--diff-filter=D` 为空、base 补丁 blob 两端同为 `18286618`、参数 DSL 两个 blob 两端相同、`docs/upgrade-guide/` 新增 0 篇。
+
+1. **唯一新增包**：`@deepseek-ai/dsh-deepseek-chat-import`（`packages/experimental/deepseek-chat-import/`）—— 把 **DeepSeek 官网对话导出**（zip）导入为本机会话；同时登记进 `OPTIONAL_BUNDLES` / `MORE_BUNDLES` / `EXPERIMENTAL_BUNDLES`（`packages/util/official-bundles/src/bundles.ts:72`、`plugin-manager.ts:58,79`）。它要 `typert` / `connection` / `sessionPersistence` / `workspaceRegistry` 四项（`static inject`，`src/index.ts:56`）。
+2. **新服务 `deepseekChatImport`**（`src/index.ts:47-52` 的声明块、键在 `:50`；`:72` 挂载）—— 只有 `@Remote limits(signal)` 一个方法，**owner-only**：非 owner 调用抛 `deepseekChatImport/owner-only`（`:115`）。它服务的是「浏览器先问上限再上传」这条链路，**不是通用导入 API**。
+3. **新插槽 2 个（均 `root`）**：`sidebar.session.action`（`hoc` —— 新会话行的**内层**包装，只在 Peer 可创建会话时渲染，贡献者必须原样传回 `children`，`packages/client/ui-sidebar/src/client/contract/slots.ts:86`）；`workspace.picker.directoryFlow`（`single` —— `workspace.picker` Factory 之下的目录选择洞，空着时 Factory 不提供「Add workspace…」；同族另两个同义洞是 `conversation.hero.workspace.directoryFlow`（`packages/client/ui-workspace/src/client/contract/slots.ts:141`）与 `sidebar.workspaces.directoryFlow`（同文件 `:143`）；本键声明在同文件 `:151`）。
+4. **包内 `Config` 键 +4（全在新包）**：`maxSessions`（默认 `1000`）/ `maxUploadBytes`（默认 512 MiB）/ `maxEntryBytes`（默认 256 MiB，单条目解压上限）/ `maxTitleBytes`（默认 `80`，须与会话标题服务的同名上限一致）。
 
 **`0.2.2-rc.1` → `0.2.2-rc.2`（1568 个提交、1 个新 tag）—— 🔴 有破坏性变更（第二段进位 → `1.10.0`）**
 
