@@ -3,7 +3,7 @@
 # API 声明登记表（本 skill 依赖的易变事实）
 
 > **用途**：本 skill 的每一条「关于 DSH 的断言」都登记在这里，标注易变性等级、基线写法、源码位置、核验方式。
-> **基线**：commit `38a6a5c965` / `dsh-v0.2.2-rc.3`（2026-11-13）。
+> **基线**：commit `9c2670d3bc` / `dsh-v0.2.2-rc.5`（2026-11-18）。
 > **探针**：`scripts/dsh-api-probe.py`（首选，零 coreutils 依赖）与 `scripts/dsh-api-probe.sh`（备选）。
 > **两份探针的断言表必须逐条一致**；被核验的断言数 = **56 条（48 正向 S/M/L + 8 反向 N）**。
 > **核验结果（2026-09-18 实测，对新基线 tag `dsh-v0.1.6-alpha.2` 的检出）**：`total=56 holds=56 stale=0`，`exit 0`。

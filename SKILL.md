@@ -4,7 +4,7 @@ slug: dsh-plugin-development
 displayName: DSH Plugin Development
 summary: Develop DSH (DeepSeek Harness) / Cordis plugins end to end — plugin forms, templates, an API cookbook, catalogued pitfalls, packaging and publishing, plus a mandatory version gate for the pre-stable upstream. Third-party fragments quoted here remain under their own licences (MIT / Apache-2.0 / BSD-3-Clause) — see the bundled LICENSE and NOTICE.
 description: A development-time skill for building plugins on DSH (DeepSeek Harness) / Cordis. It is not itself an installable DSH plugin; it is the tooling that guides a developer or AI agent through creating, debugging, packaging, and publishing one. This skill should be used when the user asks to develop a DSH plugin, write or modify a cordis plugin, add a tool, slash command, config schema, service, UI slot or HTTP route to DSH, run a periodic task inside a plugin, fix a plugin that fails to load or stays in PENDING, or package a plugin bundle for installation or distribution. It covers the plugin forms and official conventions, with 12 templates, 28 catalogued pitfalls, and copy-ready prompts for AI-agent pair development. Because DSH is pre-stable and ships breaking changes on a short cadence, it also ships a mandatory pre-coding version gate, a probe that re-verifies its own claims against a live source checkout, and a per-tag history of upstream breaking changes.
-version: 1.10.1
+version: 1.11.0
 license: MIT-0
 agent_created: true
 metadata:
@@ -33,7 +33,7 @@ metadata:
 
 ## 第 0 步（强制，不可跳过）· 版本闸门
 
-**references 是某一时刻的快照，会腐化。** DSH 处于 rc 阶段（基线 `dsh-v0.2.2-rc.3` / commit `38a6a5c965`，2026-11-13），tag 间隔中位数约 1.4 天（`--cadence` 实测 1.42 / 40 个 tag，平均 2.25 天）、出现过破坏性变更。**所以不要承诺「不过时」，要保证「过时会响」。**
+**references 是某一时刻的快照，会腐化。** DSH 处于 rc 阶段（基线 `dsh-v0.2.2-rc.5` / commit `9c2670d3bc`，2026-11-18），tag 间隔中位数约 1.4 天（`--cadence` 实测 1.42 / 42 个 tag，平均 2.27 天）、出现过破坏性变更。**所以不要承诺「不过时」，要保证「过时会响」。**
 
 **① 权威顺序（源码永远压过本技能）**
 
@@ -61,11 +61,27 @@ bash   <skill>/scripts/dsh-api-probe.sh <DSH 仓库路径>    # 备选：仅当 
 > **目标版本高于基线时**不要猜：`dsh-sync.sh` 拉源码（先经确认）→ 探针核验 → `dsh-version-diff.sh` 出差异。
 > 完整机制（腐化推导、三级全表、五种核验手段、网络不可达时的降级路径）见 `references/00-version-gate.md`。
 
-**基线 `dsh-v0.2.2-rc.3` 的硬变化（照抄旧资料前先对照）**
+**基线 `dsh-v0.2.2-rc.5` 的硬变化（照抄旧资料前先对照）**
 
-DSH 每次发版的破坏性变更集中在少数几类。**最新区间 `0.2.2-rc.2` → `0.2.2-rc.3`（6 个提交 / 1 个新 tag）没有破坏性变更**（纯加法：只多了 1 个实验包、1 个服务、2 个插槽、4 个包内 `Config` 键，见下方第一条）；**上一个含破坏性的区间 `0.2.2-rc.1` → `-rc.2`（1568 个提交）破坏面很大**，其清单原样保留在下面 —— 那一批变更**在 `rc.3` 上依然全部有效**，读旧资料前仍要逐条对照。**更早那个含破坏性的区间 `0.2.2-alpha.2` → `-alpha.3`（右键菜单整族改名、Schedule 工具换面、projection 帧形状、`apply_patch` 默认关…）** 同样仍然全部有效，逐条在 `references/13-version-history.md` §2 与 `05-pitfalls.md` 坑 P25。
+DSH 每次发版的破坏性变更集中在少数几类。**最新区间 `0.2.2-rc.4` → `0.2.2-rc.5`（5 个提交 / 1 个新 tag）有 1 条破坏性变更**：base 组合**不再固定网页搜索 provider**，DeepSeek 路由上的搜索改走 `deepseek-official`（Messages 搜索、计模型 token）；**上一个区间 `0.2.2-rc.3` → `-rc.4`（8 个提交）也有 1 条**：DeepSeek 内容拒答的错误码改报 `CONTENT_REFUSED`。这两条**都只有上游 `docs/upgrade-guide/` 报得出来** —— 六维度对第一条只报「base 补丁键变动」、对第二条**完全无反应**。再往前 `0.2.2-rc.2` → `-rc.3`（6 个提交）是纯加法；`0.2.2-rc.1` → `-rc.2`（1568 个提交）破坏面很大，其清单原样保留在下面 —— 那一批变更**在 `rc.5` 上依然全部有效**，读旧资料前仍要逐条对照。**更早那个含破坏性的区间 `0.2.2-alpha.2` → `-alpha.3`（右键菜单整族改名、Schedule 工具换面、projection 帧形状、`apply_patch` 默认关…）** 同样仍然全部有效，逐条在 `references/13-version-history.md` §2 与 `05-pitfalls.md` 坑 P25。
 
-**`0.2.2-rc.2` → `0.2.2-rc.3`（6 个提交、1 个新 tag）—— 🟢 无破坏性变更（第三段进位 → `1.10.1`）**
+**`0.2.2-rc.4` → `0.2.2-rc.5`（5 个提交、1 个新 tag）—— 🔴 有破坏性变更（第二段进位 → `1.11.0`）**
+
+> **判据**：`!:` 自报 0 条（第十一次空炮）；六维度只报出 `packages/bundle/base/cordis.patch.yml` 的 blob 变动（`18286618` → `f455fe70`），**报不出语义**；破坏面由 `docs/upgrade-guide/v0.2.2-rc.4/web-search-deepseek-model-default/`（1 个 topic / 3 个文件）定性。
+
+1. **base 不再固定 `web.searchProvider`**：`web` 行删掉 `searchProvider: deepseek-search-api`（`packages/bundle/base/cordis.patch.yml:488-491`）→ 改为 `dsh-web` **按模型路由运行期选**：`deepseek-official` / `deepseek-account` 路由上的搜索走 `deepseek-official`（对 `web-search-deepseek` 端点的一次辅助 Messages 请求，**不按次收费、计入模型 token**，会话日志追加 `web/deepseek-search-llm-request`）；其它路由、或不在模型请求内的搜索仍走 `deepseek-search-api`。
+2. **谁会坏**：模型供应商指向**网关**的部署 —— Messages 搜索端点**不跟随模型 base URL**（顺序 = `web-search-deepseek.baseURL` → `$DEEPSEEK_SEARCH_BASE_URL` → `https://api.deepseek.com/anthropic/v1`），key 会被发到官方端点、搜索失败；以及「每次搜索 = 一次 Search API 请求」的计费/审计假设。设置页显式选过 provider、或设了 `DSH_WEB_SEARCH_PROVIDER` 的 profile 不受影响。**新增**：provider 菜单多一项 **Automatic**（未存值时的默认）。
+3. **插件可见面零变化**：包 383 → 383、服务 171 → 171、插槽 126 → 126、`defineTool` +0/−0、`Config` 490 → 490、`SESSION_FORMAT_VERSION` 仍 4。
+
+**上一个区间：`0.2.2-rc.3` → `0.2.2-rc.4`（8 个提交、1 个新 tag）—— 🔴 有破坏性变更（同批第二个受理的 tag，同属 `1.11.0`）**
+
+> **判据**：`!:` 自报 0 条（第十次空炮），六维度（包增删 / base 补丁 / 配置键 / DSL / 插槽 / 会话格式）**全部报「未检出变化」**，破坏面由 `docs/upgrade-guide/v0.2.2-rc.3/deepseek-refusal-code/`（新增 1 个 topic / 3 个文件）挖出。
+
+1. **DeepSeek 内容拒答换错误码**：流以 `stop_reason: "refusal"` 结束时，适配器由 `MALFORMED_RESPONSE` 改报 **`CONTENT_REFUSED`**（`packages/llm/llm/src/error.ts:24` 的 `LLM_FAILURE_CODES` 新增该键；`packages/llm/llm-deepseek/src/translate.ts:91-94` 的 `refusal()`、`:152` 置 `refused`、`:157-160` 先 `yield` 已计费 `usage` 再 `throw`）。**按旧码分类 LLM 失败 / `turn/end` 错误的插件会走错分支** —— 改为处理 `CONTENT_REFUSED` 并提示「提供方拒答」。
+2. **拒答前的 token 已计费**，故先发 `usage` 帧再抛错；默认重试策略**终止**该次尝试，Web 端移除已流出的回复，会话把它留在 `assistant/attempt`（不进模型历史）；流开始前的拒答仍是 HTTP 400 → `INVALID_REQUEST`。
+3. **其余全是内部修复**：`liveshare` tunnel worker 在 Host 是 Electron 时补发 `ELECTRON_RUN_AS_NODE`（否则 worker 被当 GUI 应用、被单实例锁杀掉，`packages/experimental/liveshare/src/host/tunnel-worker.ts:88,375-378`）；`llm-deepseek` 的 `safetyCheck` 开关**加了又撤**（`src/config.ts` 净 diff 0）→ 最终态无新增配置键。
+
+**上一个区间：`0.2.2-rc.2` → `0.2.2-rc.3`（6 个提交、1 个新 tag）—— 🟢 无破坏性变更（当时第三段进位 → `1.10.1`）**
 
 > **判据**：`!:` 自报 0 条（第九次空炮），但这一次由集合 diff 独立证实「确实没有」—— 包名集合 `382 → 383` 只 +1、`--diff-filter=D` 为空、base 补丁 blob 两端同为 `18286618`、参数 DSL 两个 blob 两端相同、`docs/upgrade-guide/` 新增 0 篇。
 

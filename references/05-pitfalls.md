@@ -2,7 +2,7 @@
 
 > **本文件用途**：按症状检索的踩坑百科：**28 条编号坑点（P1~P27，含 P22b）** + 症状速查表 + 报错信息/界面现象对照表 + 官方 4 篇事故复盘全文摘录与八条红线。插件出问题时第一站。
 > **合成来源**：DSH插件开发实战补充-模板与踩坑.md（第三篇，略去与官方复盘重复的红线摘要） + DSH插件开发指导手册.md（附录 E 报错对照表） + F-official-pitfalls.md
-> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.2-rc.3` / commit `38a6a5c965`，2026-11-13），其中的**接口名级事实可能已过时**。
+> **快照警告**：本文件是 DSH 插件知识的**冻结快照**（基线 `dsh-v0.2.2-rc.5` / commit `9c2670d3bc`，2026-11-18），其中的**接口名级事实可能已过时**。
 > **写代码前先核验**：`bash scripts/dsh-api-probe.sh <DSH 仓库路径>`（退出码 1 = 有 STALE，**不要直接照抄**）。
 > **分级与核验规则**：`references/00-version-gate.md`、逐条登记 `references/api-claims.md`。
 > **素材名约定**：正文里出现的 `Xxx-yyy.md`（如 `E-official-templates.md`、`B-tools-external.md`）是**生成时的源调研笔记名**，其内容在生成时已合并进本文件——**不是 skill 内的文件**，不必去别处找。
@@ -279,9 +279,9 @@ ctx.tools.register(defineTool({ /* … */ }), {
 **根因（三处一起变，`0.2.2-rc.2`）**：
 - **包合并**：`dsh-deepseek-account-platform` 与 `dsh-api-account-controller` **移除**，具体服务落在 `@deepseek-ai/dsh-deepseek-account`（`packages/credentials/deepseek-account/src/index.ts`）；`PlatformAccount` → `DeepSeekAccount`（抽象基类没了，继承它的子类要改）；导入路径改 `/remote` `/typert` `/client-metadata`。服务名 `deepseekAccount`、`ctx.remote.account` 的操作名与参数**未变**，所以「服务还在」会骗过冒烟测试。
 - **配置键重做**：`web-deepseek-api` 移除 `apiKey` / `apiKeyEnv` / `baseURL`；新增 `searchBilling` / `fetchBilling`（`'auto' | 'account' | 'api-key'`）与 `searchBaseURL` / `searchApiKeyEnv` / `fetchBaseURL` / `fetchApiKeyEnv`（`packages/web/web-deepseek-api/src/index.ts:64-96`）。**键名不存在的配置项被静默忽略**，于是「配了 key 却一直走账号」。
-- **默认 provider 换人**：base 补丁 `web` 行 `searchProvider` 从 `deepseek-official` 改为 `deepseek-search-api`（`packages/bundle/base/cordis.patch.yml:487`）。
+- **默认 provider 换人（🔴 该结论已被 `0.2.2-rc.5` 再次推翻 —— 见下面的「修正」）**：base 补丁 `web` 行 `searchProvider` 从 `deepseek-official` 改为 `deepseek-search-api`（**当时**在 `packages/bundle/base/cordis.patch.yml:487`）。**修正（`0.2.2-rc.5`）**：base 已**删除整个 `searchProvider` 键**（`packages/bundle/base/cordis.patch.yml:488-491`，那里现在只剩 `fetchProvider: http`），改由 `dsh-web` **按模型路由在运行期选择** —— `deepseek-official` / `deepseek-account` 路由上的搜索走 `deepseek-official`（对 `web-search-deepseek` 端点的一次辅助 Messages 请求，不按次收费、计模型 token，会话日志追加 `web/deepseek-search-llm-request`），其它路由才走 `deepseek-search-api`。要恢复「一律走 Search API」，须在 `web` 行显式写 `searchProvider: deepseek-search-api`，或在设置页 / `DSH_WEB_SEARCH_PROVIDER` 显式选择；判据 `docs/upgrade-guide/v0.2.2-rc.4/web-search-deepseek-model-default/guide.zh.md`。
 **怎么修**：把所有旧包名替换为新包名；`apiKeyEnv` → `searchApiKeyEnv`（或直接改用 `searchBilling`）；想固定只用 API key 就写 `searchBilling: api-key` + `fetchBilling: api-key`；通知消费方把 `getUnnotifiedBonuses()` → `getNotifications()`、`ackBonusNotified()` → `reportNotificationEvent(id, event, client)`。
-**判据**：`docs/upgrade-guide/v0.2.2-rc.1/account-remote-provider/`、`account-notification-fields/`、`web-search-billing/` 三篇；`packages/credentials/deepseek-account/src/index.ts`；`packages/web/web-deepseek-api/src/index.ts:64-96`；`packages/bundle/base/cordis.patch.yml:487,495-496`。
+**判据**：`docs/upgrade-guide/v0.2.2-rc.1/account-remote-provider/`、`account-notification-fields/`、`web-search-billing/` 三篇 + `v0.2.2-rc.4/web-search-deepseek-model-default/`（rc.5 起 base 不再固定 `searchProvider`）；`packages/credentials/deepseek-account/src/index.ts`；`packages/web/web-deepseek-api/src/index.ts:64-96`；`packages/bundle/base/cordis.patch.yml:488-491,493-496`（web 行与 web-search-deepseek 行的现状位置）。
 
 ## 3.3 生命周期 / 热更新类
 
